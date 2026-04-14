@@ -1,15 +1,29 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-const queryClient = new QueryClient();
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <Toaster />
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<div style={{padding:'40px',fontFamily:'sans-serif'}}><h1>🇺🇦 BridoConnect</h1><p>Платформа прямої гуманітарної допомоги</p><p><a href="/app">Відкрити застосунок</a></p></div>} />
-      </Routes>
-    </BrowserRouter>
-  </QueryClientProvider>
-);
-export default App;
+import { Routes, Route } from "react-router-dom";
+import HomePage from "./pages/public/HomePage";
+import HowItWorksPage from "./pages/public/HowItWorksPage";
+import TransparencyPage from "./pages/public/TransparencyPage";
+import LivePage from "./pages/public/LivePage";
+import AboutPage from "./pages/public/AboutPage";
+import FaqPage from "./pages/public/FaqPage";
+import Auth from "./pages/Auth";
+import Register from "./pages/Register";
+import NotFound from "./pages/NotFound";
+import PublicLayout from "./components/public/PublicLayout";
+
+export default function App() {
+  return (
+    <Routes>
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
+        <Route path="/transparency" element={<TransparencyPage />} />
+        <Route path="/live" element={<LivePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/faq" element={<FaqPage />} />
+      </Route>
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
