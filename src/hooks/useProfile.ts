@@ -22,7 +22,7 @@ export const useProfile = () => {
   }, [user]);
 
   const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user) return;
+    if (!user) return { error: "Not authenticated" };
     const { data, error } = await supabase
       .from("profiles")
       .update(updates as any)
@@ -33,5 +33,21 @@ export const useProfile = () => {
     return { data, error };
   };
 
-  return { profile, loading, updateProfile };
+  const uploadAvatar = async (file: File) => {
+    if (!user) return { error: "Not authenticated" };
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${user.id}/avatar.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true });
+
+    if (uploadError) return { error: uploadError.message };
+
+    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+    const result = await updateProfile({ avatar_url: publicUrl });
+    return result;
+  };
+
+  return { profile, loading, updateProfile, uploadAvatar };
 };
