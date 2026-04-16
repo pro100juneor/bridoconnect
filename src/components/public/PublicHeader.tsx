@@ -1,31 +1,62 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import Logo from "../Logo";
-import { Menu, X } from "lucide-react";
-const nav = [{to:"/how-it-works",label:"Як це працює"},{to:"/transparency",label:"Прозорість"},{to:"/live",label:"Ефіри"},{to:"/about",label:"Про нас"},{to:"/faq",label:"FAQ"}];
+import { Menu, X, LogIn, UserPlus, ShoppingBag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+const nav = [
+  { to: "/how-it-works", label: "Як це працює" },
+  { to: "/transparency", label: "Прозорість" },
+  { to: "/live", label: "Ефіри" },
+  { to: "/shop", label: "Магазин" },
+  { to: "/about", label: "Про нас" },
+  { to: "/faq", label: "FAQ" },
+];
+
 const PublicHeader = () => {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="flex items-center justify-between px-4 py-3 max-w-screen-sm mx-auto">
         <Logo />
-        <nav className="hidden lg:flex items-center gap-6">
-          {nav.map(n => <Link key={n.to} to={n.to} className={`text-sm font-medium transition-colors ${pathname===n.to?"text-accent":"text-muted-foreground hover:text-foreground"}`}>{n.label}</Link>)}
-        </nav>
-        <div className="hidden lg:flex items-center gap-3">
-          <Link to="/auth" className="text-sm font-medium text-muted-foreground hover:text-foreground">Увійти</Link>
-          <Link to="/register" className="bg-accent text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-accent/90 transition-colors">Почати</Link>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="ghost" onClick={() => navigate("/auth")} className="hidden sm:flex gap-1 text-muted-foreground">
+            <LogIn className="w-4 h-4" /> Вхід
+          </Button>
+          <Button size="sm" className="hidden sm:flex bg-accent hover:bg-accent/90 text-white gap-1" onClick={() => navigate("/register")}>
+            <UserPlus className="w-4 h-4" /> Реєстрація
+          </Button>
+          <button onClick={() => setOpen(!open)} className="p-2 text-foreground">
+            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
-        <button className="lg:hidden p-2" onClick={() => setOpen(!open)}>{open ? <X className="w-5 h-5"/> : <Menu className="w-5 h-5"/>}</button>
       </div>
-      {open && <div className="lg:hidden border-t border-border bg-background px-6 py-4 space-y-3">
-        {nav.map(n => <Link key={n.to} to={n.to} onClick={() => setOpen(false)} className="block text-sm font-medium py-2">{n.label}</Link>)}
-        <div className="flex gap-3 pt-2">
-          <Link to="/auth" onClick={() => setOpen(false)} className="flex-1 text-center py-2 text-sm border border-border rounded-lg">Увійти</Link>
-          <Link to="/register" onClick={() => setOpen(false)} className="flex-1 text-center py-2 text-sm bg-accent text-white rounded-lg font-semibold">Почати</Link>
+
+      {open && (
+        <div className="border-t border-border bg-background px-4 py-4 max-w-screen-sm mx-auto">
+          <nav className="space-y-1 mb-4">
+            {nav.map(({ to, label }) => (
+              <Link key={to} to={to} onClick={() => setOpen(false)}
+                className={`block py-2.5 px-3 rounded-lg text-sm font-medium transition-colors ${
+                  pathname === to ? "bg-accent/10 text-accent" : "text-foreground hover:bg-secondary"
+                }`}>
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <div className="flex gap-2 pt-2 border-t border-border">
+            <Button variant="outline" className="flex-1" onClick={() => { navigate("/auth"); setOpen(false); }}>
+              <LogIn className="w-4 h-4 mr-2" /> Увійти
+            </Button>
+            <Button className="flex-1 bg-accent hover:bg-accent/90 text-white" onClick={() => { navigate("/register"); setOpen(false); }}>
+              <UserPlus className="w-4 h-4 mr-2" /> Реєстрація
+            </Button>
+          </div>
         </div>
-      </div>}
+      )}
     </header>
   );
 };
