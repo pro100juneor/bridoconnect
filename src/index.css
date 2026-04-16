@@ -15,12 +15,30 @@
     --accent: 4 74% 52%;
     --accent-foreground: 0 0% 98%;
     --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 4 74% 52%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 15%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 10%;
     --radius: 0.75rem;
   }
   * { @apply border-border; box-sizing: border-box; }
   body { @apply bg-background text-foreground font-sans antialiased; }
+}
+
+@layer utilities {
+  .text-success { color: hsl(var(--success)); }
+  .text-warning { color: hsl(var(--warning)); }
+  .bg-success { background-color: hsl(var(--success)); }
+  .bg-warning { background-color: hsl(var(--warning)); }
+  .fill-warning { fill: hsl(var(--warning)); }
+  .border-success { border-color: hsl(var(--success)); }
+  .border-warning { border-color: hsl(var(--warning)); }
 }
