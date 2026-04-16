@@ -1,0 +1,20 @@
+{
+  "name": "BridoConnect",
+  "short_name": "BridoConnect",
+  "description": "P2P гуманітарна платформа",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#c0392b",
+  "lang": "uk",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "categories": ["social", "finance"],
+  "shortcuts": [
+    { "name": "Стрічка", "url": "/app", "description": "Переглянути запити" },
+    { "name": "Нова угода", "url": "/app/create-deal", "description": "Створити запит" }
+  ]
+}
