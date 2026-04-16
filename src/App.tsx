@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import PublicLayout from "./components/public/PublicLayout";
 import AppLayout from "./components/layout/AppLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import HomePage from "./pages/public/HomePage";
 import HowItWorksPage from "./pages/public/HowItWorksPage";
@@ -57,7 +58,7 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
-      <Route element={<AppLayout />}>
+      <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/app" element={<Feed />} />
         <Route path="/app/live" element={<LiveStreams />} />
         <Route path="/app/live/start" element={<StartStream />} />
