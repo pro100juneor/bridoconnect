@@ -1,16 +1,33 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Radio, Users, Eye, Play, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
-const streams = [
-  { id: "1", title: "Збір на ремонт будинку — розповідаємо ситуацію", host: "Оксана К.", flag: "🇺🇦", viewers: 234, live: true, goal: "€3 200", raised: "€2 080" },
-  { id: "2", title: "Humanitarian aid distribution in Kharkiv", host: "Relief UA", flag: "🇺🇦", viewers: 87, live: true, goal: "€5 000", raised: "€4 120" },
-  { id: "3", title: "Запис: Як отримати допомогу через BridoConnect", host: "BridoConnect", flag: "🇩🇪", viewers: 1240, live: false, goal: null, raised: null },
-  { id: "4", title: "Сім'я біженців — наша історія з Маріуполя", host: "Надія С.", flag: "🇺🇦", viewers: 56, live: true, goal: "€1 800", raised: "€620" },
+const MOCK_STREAMS = [
+  { id:"1", title:"Збір на ремонт будинку — розповідаємо ситуацію", host_name:"Оксана К.", host_flag:"🇺🇦", viewer_count:234, status:"live", goal_amount:3200, raised:2080 },
+  { id:"2", title:"Humanitarian aid distribution in Kharkiv", host_name:"Relief UA", host_flag:"🇺🇦", viewer_count:87, status:"live", goal_amount:5000, raised:4120 },
+  { id:"3", title:"Як отримати допомогу через BridoConnect", host_name:"BridoConnect", host_flag:"🇩🇪", viewer_count:1240, status:"ended", goal_amount:null, raised:null },
 ];
 
 const LiveStreams = () => {
   const navigate = useNavigate();
+  const [streams, setStreams] = useState<any[]>(MOCK_STREAMS);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from("streams").select("*, profiles!host_id(name, avatar_url)")
+      .order("created_at", { ascending: false }).limit(20)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setStreams(data.map((s: any) => ({...s, host_name: s.profiles?.name || "Невідомо", host_flag:"🏳️"})));
+        }
+        setLoading(false);
+      });
+  }, []);
+
+  const live = streams.filter(s => s.status === "live");
+
   return (
     <div className="pb-8">
       <div className="px-4 pt-4 pb-4">
@@ -20,54 +37,62 @@ const LiveStreams = () => {
             <Plus className="w-4 h-4" /> Запустити
           </Button>
         </div>
-        <div className="flex items-center gap-2 bg-accent/10 rounded-xl px-3 py-2">
-          <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-          <span className="text-xs text-accent font-medium">{streams.filter(s => s.live).length} прямих ефірів зараз</span>
-          <Users className="w-3 h-3 text-accent ml-auto" />
-          <span className="text-xs text-accent">{streams.filter(s=>s.live).reduce((a,s)=>a+s.viewers,0)} глядачів</span>
-        </div>
-      </div>
-      <div className="px-4 space-y-4">
-        {streams.map(s => (
-          <div key={s.id} className="rounded-xl border border-border overflow-hidden">
-            <div className="h-36 bg-primary/5 flex items-center justify-center relative">
-              <Radio className="w-12 h-12 text-primary/20" />
-              <button className="absolute inset-0 flex items-center justify-center">
-                <div className="w-14 h-14 rounded-full bg-white/90 shadow-lg flex items-center justify-center">
-                  <Play className="w-6 h-6 text-accent fill-accent ml-1" />
-                </div>
-              </button>
-              <div className="absolute top-2 left-2 flex items-center gap-1">
-                {s.live ? (
-                  <span className="bg-accent text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
-                  </span>
-                ) : (
-                  <span className="bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">Запис</span>
-                )}
-              </div>
-              <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
-                <Eye className="w-3 h-3" /> {s.viewers}
-              </div>
-            </div>
-            <div className="p-3">
-              <p className="font-semibold text-sm text-foreground mb-1 line-clamp-2">{s.title}</p>
-              <p className="text-xs text-muted-foreground mb-2">{s.host} {s.flag}</p>
-              {s.goal && (
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-muted-foreground">Зібрано</span>
-                    <span className="font-semibold text-foreground">{s.raised} з {s.goal}</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-secondary rounded-full">
-                    <div className="h-full bg-accent rounded-full" style={{width: `${Math.round(parseInt(s.raised.replace(/[^0-9]/g,""))/parseInt(s.goal.replace(/[^0-9]/g,""))*100)}%`}} />
-                  </div>
-                </div>
-              )}
-            </div>
+        {live.length > 0 && (
+          <div className="flex items-center gap-2 bg-accent/10 rounded-xl px-3 py-2">
+            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+            <span className="text-xs text-accent font-medium">{live.length} прямих ефірів зараз</span>
+            <Users className="w-3 h-3 text-accent ml-auto" />
+            <span className="text-xs text-accent">{live.reduce((a,s) => a + (s.viewer_count||0), 0)} глядачів</span>
           </div>
-        ))}
+        )}
       </div>
+      {loading ? (
+        <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"/></div>
+      ) : (
+        <div className="px-4 space-y-4">
+          {streams.map(s => {
+            const pct = s.goal_amount && s.raised ? Math.round(s.raised/s.goal_amount*100) : null;
+            return (
+              <div key={s.id} className="rounded-xl border border-border overflow-hidden cursor-pointer"
+                onClick={() => navigate(`/app/live/${s.id}`)}>
+                <div className="h-36 bg-primary/5 flex items-center justify-center relative">
+                  <Radio className="w-12 h-12 text-primary/20" />
+                  <button className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-full bg-white/90 shadow-lg flex items-center justify-center">
+                      <Play className="w-6 h-6 text-accent fill-accent ml-1" />
+                    </div>
+                  </button>
+                  <div className="absolute top-2 left-2">
+                    {s.status === "live" ? (
+                      <span className="bg-accent text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"/>LIVE
+                      </span>
+                    ) : <span className="bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">Запис</span>}
+                  </div>
+                  <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
+                    <Eye className="w-3 h-3" />{s.viewer_count || 0}
+                  </div>
+                </div>
+                <div className="p-3">
+                  <p className="font-semibold text-sm text-foreground mb-1 line-clamp-2">{s.title}</p>
+                  <p className="text-xs text-muted-foreground mb-2">{s.host_name} {s.host_flag}</p>
+                  {pct !== null && (
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-muted-foreground">Зібрано</span>
+                        <span className="font-semibold text-foreground">€{s.raised} з €{s.goal_amount}</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-secondary rounded-full">
+                        <div className="h-full bg-accent rounded-full" style={{width:`${Math.min(pct,100)}%`}}/>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
