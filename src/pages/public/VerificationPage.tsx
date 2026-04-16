@@ -2,16 +2,31 @@ import { useNavigate } from "react-router-dom";
 import { Shield, Upload, CheckCircle, Clock, FileText, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useVerification } from "@/hooks/useVerification";
 
 const steps = [
-  { icon: FileText, title: "Документ, що посвідчує особу", desc: "Паспорт, ID-картка або посвідка на проживання" },
-  { icon: Camera, title: "Селфі з документом", desc: "Чітке фото вашого обличчя поруч з документом" },
-  { icon: Shield, title: "Підтвердження адреси", desc: "Комунальний рахунок або банківська виписка" },
+  { icon: FileText, title: "Документ, що посвідчує особу", desc: "Паспорт, ID-картка або посвідка на проживання", type: "id_document" },
+  { icon: Camera, title: "Селфі з документом", desc: "Чітке фото вашого обличчя поруч з документом", type: "selfie" },
+  { icon: Shield, title: "Підтвердження адреси", desc: "Комунальний рахунок або банківська виписка", type: "address_proof" },
 ];
 
 const VerificationPage = () => {
   const navigate = useNavigate();
+  const { uploadDocument, submitVerification, uploading } = useVerification();
+  const [uploaded, setUploaded] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const result = await uploadDocument(file, type as any);
+    if (!result?.error) setUploaded(prev => [...prev, type]);
+  };
+
+  const handleSubmit = async () => {
+    await submitVerification();
+    setSubmitted(true);
+  };
 
   if (submitted) {
     return (
@@ -37,20 +52,24 @@ const VerificationPage = () => {
         </div>
         <p className="text-muted-foreground text-sm mb-8">Верифіковані акаунти отримують значок довіри і мають пріоритет у стрічці.</p>
         <div className="space-y-3 mb-8">
-          {steps.map((step, i) => (
-            <div key={i} className="flex items-start gap-4 p-4 rounded-xl border border-border">
-              <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                <step.icon className="w-5 h-5 text-accent"/>
+          {steps.map((step, i) => {
+            const done = uploaded.includes(step.type);
+            return (
+              <div key={i} className={`flex items-start gap-4 p-4 rounded-xl border transition-colors ${done ? "border-success bg-success/5" : "border-border"}`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${done ? "bg-success/10" : "bg-accent/10"}`}>
+                  {done ? <CheckCircle className="w-5 h-5 text-success"/> : <step.icon className="w-5 h-5 text-accent"/>}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm text-foreground mb-0.5">{step.title}</p>
+                  <p className="text-xs text-muted-foreground">{step.desc}</p>
+                </div>
+                <label className={`border-2 border-dashed rounded-lg p-2 cursor-pointer transition-colors ${done ? "border-success" : "border-border hover:border-accent"}`}>
+                  {done ? <CheckCircle className="w-4 h-4 text-success"/> : <Upload className="w-4 h-4 text-muted-foreground"/>}
+                  <input type="file" accept="image/*,.pdf" className="hidden" onChange={e => handleFile(e, step.type)} />
+                </label>
               </div>
-              <div className="flex-1">
-                <p className="font-medium text-sm text-foreground mb-0.5">{step.title}</p>
-                <p className="text-xs text-muted-foreground">{step.desc}</p>
-              </div>
-              <div className="border-2 border-dashed border-border rounded-lg p-2 cursor-pointer hover:border-accent transition-colors">
-                <Upload className="w-4 h-4 text-muted-foreground"/>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="p-4 bg-success/10 rounded-xl mb-6 flex items-start gap-3">
           <CheckCircle className="w-5 h-5 text-success shrink-0 mt-0.5"/>
@@ -59,8 +78,8 @@ const VerificationPage = () => {
             <p className="text-xs text-muted-foreground">Документи зберігаються зашифровано відповідно до GDPR.</p>
           </div>
         </div>
-        <Button className="w-full bg-accent hover:bg-accent/90 text-white" onClick={() => setSubmitted(true)}>
-          Надіслати документи
+        <Button className="w-full bg-accent hover:bg-accent/90 text-white" disabled={uploading || uploaded.length === 0} onClick={handleSubmit}>
+          {uploading ? "Завантажуємо..." : `Надіслати документи (${uploaded.length}/3)`}
         </Button>
       </div>
     </div>
