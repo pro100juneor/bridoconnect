@@ -58,29 +58,31 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
-      <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-        <Route path="/app" element={<Feed />} />
-        <Route path="/app/live" element={<LiveStreams />} />
-        <Route path="/app/live/start" element={<StartStream />} />
-        <Route path="/app/live/:id" element={<StreamViewer />} />
-        <Route path="/app/create-deal" element={<CreateDeal />} />
-        <Route path="/app/shop" element={<Shop />} />
-        <Route path="/app/shop/seller/:id" element={<ShopDetail />} />
-        <Route path="/app/shop/:id" element={<ProductDetail />} />
-        <Route path="/app/profile" element={<Profile />} />
-        <Route path="/app/profile/edit" element={<EditProfile />} />
-        <Route path="/app/search" element={<Search />} />
-        <Route path="/app/chats" element={<ChatList />} />
-        <Route path="/app/chat/:id" element={<Chat />} />
-        <Route path="/app/notifications" element={<Notifications />} />
-        <Route path="/app/deal/:id" element={<ActiveDeal />} />
-        <Route path="/app/deals" element={<DealHistory />} />
-        <Route path="/app/dispute/:id" element={<Dispute />} />
-        <Route path="/app/wallet" element={<Wallet />} />
-        <Route path="/app/wishlist" element={<Wishlist />} />
-        <Route path="/app/user/:id" element={<PublicProfile />} />
-        <Route path="/app/settings" element={<Settings />} />
-        <Route path="/app/premium" element={<Premium />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppLayout />}>
+          <Route path="/app" element={<Feed />} />
+          <Route path="/app/live" element={<LiveStreams />} />
+          <Route path="/app/live/start" element={<StartStream />} />
+          <Route path="/app/live/:id" element={<StreamViewer />} />
+          <Route path="/app/create-deal" element={<CreateDeal />} />
+          <Route path="/app/shop" element={<Shop />} />
+          <Route path="/app/shop/seller/:id" element={<ShopDetail />} />
+          <Route path="/app/shop/:id" element={<ProductDetail />} />
+          <Route path="/app/profile" element={<Profile />} />
+          <Route path="/app/profile/edit" element={<EditProfile />} />
+          <Route path="/app/search" element={<Search />} />
+          <Route path="/app/chats" element={<ChatList />} />
+          <Route path="/app/chat/:id" element={<Chat />} />
+          <Route path="/app/notifications" element={<Notifications />} />
+          <Route path="/app/deal/:id" element={<ActiveDeal />} />
+          <Route path="/app/deals" element={<DealHistory />} />
+          <Route path="/app/dispute/:id" element={<Dispute />} />
+          <Route path="/app/wallet" element={<Wallet />} />
+          <Route path="/app/wishlist" element={<Wishlist />} />
+          <Route path="/app/user/:id" element={<PublicProfile />} />
+          <Route path="/app/settings" element={<Settings />} />
+          <Route path="/app/premium" element={<Premium />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<NotFound />} />
