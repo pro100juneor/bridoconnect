@@ -59,7 +59,7 @@ const DealHistory = () => {
         <div className="px-4 space-y-2">
           {list.map((deal: any) => {
             const s = statusMap[deal.status] || statusMap.pending;
-            const name = deal.creator_name || "Користувач";
+            const name = deal.creator_name || (deal as any).profiles?.name || "Користувач";
             return (
               <button key={deal.id} onClick={() => navigate(`/app/deal/${deal.id}`)}
                 className="w-full flex items-center gap-3 p-4 rounded-xl border border-border hover:bg-secondary/50 text-left">
