@@ -58,6 +58,11 @@ const ChatList = () => {
         <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"/></div>
       ) : (
         <div className="divide-y divide-border">
+          {filtered.length === 0 && (
+            <div className="text-center py-16 text-muted-foreground text-sm px-4">
+              {query ? "Нічого не знайдено" : "Повідомлень ще немає. Знайдіть людину і напишіть їй."}
+            </div>
+          )}
           {filtered.map(chat => (
             <button key={chat.id} onClick={() => navigate(`/app/chat/${chat.id}`)}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors text-left">
