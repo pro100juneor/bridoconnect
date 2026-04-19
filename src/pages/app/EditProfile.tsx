@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Camera, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProfile } from "@/hooks/useProfile";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -30,6 +31,7 @@ const EditProfile = () => {
     setSaving(true);
     await updateProfile({ name: form.name, city: form.city, country: form.country, bio: form.bio });
     setSaving(false);
+    toast({ title: "Профіль збережено ✅" });
     setSaved(true);
     setTimeout(() => { setSaved(false); navigate("/app/profile"); }, 1200);
   };
