@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Logo from "../Logo";
-import { Menu, X, LogIn, UserPlus, ShoppingBag } from "lucide-react";
+import { Menu, X, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const nav = [
@@ -9,6 +9,7 @@ const nav = [
   { to: "/transparency", label: "Прозорість" },
   { to: "/live", label: "Ефіри" },
   { to: "/shop", label: "Магазин" },
+  { to: "/verification", label: "Верифікація" },
   { to: "/about", label: "Про нас" },
   { to: "/faq", label: "FAQ" },
 ];
@@ -23,12 +24,6 @@ const PublicHeader = () => {
       <div className="flex items-center justify-between px-4 py-3 max-w-screen-sm mx-auto">
         <Logo />
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="ghost" onClick={() => navigate("/auth")} className="hidden sm:flex gap-1 text-muted-foreground">
-            <LogIn className="w-4 h-4" /> Вхід
-          </Button>
-          <Button size="sm" className="hidden sm:flex bg-accent hover:bg-accent/90 text-white gap-1" onClick={() => navigate("/register")}>
-            <UserPlus className="w-4 h-4" /> Реєстрація
-          </Button>
           <button onClick={() => setOpen(!open)} className="p-2 text-foreground">
             {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
