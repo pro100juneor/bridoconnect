@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, MessageCircle, Heart, Star, MapPin, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useReviews } from "@/hooks/useReviews";
 
 const MOCK_PROFILE = {
@@ -13,6 +14,7 @@ const MOCK_PROFILE = {
 const PublicProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const { reviews } = useReviews(id);
 
