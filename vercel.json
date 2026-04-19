@@ -8,8 +8,12 @@
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" }
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
     }
-  ]
+  ],
+  "env": {
+    "VITE_SUPABASE_URL": "https://wtevirwkshidxskqpvtu.supabase.co",
+    "VITE_SUPABASE_PUBLISHABLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0ZXZpcndrc2hpZHhza3FwdnR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2MjI4NDIsImV4cCI6MjA5MjE5ODg0Mn0.hUMGqu0Z1XjZsFfW0VbkYHnr49cVwYMfA1gME-T06mk"
+  }
 }
