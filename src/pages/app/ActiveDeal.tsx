@@ -26,6 +26,7 @@ const ActiveDeal = () => {
   const { user } = useAuth();
   const { createCheckout } = useStripe();
   const [deal, setDeal] = useState<any>(null);
+  const [dealLoading, setDealLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [amount, setAmount] = useState("");
@@ -33,9 +34,14 @@ const ActiveDeal = () => {
   useEffect(() => {
     if (!id) return;
     supabase.from("deals").select("*").eq("id", id).single()
-      .then(({ data }) => { if (data) setDeal(data); else setDeal(MOCK_DEAL); });
+      .then(({ data }) => { if (data) setDeal(data); else setDeal(MOCK_DEAL); setDealLoading(false); });
   }, [id]);
 
+  if (dealLoading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
   const d = deal || MOCK_DEAL;
   const pct = d.amount > 0 ? Math.round((d.raised / d.amount) * 100) : 62;
 
