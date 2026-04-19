@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search as SearchIcon, SlidersHorizontal, MapPin, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,17 +17,29 @@ const Search = () => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>(MOCK_RESULTS);
   const [loading, setLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!query || query.length < 2) { setResults(MOCK_RESULTS); return; }
-    setLoading(true);
-    supabase.from("profiles").select("*").ilike("name", `%${query}%`).limit(20)
-      .then(({ data }) => {
-        setResults(data && data.length > 0 ? data : MOCK_RESULTS.filter(r =>
-          r.name.toLowerCase().includes(query.toLowerCase()) || r.city.toLowerCase().includes(query.toLowerCase())
-        ));
-        setLoading(false);
-      });
+    if (!query || query.length < 2) { setResults(MOCK_RESULTS); setLoading(false); return; }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setLoading(true);
+      supabase.from("profiles")
+        .select("id, name, city, country, rating, deals_count, verified, avatar_url")
+        .ilike("name", `%${query}%`).limit(20)
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            setResults(data);
+          } else {
+            setResults(MOCK_RESULTS.filter(r =>
+              r.name.toLowerCase().includes(query.toLowerCase()) ||
+              (r.city || "").toLowerCase().includes(query.toLowerCase())
+            ));
+          }
+          setLoading(false);
+        });
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query]);
 
   return (
