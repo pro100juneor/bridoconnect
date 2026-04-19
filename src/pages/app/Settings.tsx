@@ -6,10 +6,11 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, updatePassword } = useAuth();
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [twoFactor, setTwoFactor] = useState(false);
+  const [changingPwd, setChangingPwd] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
