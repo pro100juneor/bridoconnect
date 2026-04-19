@@ -26,7 +26,7 @@ const DealHistory = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("deals").select("*").or(`creator_id.eq.${user.id},sponsor_id.eq.${user.id}`)
+    supabase.from("deals").select("*, profiles!creator_id(name, verified, rating)").or(`creator_id.eq.${user.id},sponsor_id.eq.${user.id}`)
       .order("created_at", { ascending: false })
       .then(({ data }) => { setDeals(data && data.length > 0 ? data : MOCK); setLoading(false); });
   }, [user]);
