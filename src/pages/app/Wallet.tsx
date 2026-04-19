@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ArrowUpRight, ArrowDownLeft, Plus, CreditCard, TrendingUp, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -118,5 +119,4 @@ const Wallet = () => {
   );
 };
 
-import { useState } from "react";
 export default Wallet;
