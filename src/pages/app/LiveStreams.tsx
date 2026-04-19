@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Radio, Users, Eye, Play, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MOCK_STREAMS = [
   { id:"1", title:"Збір на ремонт будинку — розповідаємо ситуацію", host_name:"Оксана К.", host_flag:"🇺🇦", viewer_count:234, status:"live", goal_amount:3200, raised:2080 },
@@ -12,6 +13,7 @@ const MOCK_STREAMS = [
 
 const LiveStreams = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [streams, setStreams] = useState<any[]>(MOCK_STREAMS);
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +52,12 @@ const LiveStreams = () => {
         <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"/></div>
       ) : (
         <div className="px-4 space-y-4">
-          {streams.map(s => {
+          {streams.length === 0 && !loading && (
+          <div className="text-center py-16 text-muted-foreground text-sm">
+            Зараз немає активних ефірів
+          </div>
+        )}
+        {streams.map(s => {
             const pct = s.goal_amount && s.raised ? Math.round(s.raised/s.goal_amount*100) : null;
             return (
               <div key={s.id} className="rounded-xl border border-border overflow-hidden cursor-pointer"
