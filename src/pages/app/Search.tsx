@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Search as SearchIcon, SlidersHorizontal, MapPin, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MOCK_RESULTS = [
   { id:"u1", name:"Оксана К.", country:"Україна", city:"Харків", rating:4.8, deals_count:12, tags:["Житло","Гроші"], verified:true },
@@ -12,6 +13,7 @@ const MOCK_RESULTS = [
 
 const Search = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>(MOCK_RESULTS);
   const [loading, setLoading] = useState(false);
