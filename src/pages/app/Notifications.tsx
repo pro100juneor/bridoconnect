@@ -29,6 +29,11 @@ const Notifications = () => {
         </button>
       </div>
       <div className="divide-y divide-border">
+        {notifs.length === 0 && (
+          <div className="text-center py-16 text-muted-foreground text-sm">
+            Сповіщень немає
+          </div>
+        )}
         {notifs.map(n => (
           <div key={n.id} className={`flex items-start gap-3 px-4 py-3 ${!n.read && !readAll ? "bg-accent/5" : ""}`}
             onClick={() => setNotifs(prev => prev.map(x => x.id === n.id ? {...x, read:true} : x))}>
