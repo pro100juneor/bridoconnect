@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Crown, Check, Zap, Shield, Star, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useStripe } from "@/hooks/useStripe";
 
 const plans = [
   { id: "monthly", name: "Місячна", price: "€4.99", period: "/ місяць", priceId: import.meta.env.VITE_STRIPE_PRICE_MONTHLY || "price_monthly",
@@ -18,12 +17,9 @@ const perks = [
 ];
 
 const Premium = () => {
-  const { createSubscription } = useStripe();
-  const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
-    setLoading(plan.id);
-    try { await createSubscription(plan.priceId); } catch { setLoading(null); }
+    toast({ title: "Stripe незабаром", description: `Підписка ${plan.name} буде доступна після підключення Stripe.` });
   };
 
   return (
