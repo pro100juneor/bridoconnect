@@ -16,6 +16,18 @@ const HowItWorksPage = () => {
       <div className="px-6 py-16 max-w-2xl mx-auto">
         <h1 className="font-serif text-3xl text-foreground mb-3">Як це працює</h1>
         <p className="text-muted-foreground mb-12">BridoConnect — прозора P2P платформа гуманітарної допомоги без посередників.</p>
+        {/* Hero video placeholder — replace with Runway video */}
+        <div className="w-full aspect-video bg-gradient-to-br from-primary/10 to-accent/5 rounded-2xl overflow-hidden mb-10 relative border border-border">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
+              <svg className="w-8 h-8 text-accent ml-1" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+            <p className="text-sm text-muted-foreground font-medium">Дивитись як це працює</p>
+            <p className="text-xs text-muted-foreground/60">2 хв</p>
+          </div>
+        </div>
         <div className="space-y-8">
           {steps.map(step => (
             <div key={step.num} className="flex gap-5">
