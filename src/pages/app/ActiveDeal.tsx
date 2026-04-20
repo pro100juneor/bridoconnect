@@ -48,7 +48,9 @@ const ActiveDeal = () => {
   const handlePay = async () => {
     const amt = parseFloat(amount) || 50;
     setPaying(true);
-    try { await createCheckout({ dealId: id, amount: amt }); } catch { setPaying(false); }
+    try { // await createCheckout // TODO: Stripe
+    toast({ title: "Stripe незабаром", description: "Оплата буде доступна після підключення Stripe." });
+    // await createCheckout({ dealId: id, amount: amt }); } catch { setPaying(false); }
   };
 
   return (
