@@ -8,7 +8,7 @@ const sections = [
   },
   {
     title: "2. Datenerfassung auf dieser Website",
-    content: "Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. BridoConnect GmbH, Frankfurt am Main. Sie erreichen uns unter info@brido.de."
+    content: "Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Firma „Luftarbeiter“, Inh. Oleksii Kusov, Mosenstraße 3, 08209 Auerbach. Sie erreichen uns unter info@brido.de."
   },
   {
     title: "3. Wie erfassen wir Ihre Daten?",
