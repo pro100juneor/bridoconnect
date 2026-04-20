@@ -4,7 +4,6 @@ import { ArrowLeft, MessageCircle, Shield, CheckCircle, Clock, AlertTriangle } f
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useStripe } from "@/hooks/useStripe";
 import ReviewModal from "@/components/ReviewModal";
 
 const MOCK_DEAL = {
@@ -24,7 +23,6 @@ const ActiveDeal = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
-  const { createCheckout } = useStripe();
   const [deal, setDeal] = useState<any>(null);
   const [dealLoading, setDealLoading] = useState(true);
   const [paying, setPaying] = useState(false);
