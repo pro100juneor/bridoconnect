@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ShoppingBag, Star, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useStripe } from "@/hooks/useStripe";
 
 const products = [
   { id:"1", name:"Дитячий одяг (пакет)", price:35, category:"Одяг", flag:"🇩🇪", rating:4.8, reviews:24, sold:156 },
@@ -18,14 +17,11 @@ const Shop = () => {
   const navigate = useNavigate();
   const [active, setActive] = useState("Всі");
   const [liked, setLiked] = useState<string[]>([]);
-  const [buying, setBuying] = useState<string | null>(null);
-  const { createCheckout } = useStripe();
-
+  
   const filtered = active === "Всі" ? products : products.filter(p => p.category === active);
 
   const handleBuy = async (p: typeof products[0]) => {
-    setBuying(p.id);
-    try { await createCheckout({ amount: p.price }); } catch { setBuying(null); }
+    navigate(`/app/shop/${p.id}`);
   };
 
   return (
