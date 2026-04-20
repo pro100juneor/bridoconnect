@@ -1,39 +1,29 @@
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useLiveKit = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
-  const getStreamToken = async (roomName: string, isHost = false) => {
-    setLoading(true);
-    setError(null);
+  const getStreamToken = async (roomName: string): Promise<string | null> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/create-stream-token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ roomName }),
+      });
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-stream-token`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ room_name: roomName, is_host: isHost }),
-        }
-      );
-
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-      return data as { token: string; ws_url: string; room_name: string; participant_name: string };
-    } catch (err: any) {
-      setError(err.message);
+      if (!resp.ok) return null;
+      const { token: lkToken } = await resp.json();
+      return lkToken;
+    } catch {
       return null;
-    } finally {
-      setLoading(false);
     }
   };
 
-  return { getStreamToken, loading, error };
+  return { getStreamToken };
 };
