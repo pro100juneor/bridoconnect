@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ArrowUpRight, ArrowDownLeft, Plus, CreditCard, TrendingUp, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useStripe } from "@/hooks/useStripe";
 import { useTransactions } from "@/hooks/useTransactions";
 import { toast } from "@/hooks/use-toast";
 
@@ -15,9 +14,7 @@ const TYPE_LABEL: Record<string, string> = {
 
 const Wallet = () => {
   const navigate = useNavigate();
-  const { createCheckout } = useStripe();
   const { transactions, balance, loading } = useTransactions();
-  const [depositing, setDepositing] = useState(false);
 
   const handleDeposit = async () => {
     setDepositing(true);
