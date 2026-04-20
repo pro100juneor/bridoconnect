@@ -38,9 +38,26 @@ const Register = () => {
         description: error.message === "User already registered" ? "Цей email вже зареєстровано" : error.message,
         variant: "destructive",
       });
-    } else {
-      setStep("success");
+      return;
     }
+    // autoconfirm увімкнений — session є одразу
+    if (signUpData?.session) {
+      navigate("/app");
+      return;
+    }
+    // autoconfirm вимкнений — спробуємо signIn автоматично
+    setLoading(true);
+    const { data: signInData } = await supabase.auth.signInWithPassword({
+      email: form.email,
+      password: form.password,
+    });
+    setLoading(false);
+    if (signInData?.session) {
+      navigate("/app");
+      return;
+    }
+    // Якщо все рівно немає сесії — показуємо екран підтвердження email
+    setStep("success");
   };
 
   const handleGoogle = async () => {
