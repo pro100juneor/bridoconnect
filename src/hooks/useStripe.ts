@@ -1,53 +1,49 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export const useStripe = () => {
-  const createCheckout = async ({
-    dealId,
-    amount,
-    currency = "eur",
-  }: {
-    dealId?: string;
-    amount: number;
-    currency?: string;
-  }) => {
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+
+  const createCheckout = async ({ amount, dealId }: { amount: number; dealId?: string }) => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error("Not authenticated");
+    const token = session?.access_token;
 
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ deal_id: dealId, amount, currency }),
-      }
-    );
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ amount, dealId, type: dealId ? "deal_payment" : "deposit" }),
+    });
 
-    const { url, error } = await response.json();
-    if (error) throw new Error(error);
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || "Stripe error");
+    }
+
+    const { url } = await resp.json();
     if (url) window.location.href = url;
   };
 
-  const createSubscription = async (priceId: string) => {
+  const createSubscription = async ({ priceId }: { priceId: string }) => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error("Not authenticated");
+    const token = session?.access_token;
 
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ mode: "subscription", price_id: priceId }),
-      }
-    );
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ type: "subscription", priceId }),
+    });
 
-    const { url, error } = await response.json();
-    if (error) throw new Error(error);
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || "Stripe subscription error");
+    }
+
+    const { url } = await resp.json();
     if (url) window.location.href = url;
   };
 
