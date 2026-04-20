@@ -15,12 +15,12 @@ const TYPE_LABEL: Record<string, string> = {
 const Wallet = () => {
   const navigate = useNavigate();
   const { transactions, balance, loading } = useTransactions();
+  const [depositing, setDepositing] = useState(false);
 
   const handleDeposit = async () => {
     setDepositing(true);
     try {
-      await createCheckout({ amount: 50 });
-    } catch {
+      } catch {
       toast({ title: "Помилка оплати", description: "Не вдалось відкрити Stripe", variant: "destructive" });
       setDepositing(false);
     }
