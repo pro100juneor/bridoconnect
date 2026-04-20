@@ -19,7 +19,9 @@ const perks = [
 const Premium = () => {
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
+    setLoading(plan.id);
     toast({ title: "Stripe незабаром", description: `Підписка ${plan.name} буде доступна після підключення Stripe.` });
+    setTimeout(() => setLoading(null), 1500);
   };
 
   return (
