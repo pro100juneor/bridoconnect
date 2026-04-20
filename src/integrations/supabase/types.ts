@@ -50,3 +50,21 @@ export interface Transaction {
   status: string;
   created_at: string;
 }
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: 'deal_request' | 'donation' | 'message' | 'verification' | 'system';
+  title: string;
+  description?: string;
+  deal_id?: string;
+  read: boolean;
+  created_at: string;
+}
+
+export interface Favorite {
+  id: string;
+  user_id: string;
+  target_id: string;
+  created_at: string;
+}
