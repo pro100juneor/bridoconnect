@@ -1,8 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2023-10-16" });
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+  apiVersion: "2023-10-16",
+  httpClient: Stripe.createFetchHttpClient(),
+});
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,49 +15,50 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { deal_id, amount, currency = "eur", mode = "payment", price_id } = await req.json();
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") || "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
-    );
-
-    const authHeader = req.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-    const { data: { user } } = await supabase.auth.getUser(token || "");
-    if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
-
+    const { amount, dealId, type, priceId } = await req.json();
     const origin = req.headers.get("origin") || "https://bridoconnect.vercel.app";
 
     let session;
 
-    if (mode === "subscription" && price_id) {
+    if (type === "subscription" && priceId) {
+      // Premium subscription
       session = await stripe.checkout.sessions.create({
         mode: "subscription",
-        line_items: [{ price: price_id, quantity: 1 }],
+        payment_method_types: ["card"],
+        line_items: [{ price: priceId, quantity: 1 }],
         success_url: `${origin}/app/premium?success=true`,
         cancel_url: `${origin}/app/premium`,
-        metadata: { user_id: user.id },
+        metadata: { type: "subscription" },
       });
     } else {
+      // One-time payment (wallet deposit or deal payment)
       session = await stripe.checkout.sessions.create({
         mode: "payment",
+        payment_method_types: ["card"],
         line_items: [{
           price_data: {
-            currency,
-            product_data: { name: deal_id ? `Підтримка угоди #${deal_id}` : "Поповнення гаманця" },
-            unit_amount: Math.round(amount * 100),
+            currency: "eur",
+            product_data: {
+              name: dealId ? "Допомога по угоді BridoConnect" : "Поповнення гаманця BridoConnect",
+              description: dealId ? `Deal ID: ${dealId}` : "Баланс рахунку",
+            },
+            unit_amount: Math.round((amount || 50) * 100),
           },
           quantity: 1,
         }],
-        success_url: deal_id ? `${origin}/app/deal/${deal_id}?payment=success` : `${origin}/app/wallet?payment=success`,
-        cancel_url: deal_id ? `${origin}/app/deal/${deal_id}` : `${origin}/app/wallet`,
-        metadata: { user_id: user.id, deal_id: deal_id || "" },
+        success_url: `${origin}/app/wallet?success=true`,
+        cancel_url: `${origin}/app/wallet`,
+        metadata: { dealId: dealId || "", type: type || "deposit" },
       });
     }
 
-    return new Response(JSON.stringify({ url: session.url }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+    return new Response(JSON.stringify({ url: session.url }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
