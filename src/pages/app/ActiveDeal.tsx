@@ -25,7 +25,6 @@ const ActiveDeal = () => {
   const { user } = useAuth();
   const [deal, setDeal] = useState<any>(null);
   const [dealLoading, setDealLoading] = useState(true);
-  const [paying, setPaying] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [amount, setAmount] = useState("");
 
@@ -44,11 +43,7 @@ const ActiveDeal = () => {
   const pct = d.amount > 0 ? Math.round((d.raised / d.amount) * 100) : 62;
 
   const handlePay = async () => {
-    const amt = parseFloat(amount) || 50;
-    setPaying(true);
-    try { // await createCheckout // TODO: Stripe
     toast({ title: "Stripe незабаром", description: "Оплата буде доступна після підключення Stripe." });
-    // await createCheckout({ dealId: id, amount: amt }); } catch { setPaying(false); }
   };
 
   return (
