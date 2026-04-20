@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 const sections = [
   {
     title: "§ 1 Geltungsbereich",
-    content: "Diese Allgemeinen Geschäftsbedingungen gelten für alle Nutzer der Plattform BridoConnect, betrieben von BridoConnect GmbH, Frankfurt am Main."
+    content: "Diese Allgemeinen Geschäftsbedingungen gelten für alle Nutzer der Plattform BridoConnect, betrieben von Firma „Luftarbeiter“, Inh. Oleksii Kusov, Mosenstraße 3, 08209 Auerbach."
   },
   {
     title: "§ 2 Leistungsbeschreibung",
@@ -32,7 +32,7 @@ const sections = [
   },
   {
     title: "§ 8 Anwendbares Recht",
-    content: "Es gilt deutsches Recht. Gerichtsstand ist Frankfurt am Main, sofern der Nutzer Kaufmann ist."
+    content: "Es gilt deutsches Recht. Gerichtsstand ist Auerbach/Vogtland, sofern der Nutzer Kaufmann ist."
   },
 ];
 
