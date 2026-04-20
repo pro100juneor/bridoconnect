@@ -23,7 +23,7 @@ const Register = () => {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
