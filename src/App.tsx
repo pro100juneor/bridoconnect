@@ -11,6 +11,9 @@ import AboutPage from "./pages/public/AboutPage";
 import FaqPage from "./pages/public/FaqPage";
 import ShopCatalogPage from "./pages/public/ShopCatalogPage";
 import VerificationPage from "./pages/public/VerificationPage";
+import ImpressumPage from "./pages/public/ImpressumPage";
+import DatenschutzPage from "./pages/public/DatenschutzPage";
+import AGBPage from "./pages/public/AGBPage";
 
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
@@ -52,6 +55,9 @@ export default function App() {
         <Route path="/faq" element={<FaqPage />} />
         <Route path="/shop" element={<ShopCatalogPage />} />
         <Route path="/verification" element={<VerificationPage />} />
+        <Route path="/impressum" element={<ImpressumPage />} />
+        <Route path="/datenschutz" element={<DatenschutzPage />} />
+        <Route path="/agb" element={<AGBPage />} />
       </Route>
 
       <Route path="/auth" element={<Auth />} />
