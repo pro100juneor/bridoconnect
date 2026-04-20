@@ -55,7 +55,12 @@ const PublicProfile = () => {
   );
 
   if (!profile) return (
-    <div className="text-center py-16 text-muted-foreground">Профіль не знайдено</div>
+    <div className="text-center py-16 px-6">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground mb-6 text-sm mx-auto">
+          <ArrowLeft className="w-4 h-4" /> Назад
+        </button>
+        <p className="text-muted-foreground">Профіль не знайдено</p>
+      </div>
   );
 
   const initials = profile.name?.split(" ").map((n: string) => n[0]).join("").slice(0,2).toUpperCase();
