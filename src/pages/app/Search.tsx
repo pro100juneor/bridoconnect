@@ -14,6 +14,11 @@ const MOCK_RESULTS = [
 const Search = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  const addFavorite = async (targetId: string) => {
+    if (!user) return;
+    await supabase.from("favorites").upsert({ user_id: user.id, target_id: targetId });
+  };
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>(MOCK_RESULTS);
   const [loading, setLoading] = useState(false);
