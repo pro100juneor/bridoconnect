@@ -15,6 +15,7 @@ const cats = ["Всі","Їжа","Одяг","Ліки","Освіта","Побут
 
 const Shop = () => {
   const navigate = useNavigate();
+  const [buying, setBuying] = useState<string | null>(null);
   const [active, setActive] = useState("Всі");
   const [liked, setLiked] = useState<string[]>([]);
   
@@ -59,9 +60,8 @@ const Shop = () => {
               <div className="flex items-center justify-between">
                 <span className="font-bold text-foreground">€{p.price}</span>
                 <button onClick={e => { e.stopPropagation(); handleBuy(p); }}
-                  disabled={buying === p.id}
-                  className="text-xs bg-accent text-white px-2.5 py-1 rounded-lg font-medium disabled:opacity-60">
-                  {buying===p.id?"...":"Купити"}
+                                    className="text-xs bg-accent text-white px-2.5 py-1 rounded-lg font-medium disabled:opacity-60">
+                  "Купити"
                 </button>
               </div>
             </div>
