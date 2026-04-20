@@ -15,6 +15,11 @@ const PublicProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
+
+  const addToFavorites = async () => {
+    if (!user || !id) return;
+    await supabase.from("favorites").upsert({ user_id: user.id, target_id: id });
+  };
   const [profile, setProfile] = useState<any>(null);
   const { reviews } = useReviews(id);
 
