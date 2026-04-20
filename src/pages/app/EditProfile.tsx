@@ -13,7 +13,7 @@ const EditProfile = () => {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [form, setForm] = useState({ name: "", city: "", country: "", bio: "", phone: "" });
+  const [form, setForm] = useState({ name: "", city: "", country: "", bio: "" });
 
   useEffect(() => {
     if (profile) {
