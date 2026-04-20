@@ -22,9 +22,9 @@ const sections = [
   {
     title: "Правове",
     links: [
-      { to: "/faq", label: "Impressum" },
-      { to: "/faq", label: "Datenschutz" },
-      { to: "/faq", label: "AGB" },
+      { to: "/impressum", label: "Impressum" },
+      { to: "/datenschutz", label: "Datenschutz" },
+      { to: "/agb", label: "AGB" },
     ],
   },
 ];
