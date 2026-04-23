@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Bell, RefreshCw } from "lucide-react";
+import { Search, Bell } from "lucide-react";
 import { useDeals } from "@/hooks/useDeals";
 
 const categories = ["Всі", "Гроші", "Товари", "Завдання", "Ліки", "Житло", "Їжа"];
@@ -121,7 +121,6 @@ const Feed = () => {
 
   const filteredCount = displayDeals.length;
   const sourceCount = source.length;
-  const isUsingMock = realDeals.length === 0 && !loading;
 
   return (
     <div className="pb-4">
@@ -133,8 +132,6 @@ const Feed = () => {
             className="p-2 text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Оновити"
           >
-            <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
-          </button>
           <button
             onClick={() => navigate("/app/search")}
             className="p-2 text-muted-foreground"
@@ -212,12 +209,6 @@ const Feed = () => {
       {loading && (
         <div className="flex justify-center py-8">
           <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-
-      {isUsingMock && (
-        <div className="mx-4 mb-3 p-2 rounded-lg bg-accent/5 border border-accent/20 text-[10px] text-accent">
-          Демо-режим — поки нема реальних запитів у стрічці
         </div>
       )}
 
