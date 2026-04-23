@@ -61,7 +61,7 @@ const Shop = () => {
                 <span className="font-bold text-foreground">€{p.price}</span>
                 <button onClick={e => { e.stopPropagation(); handleBuy(p); }}
                                     className="text-xs bg-accent text-white px-2.5 py-1 rounded-lg font-medium disabled:opacity-60">
-                  "Купити"
+                  Купити
                 </button>
               </div>
             </div>
