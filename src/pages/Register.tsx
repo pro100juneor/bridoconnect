@@ -61,10 +61,17 @@ const Register = () => {
   };
 
   const handleGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: window.location.origin + "/app" },
     });
+    if (error) {
+      toast({
+        title: "Google OAuth не налаштовано",
+        description: "Адміністратор скоро це підключить. Поки що зареєструйтесь через email.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (step === "success") {

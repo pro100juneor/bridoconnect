@@ -108,7 +108,11 @@ const PublicProfile = () => {
       {user && user.id !== id && (
         <div className="px-4 flex gap-3 mb-6">
           <Button className="flex-1 bg-accent hover:bg-accent/90 text-white gap-2"
-            onClick={() => navigate(`/app/chats`)}>
+            onClick={() => {
+              // Якщо є активний deal цього юзера — йдемо в чат по ньому
+              if (deals[0]) navigate(`/app/chat/${deals[0].id}`);
+              else navigate(`/app/chats`);
+            }}>
             <MessageCircle className="w-4 h-4" /> Написати
           </Button>
           <Button variant="outline" className={`gap-2 ${isFav ? "border-accent text-accent" : ""}`}
