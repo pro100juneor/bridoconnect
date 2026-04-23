@@ -5,7 +5,6 @@ import {
   Plus,
   CreditCard,
   TrendingUp,
-  RefreshCw,
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -139,7 +138,6 @@ const Wallet = () => {
             className="text-muted-foreground hover:text-foreground"
             aria-label="Оновити"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </button>
         </div>
 
