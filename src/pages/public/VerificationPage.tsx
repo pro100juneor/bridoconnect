@@ -1,8 +1,11 @@
 import { useNavigate } from "react-router-dom";
+import { motion, useReducedMotion } from "framer-motion";
 import { Shield, Upload, CheckCircle, Clock, FileText, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useVerification } from "@/hooks/useVerification";
+import { Confetti } from "@/components/Confetti";
+import { tap, notify } from "@/lib/native";
 
 const steps = [
   { icon: FileText, title: "Документ, що посвідчує особу", desc: "Паспорт, ID-картка або посвідка на проживання", type: "id_document" },
@@ -12,6 +15,7 @@ const steps = [
 
 const VerificationPage = () => {
   const navigate = useNavigate();
+  const reduced = useReducedMotion();
   const { uploadDocument, submitVerification, uploading } = useVerification();
   const [uploaded, setUploaded] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
@@ -20,69 +24,110 @@ const VerificationPage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     const result = await uploadDocument(file, type as any);
-    if (!result?.error) setUploaded(prev => [...prev, type]);
+    if (!result?.error) {
+      setUploaded((prev) => [...prev, type]);
+      void tap("light");
+      void notify("success");
+    } else {
+      void notify("error");
+    }
   };
 
   const handleSubmit = async () => {
+    void tap("medium");
     await submitVerification();
+    void notify("success");
     setSubmitted(true);
   };
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center mb-4">
-          <Clock className="w-8 h-8 text-warning"/>
-        </div>
-        <h2 className="font-serif text-2xl text-foreground mb-2">Документи на перевірці</h2>
-        <p className="text-muted-foreground text-sm mb-6">Команда Trust & Safety перевірить ваші документи протягом 24 годин.</p>
-        <Button className="w-full bg-accent hover:bg-accent/90 text-white" onClick={() => navigate("/app/profile")}>
+      <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center relative">
+        <Confetti trigger={!reduced} />
+        <motion.div
+          initial={reduced ? false : { scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center mb-4"
+        >
+          <Clock className="w-8 h-8 text-warning" strokeWidth={1.75} />
+        </motion.div>
+        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-2 animate-fade-in">Документи на перевірці</h1>
+        <p className="text-muted-foreground text-sm mb-6 leading-relaxed">Команда Trust & Safety перевірить ваші документи протягом 24 годин.</p>
+        <Button
+          className="w-full max-w-xs bg-accent hover:bg-accent/90 text-white min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
+          onClick={() => navigate("/app/profile")}
+        >
           До профілю
         </Button>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="px-6 py-12 max-w-lg mx-auto">
+    <main className="min-h-screen bg-background">
+      <section className="px-6 py-12 max-w-lg mx-auto">
         <div className="flex items-center gap-3 mb-3">
-          <Shield className="w-8 h-8 text-accent"/>
-          <h1 className="font-serif text-2xl text-foreground">Верифікація акаунту</h1>
+          <Shield className="w-8 h-8 text-accent" strokeWidth={1.75} />
+          <h1 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">Верифікація акаунту</h1>
         </div>
-        <p className="text-muted-foreground text-sm mb-8">Верифіковані акаунти отримують значок довіри і мають пріоритет у стрічці.</p>
+        <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
+          Верифіковані акаунти отримують значок довіри і мають пріоритет у стрічці.
+        </p>
         <div className="space-y-3 mb-8">
           {steps.map((step, i) => {
             const done = uploaded.includes(step.type);
             return (
-              <div key={i} className={`flex items-start gap-4 p-4 rounded-xl border transition-colors ${done ? "border-success bg-success/5" : "border-border"}`}>
+              <article
+                key={i}
+                className={`relative flex items-start gap-4 p-4 rounded-2xl border overflow-hidden transition-colors before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 ${
+                  done ? "border-success bg-success/5" : "border-border"
+                }`}
+              >
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${done ? "bg-success/10" : "bg-accent/10"}`}>
-                  {done ? <CheckCircle className="w-5 h-5 text-success"/> : <step.icon className="w-5 h-5 text-accent"/>}
+                  {done ? (
+                    <CheckCircle className="w-5 h-5 text-success" strokeWidth={1.75} />
+                  ) : (
+                    <step.icon className="w-5 h-5 text-accent" strokeWidth={1.75} />
+                  )}
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-sm text-foreground mb-0.5">{step.title}</p>
-                  <p className="text-xs text-muted-foreground">{step.desc}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
                 </div>
-                <label className={`border-2 border-dashed rounded-lg p-2 cursor-pointer transition-colors ${done ? "border-success" : "border-border hover:border-accent"}`}>
-                  {done ? <CheckCircle className="w-4 h-4 text-success"/> : <Upload className="w-4 h-4 text-muted-foreground"/>}
-                  <input type="file" accept="image/*,.pdf" className="hidden" onChange={e => handleFile(e, step.type)} />
+                <label
+                  className={`border-2 border-dashed rounded-2xl min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer transition-all duration-150 hover:-translate-y-px ${
+                    done ? "border-success" : "border-border hover:border-accent"
+                  }`}
+                  aria-label={done ? "Завантажено" : `Завантажити ${step.title}`}
+                >
+                  {done ? (
+                    <CheckCircle className="w-4 h-4 text-success" strokeWidth={1.75} />
+                  ) : (
+                    <Upload className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
+                  )}
+                  <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => handleFile(e, step.type)} />
                 </label>
-              </div>
+              </article>
             );
           })}
         </div>
-        <div className="p-4 bg-success/10 rounded-xl mb-6 flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-success shrink-0 mt-0.5"/>
+        <div className="relative p-4 bg-success/10 rounded-2xl mb-6 flex items-start gap-3 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
+          <CheckCircle className="w-5 h-5 text-success shrink-0 mt-0.5" strokeWidth={1.75} />
           <div>
             <p className="text-sm font-semibold text-foreground">Ваші дані захищені</p>
-            <p className="text-xs text-muted-foreground">Документи зберігаються зашифровано відповідно до GDPR.</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">Документи зберігаються зашифровано відповідно до GDPR.</p>
           </div>
         </div>
-        <Button className="w-full bg-accent hover:bg-accent/90 text-white" disabled={uploading || uploaded.length === 0} onClick={handleSubmit}>
-          {uploading ? "Завантажуємо..." : `Надіслати документи (${uploaded.length}/3)`}
+        <Button
+          className="w-full bg-accent hover:bg-accent/90 text-white min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
+          disabled={uploading || uploaded.length === 0}
+          onClick={handleSubmit}
+        >
+          {uploading ? "Завантажуємо…" : `Надіслати документи (${uploaded.length}/3)`}
         </Button>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 export default VerificationPage;
