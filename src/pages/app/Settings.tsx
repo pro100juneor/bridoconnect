@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { tap } from "@/lib/native";
 import {
   ChevronRight,
   Bell,
@@ -125,8 +126,8 @@ const Settings = () => {
   return (
     <div className="pb-8">
       <h1 className="sr-only">Налаштування</h1>
-      <div className="px-4 pt-4 pb-2">
-        <h2 className="font-serif text-xl text-foreground">Налаштування</h2>
+      <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-2">
+        <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">Налаштування</h2>
         {!tableAvailable && (
           <p className="text-[10px] text-muted-foreground mt-1">
             Налаштування зберігаються локально (БД offline)
@@ -139,22 +140,30 @@ const Settings = () => {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
               {section.title}
             </p>
-            <div className="bg-secondary rounded-xl overflow-hidden divide-y divide-border">
+            <div className="bg-secondary rounded-2xl overflow-hidden divide-y divide-border">
               {section.items.map(item => (
                 <div
                   key={item.label}
-                  onClick={() => item.path && navigate(item.path)}
-                  className={`flex items-center gap-3 px-4 py-3 ${item.path ? "cursor-pointer" : ""}`}
+                  onClick={() => {
+                    if (item.path) {
+                      void tap("light");
+                      navigate(item.path);
+                    }
+                  }}
+                  className={`flex items-center gap-3 px-4 py-3 min-h-[44px] ${item.path ? "cursor-pointer hover:bg-secondary/50 transition-colors" : ""}`}
                 >
-                  {item.icon && <item.icon className="w-5 h-5 text-muted-foreground" />}
+                  {item.icon && <item.icon className="w-5 h-5 text-muted-foreground" strokeWidth={1.75} />}
                   <span className="text-sm font-medium text-foreground flex-1">{item.label}</span>
                   {item.toggle ? (
                     <Switch
                       checked={!!item.toggleValue}
-                      onCheckedChange={item.onChange}
+                      onCheckedChange={(v) => {
+                        void tap("light");
+                        item.onChange?.(v);
+                      }}
                     />
                   ) : item.arrow ? (
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
                   ) : (
                     <span className="text-xs text-muted-foreground">{item.value}</span>
                   )}
@@ -164,10 +173,10 @@ const Settings = () => {
           </div>
         ))}
         <button
-          onClick={handleSignOut}
-          className="w-full flex items-center gap-3 px-4 py-3 bg-destructive/10 rounded-xl text-destructive"
+          onClick={() => { void tap("medium"); handleSignOut(); }}
+          className="w-full flex items-center gap-3 px-4 py-3 min-h-[44px] bg-destructive/10 rounded-2xl text-destructive transition-transform duration-150 hover:-translate-y-px"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-5 h-5" strokeWidth={1.75} />
           <span className="text-sm font-medium">Вийти з акаунту</span>
         </button>
       </div>
