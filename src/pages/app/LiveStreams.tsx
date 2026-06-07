@@ -14,16 +14,17 @@ const MOCK_STREAMS = [
 const LiveStreams = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [streams, setStreams] = useState<any[]>(MOCK_STREAMS);
+  // Don't seed with mock — they show as fake "live" streams during loading.
+  const [streams, setStreams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     supabase.from("streams").select("*, profiles!host_id(name, avatar_url)")
       .order("created_at", { ascending: false }).limit(20)
       .then(({ data }) => {
-        if (data && data.length > 0) {
-          setStreams(data.map((s: any) => ({...s, host_name: s.profiles?.name || "Невідомо", host_flag:"🏳️"})));
-        }
+        setStreams(
+          (data ?? []).map((s: any) => ({ ...s, host_name: s.profiles?.name || "Невідомо", host_flag: "🏳️" })),
+        );
         setLoading(false);
       });
   }, []);

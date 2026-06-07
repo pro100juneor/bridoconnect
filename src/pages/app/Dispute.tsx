@@ -54,18 +54,18 @@ const Dispute = () => {
     const { data, error } = await openDispute(id, reason, desc);
     setSubmitting(false);
 
-    if (error) {
-      // Таблиця disputes може бути ще не створеною (міграція 007 не застосована)
-      // Показуємо успіх UX але попереджаємо в toast
+    if (error || !data) {
+      // Real failures: nothing landed in DB. Don't show fake success UX —
+      // the user thought the dispute was filed and it wasn't.
       toast({
-        title: "Спір зафіксовано локально",
-        description: "Буде синхронізовано з сервером після оновлення БД.",
+        title: "Не вдалося відкрити спір",
+        description: error?.message ?? "Спробуйте ще раз або зверніться в підтримку.",
+        variant: "destructive",
       });
-      setDisputeId(`LOCAL-${Date.now().toString().slice(-6)}`);
-    } else if (data) {
-      setDisputeId(data.id);
-      toast({ title: "Спір подано", description: "Trust & Safety команда розгляне протягом 48 годин." });
+      return;
     }
+    setDisputeId(data.id);
+    toast({ title: "Спір подано", description: "Trust & Safety команда розгляне протягом 48 годин." });
     setSubmitted(true);
   };
 

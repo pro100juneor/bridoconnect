@@ -7,32 +7,41 @@ type Bug = { route: string; kind: "console" | "pageerror" | "overflow"; msg: str
 
 // Routes that don't require auth or that should still render *something*
 // (auth-gated routes redirect to /auth, which is itself a valid screen to test).
+// Routes adapted to main's actual router (src/App.tsx).
 const ROUTES: Array<{ path: string; name: string; auth?: boolean }> = [
-  { path: "/", name: "landing" },
-  { path: "/auth", name: "auth-login" },
-  { path: "/verify-email-sent?email=test@example.com", name: "verify-email-sent" },
-  { path: "/verify-email?token_hash=bad", name: "verify-email-error" },
-  { path: "/reset-password", name: "reset-password" },
+  // Public marketing
+  { path: "/", name: "home" },
+  { path: "/how-it-works", name: "how-it-works" },
+  { path: "/transparency", name: "transparency" },
+  { path: "/about", name: "about" },
+  { path: "/faq", name: "faq" },
+  { path: "/live", name: "public-live" },
+  { path: "/shop", name: "public-shop" },
+  { path: "/verification", name: "verification" },
+  // Legal
   { path: "/impressum", name: "impressum" },
   { path: "/datenschutz", name: "datenschutz" },
+  { path: "/agb", name: "agb" },
+  // Auth
+  { path: "/auth", name: "auth-login" },
+  { path: "/register", name: "auth-register" },
+  { path: "/reset-password", name: "reset-password" },
+  // Authed app
   { path: "/app", name: "feed", auth: true },
   { path: "/app/live", name: "live", auth: true },
+  { path: "/app/live/start", name: "start-stream", auth: true },
   { path: "/app/create-deal", name: "create-deal", auth: true },
   { path: "/app/shop", name: "shop", auth: true },
   { path: "/app/profile", name: "profile", auth: true },
   { path: "/app/profile/edit", name: "profile-edit", auth: true },
-  { path: "/app/profile/kyc", name: "profile-kyc", auth: true },
+  { path: "/app/wallet", name: "wallet", auth: true },
   { path: "/app/settings", name: "settings", auth: true },
   { path: "/app/search", name: "search", auth: true },
   { path: "/app/chats", name: "chats", auth: true },
   { path: "/app/notifications", name: "notifications", auth: true },
-  { path: "/app/wallet", name: "wallet", auth: true },
   { path: "/app/premium", name: "premium", auth: true },
   { path: "/app/deals", name: "deals", auth: true },
-  { path: "/app/dispute", name: "dispute", auth: true },
   { path: "/app/wishlist", name: "wishlist", auth: true },
-  { path: "/app/admin/kyc-queue", name: "admin-kyc", auth: true },
-  { path: "/app/admin/disputes", name: "admin-disputes", auth: true },
 ];
 
 const bugs: Bug[] = [];

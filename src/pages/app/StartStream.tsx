@@ -32,11 +32,18 @@ const StartStream = () => {
       status: "live",
     }]).select().single();
 
-    // Get LiveKit token
+    // Get LiveKit token (host=true)
     const tokenData = await getStreamToken(room, true);
     if (tokenData) {
       setRoomName(room);
       setLive(true);
+    } else {
+      // Stream row already inserted — mark it ended so the feed doesn't
+      // surface a dead room. Surface error to user.
+      if (stream?.id) {
+        await supabase.from("streams").update({ status: "ended" }).eq("id", stream.id);
+      }
+      alert("Не вдалося отримати токен ефіру. Спробуйте знову.");
     }
   };
 

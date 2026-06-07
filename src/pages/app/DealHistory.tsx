@@ -28,10 +28,11 @@ const DealHistory = () => {
     if (!user) return;
     supabase.from("deals").select("*, profiles!creator_id(name, verified, rating)").or(`creator_id.eq.${user.id},sponsor_id.eq.${user.id}`)
       .order("created_at", { ascending: false })
-      .then(({ data }) => { setDeals(data && data.length > 0 ? data : MOCK); setLoading(false); });
+      .then(({ data }) => { setDeals(data ?? []); setLoading(false); });
   }, [user]);
 
-  const list = deals.length > 0 ? deals : MOCK;
+  // Real deals only — mock fallback inflated user's history with fake rows.
+  const list = deals;
   const total = list.filter((d: any) => d.status === "completed").reduce((s: number, d: any) => s + (d.amount || 0), 0);
 
   return (

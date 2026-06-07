@@ -29,7 +29,9 @@ const ChatList = () => {
   const { chats, loading } = useChats();
   const [query, setQuery] = useState("");
 
-  const display = chats.length > 0 || !user ? chats : (loading ? [] : MOCK_FALLBACK);
+  // Real chats only — mock fallback was showing fake conversations
+  // (Anna/Маркус/Софія…) to authed users with 0 real chats.
+  const display = chats;
 
   const filtered = display.filter(c =>
     c.other_name.toLowerCase().includes(query.toLowerCase()) ||

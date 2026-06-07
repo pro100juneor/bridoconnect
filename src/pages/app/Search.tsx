@@ -20,12 +20,12 @@ const Search = () => {
     await supabase.from("favorites").upsert({ user_id: user.id, target_id: targetId });
   };
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any[]>(MOCK_RESULTS);
+  const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!query || query.length < 2) { setResults(MOCK_RESULTS); setLoading(false); return; }
+    if (!query || query.length < 2) { setResults([]); setLoading(false); return; }
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setLoading(true);
@@ -33,14 +33,8 @@ const Search = () => {
         .select("id, name, city, country, rating, deals_count, verified, avatar_url")
         .ilike("name", `%${query}%`).limit(20)
         .then(({ data }) => {
-          if (data && data.length > 0) {
-            setResults(data);
-          } else {
-            setResults(MOCK_RESULTS.filter(r =>
-              r.name.toLowerCase().includes(query.toLowerCase()) ||
-              (r.city || "").toLowerCase().includes(query.toLowerCase())
-            ));
-          }
+          // Real results only — mock fallback was surfacing fake names to live users.
+          setResults(data ?? []);
           setLoading(false);
         });
     }, 300);
@@ -63,6 +57,13 @@ const Search = () => {
       </div>
       {loading ? (
         <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"/></div>
+      ) : results.length === 0 ? (
+        <div className="px-6 py-12 text-center">
+          <SearchIcon className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-40" />
+          <p className="text-sm text-muted-foreground">
+            {query.length < 2 ? "Введіть ім'я або місто" : "Нічого не знайдено"}
+          </p>
+        </div>
       ) : (
         <div className="px-4 space-y-3">
           {results.map(r => (

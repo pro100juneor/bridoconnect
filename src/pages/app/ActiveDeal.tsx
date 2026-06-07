@@ -56,7 +56,9 @@ const ActiveDeal = () => {
             creator_verified: p.verified || false,
           });
         } else {
-          setDeal(MOCK_DEAL);
+          // Deal genuinely not found in DB. Don't fall through to MOCK_DEAL
+          // — that previously rendered a fake "Анна С. з Києва" payment UI.
+          setDeal(null);
         }
         setDealLoading(false);
       });
@@ -105,7 +107,19 @@ const ActiveDeal = () => {
     );
   }
 
-  const d = deal || MOCK_DEAL;
+  if (!deal) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
+        <h2 className="font-serif text-xl text-foreground mb-2">Угоду не знайдено</h2>
+        <p className="text-sm text-muted-foreground mb-6">Можливо, її було видалено або посилання застаріле.</p>
+        <button onClick={() => navigate("/app")} className="text-accent font-medium text-sm">
+          На стрічку
+        </button>
+      </div>
+    );
+  }
+
+  const d = deal;
   const pct = d.amount > 0 ? Math.round((d.raised / d.amount) * 100) : 0;
   const initials = (d.creator_name || "?").split(" ").map((s: string) => s[0]).join("").slice(0, 2).toUpperCase();
   const finished = d.status === "completed" || d.status === "cancelled";

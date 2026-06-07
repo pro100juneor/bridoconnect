@@ -96,8 +96,9 @@ const Feed = () => {
   const [activeFlag, setActiveFlag] = useState<string | null>(null);
   const { deals: realDeals, loading, refetch } = useDeals({ status: "active" });
 
-  // База: реальні деали, якщо є; інакше mock
-  const source = realDeals.length > 0 ? realDeals : MOCK_DEALS;
+  // Real deals only — mock fallback was surfacing fake Харків/Берлін
+  // names to live users when the DB happened to be empty.
+  const source = realDeals;
 
   // Фільтрація клієнтом (щоб працювало і для mock, і для реальних)
   const displayDeals = useMemo(() => {
