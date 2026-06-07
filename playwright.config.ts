@@ -17,13 +17,13 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      testIgnore: ["**/iphone-audit.spec.ts"],
+      testIgnore: ["**/iphone-audit.spec.ts", "**/button-explorer.spec.ts"],
       use: { ...devices["Desktop Chrome"] },
     },
     // Task 65 (audit): iPhone Safari (WebKit) crawl of every screen.
     {
       name: "iphone-webkit",
-      testMatch: ["**/iphone-audit.spec.ts"],
+      testMatch: ["**/iphone-audit.spec.ts", "**/button-explorer.spec.ts"],
       use: { ...devices["iPhone 14"] },
     },
   ],
