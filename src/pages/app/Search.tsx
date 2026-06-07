@@ -1,24 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { Search as SearchIcon, SlidersHorizontal, MapPin, Star } from "lucide-react";
+import { Search as SearchIcon, SlidersHorizontal, MapPin, Star, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-
-const MOCK_RESULTS = [
-  { id:"u1", name:"Оксана К.", country:"Україна", city:"Харків", rating:4.8, deals_count:12, tags:["Житло","Гроші"], verified:true },
-  { id:"u2", name:"Ахмад Р.", country:"Сирія", city:"Берлін", rating:4.5, deals_count:7, tags:["Їжа","Одяг"], verified:true },
-  { id:"u3", name:"Марія Л.", country:"Україна", city:"Київ", rating:4.9, deals_count:23, tags:["Ліки","Діти"], verified:true },
-  { id:"u4", name:"Юрій Т.", country:"Україна", city:"Одеса", rating:4.3, deals_count:5, tags:["Завдання"], verified:false },
-];
+import { tap } from "@/lib/native";
 
 const Search = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  void useAuth(); // mount auth ctx
 
-  const addFavorite = async (targetId: string) => {
-    if (!user) return;
-    await supabase.from("favorites").upsert({ user_id: user.id, target_id: targetId });
-  };
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,57 +33,94 @@ const Search = () => {
 
   return (
     <div className="pb-8">
-      <div className="px-4 pt-4 pb-3">
-        <h2 className="font-serif text-xl text-foreground mb-3">Пошук</h2>
+      <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-3">
+        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">Пошук</h1>
         <div className="flex gap-2">
-          <div className="flex-1 flex items-center gap-2 bg-secondary rounded-xl px-3 py-2">
-            <SearchIcon className="w-4 h-4 text-muted-foreground" />
-            <input value={query} onChange={e => setQuery(e.target.value)}
-              placeholder="Ім'я, місто, потреба..."
-              className="bg-transparent text-sm flex-1 outline-none text-foreground placeholder:text-muted-foreground" />
+          <div className="flex-1 flex items-center gap-2 bg-secondary rounded-2xl px-3 py-2 min-h-[44px]">
+            <SearchIcon className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Ім'я, місто, потреба…"
+              className="bg-transparent text-sm flex-1 outline-none text-foreground placeholder:text-muted-foreground"
+            />
           </div>
-          <button className="p-2.5 bg-secondary rounded-xl"><SlidersHorizontal className="w-5 h-5 text-muted-foreground" /></button>
+          <button
+            className="min-h-[44px] min-w-[44px] bg-secondary rounded-2xl flex items-center justify-center transition-transform duration-150 hover:-translate-y-px"
+            aria-label="Фільтри"
+            onClick={() => { void tap("light"); }}
+          >
+            <SlidersHorizontal className="w-5 h-5 text-muted-foreground" strokeWidth={1.75} />
+          </button>
         </div>
       </div>
+
       {loading ? (
-        <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"/></div>
+        // DESIGN.md §Loading: skeleton rows
+        <div className="px-4 mt-3 space-y-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-24 rounded-2xl bg-secondary animate-pulse" />
+          ))}
+        </div>
       ) : results.length === 0 ? (
-        <div className="px-6 py-12 text-center">
-          <SearchIcon className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-40" />
-          <p className="text-sm text-muted-foreground">
+        <div className="px-6 py-12 text-center flex flex-col items-center gap-4">
+          <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center">
+            <svg viewBox="0 0 48 48" className="w-10 h-10 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="22" cy="22" r="14" />
+              <line x1="40" y1="40" x2="32" y2="32" />
+            </svg>
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
             {query.length < 2 ? "Введіть ім'я або місто" : "Нічого не знайдено"}
           </p>
         </div>
       ) : (
-        <div className="px-4 space-y-3">
-          {results.map(r => (
-            <div key={r.id} className="p-4 rounded-xl border border-border cursor-pointer hover:bg-secondary/50"
-              onClick={() => navigate(`/app/user/${r.id}`)}>
+        <div className="px-4 mt-3 space-y-3">
+          {results.map((r) => (
+            <article
+              key={r.id}
+              className="relative p-4 rounded-2xl border border-border cursor-pointer hover:bg-secondary/50 hover:-translate-y-px transition-all duration-150 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8"
+              onClick={() => { void tap("light"); navigate(`/app/user/${r.id}`); }}
+            >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary overflow-hidden">
-                  {r.avatar_url ? <img src={r.avatar_url} className="w-full h-full object-cover" alt=""/> : r.name.split(" ").map((n: string) => n[0]).join("").slice(0,2)}
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary overflow-hidden">
+                  {r.avatar_url ? (
+                    <img src={r.avatar_url} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    r.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)
+                  )}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm text-foreground">{r.name} {r.country === "Україна" ? "🇺🇦" : "🏳️"}</span>
-                    {r.verified && <span className="text-[10px] bg-success/10 text-success px-1.5 py-0.5 rounded">✓</span>}
+                    <span className="font-semibold text-sm text-foreground">
+                      {r.name} {r.country === "Україна" ? "🇺🇦" : "🏳️"}
+                    </span>
+                    {r.verified && (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-success" strokeWidth={1.75} aria-hidden="true" />
+                    )}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <MapPin className="w-3 h-3" />{r.city || "—"}
-                    <Star className="w-3 h-3 fill-warning text-warning" />{r.rating || "—"} · {r.deals_count || 0} угод
+                    <MapPin className="w-3 h-3" strokeWidth={1.75} />
+                    {r.city || "—"}
+                    <Star className="w-3 h-3 fill-warning text-warning" strokeWidth={1.75} />
+                    {r.rating || "—"} · {r.deals_count || 0} угод
                   </div>
                 </div>
-                <button className="text-xs bg-accent text-white px-3 py-1.5 rounded-lg font-medium"
-                  onClick={e => { e.stopPropagation(); navigate(`/app/chat/${r.id}`); }}>
+                <button
+                  className="text-xs bg-accent text-white px-3 py-1.5 rounded-2xl font-medium min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
+                  onClick={(e) => { e.stopPropagation(); void tap("medium"); navigate(`/app/chat/${r.id}`); }}
+                >
                   Зв'язатись
                 </button>
               </div>
               {r.tags && (
                 <div className="flex gap-1.5">
-                  {(r.tags || []).map((tag: string) => <span key={tag} className="px-2 py-0.5 bg-secondary text-muted-foreground text-xs rounded-full">{tag}</span>)}
+                  {(r.tags || []).map((tag: string) => (
+                    <span key={tag} className="px-2 py-0.5 bg-secondary text-muted-foreground text-xs rounded-full">{tag}</span>
+                  ))}
                 </div>
               )}
-            </div>
+            </article>
           ))}
         </div>
       )}
