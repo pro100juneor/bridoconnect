@@ -27,6 +27,7 @@ const Shop = () => {
 
   return (
     <div className="pb-8">
+      <h1 className="sr-only">Гуманітарний магазин</h1>
       <div className="px-4 pt-4 pb-3">
         <h2 className="font-serif text-xl text-foreground mb-3">Гуманітарний магазин</h2>
         <div className="flex gap-2 overflow-x-auto pb-1">

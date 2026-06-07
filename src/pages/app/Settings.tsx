@@ -124,6 +124,7 @@ const Settings = () => {
 
   return (
     <div className="pb-8">
+      <h1 className="sr-only">Налаштування</h1>
       <div className="px-4 pt-4 pb-2">
         <h2 className="font-serif text-xl text-foreground">Налаштування</h2>
         {!tableAvailable && (

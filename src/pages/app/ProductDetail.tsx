@@ -24,7 +24,7 @@ const ProductDetail = () => {
   return (
     <div className="pb-24">
       <div className="flex items-center gap-3 px-4 pt-4 pb-4">
-        <button onClick={() => navigate(-1)}><ArrowLeft className="w-5 h-5 text-foreground" /></button>
+        <button onClick={() => navigate(-1)} aria-label="Назад"><ArrowLeft className="w-5 h-5 text-foreground" /></button>
         <h2 className="font-serif text-xl text-foreground flex-1">Товар</h2>
         <button onClick={() => setLiked(l => !l)}>
           <Heart className={`w-5 h-5 ${liked ? "fill-accent text-accent" : "text-muted-foreground"}`} />

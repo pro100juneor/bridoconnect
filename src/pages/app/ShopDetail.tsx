@@ -13,7 +13,7 @@ const ShopDetail = () => {
   return (
     <div className="pb-8">
       <div className="flex items-center gap-3 px-4 pt-4 pb-4">
-        <button onClick={() => navigate(-1)}><ArrowLeft className="w-5 h-5 text-foreground" /></button>
+        <button onClick={() => navigate(-1)} aria-label="Назад"><ArrowLeft className="w-5 h-5 text-foreground" /></button>
         <h2 className="font-serif text-xl text-foreground flex-1">Профіль продавця</h2>
       </div>
       <div className="px-4 pb-6 border-b border-border">

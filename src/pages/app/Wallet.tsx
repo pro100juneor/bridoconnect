@@ -66,6 +66,7 @@ const Wallet = () => {
 
   return (
     <div className="pb-8">
+      <h1 className="sr-only">Гаманець</h1>
       <div className="px-4 pt-4 pb-6 bg-primary text-white rounded-b-3xl mb-4">
         <h2 className="font-serif text-xl mb-6">Гаманець</h2>
         <div className="text-center mb-6">

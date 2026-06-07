@@ -124,6 +124,7 @@ const Feed = () => {
 
   return (
     <div className="pb-4">
+      <h1 className="sr-only">Стрічка запитів про допомогу</h1>
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <h2 className="font-serif text-xl text-foreground">Стрічка</h2>
         <div className="flex gap-2">

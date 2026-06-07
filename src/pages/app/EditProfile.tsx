@@ -49,7 +49,7 @@ const EditProfile = () => {
   return (
     <div className="pb-8">
       <div className="flex items-center gap-3 px-4 pt-4 pb-4 border-b border-border">
-        <button onClick={() => navigate(-1)}><ArrowLeft className="w-5 h-5 text-foreground" /></button>
+        <button onClick={() => navigate(-1)} aria-label="Назад"><ArrowLeft className="w-5 h-5 text-foreground" /></button>
         <h2 className="font-serif text-xl text-foreground flex-1">Редагувати профіль</h2>
         <button onClick={handleSave} className={`text-xs font-semibold ${saved ? "text-success" : "text-accent"}`}>
           {saved ? <Check className="w-4 h-4" /> : "Зберегти"}

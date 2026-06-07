@@ -24,9 +24,15 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col max-w-screen-sm mx-auto relative">
-      <div className="flex-1 pb-20 overflow-y-auto">
+      <a
+        href="#app-main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-accent focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg"
+      >
+        Перейти до основного вмісту
+      </a>
+      <main id="app-main" className="flex-1 pb-20 overflow-y-auto" tabIndex={-1}>
         <Outlet />
-      </div>
+      </main>
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-screen-sm bg-background border-t border-border z-50 safe-area-bottom">
         <div className="flex items-center justify-around px-2 py-1.5">
           {tabs.map(({ to, icon: Icon, label, exact }) => {

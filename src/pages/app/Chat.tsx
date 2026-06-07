@@ -40,7 +40,7 @@ const Chat = () => {
   return (
     <div className="flex flex-col h-screen">
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-background">
-        <button onClick={() => navigate(-1)}><ArrowLeft className="w-5 h-5 text-foreground" /></button>
+        <button onClick={() => navigate(-1)} aria-label="Назад"><ArrowLeft className="w-5 h-5 text-foreground" /></button>
         <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
           {initials}
         </div>

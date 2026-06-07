@@ -28,6 +28,7 @@ const Profile = () => {
 
   return (
     <div>
+      <h1 className="sr-only">Профіль</h1>
       <div className="px-4 pt-4 pb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-serif text-xl text-foreground">Профіль</h2>

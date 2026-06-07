@@ -82,7 +82,7 @@ const StartStream = () => {
   return (
     <div className="pb-8">
       <div className="flex items-center gap-3 px-4 pt-4 pb-4 border-b border-border">
-        <button onClick={() => navigate(-1)}><ArrowLeft className="w-5 h-5 text-foreground" /></button>
+        <button onClick={() => navigate(-1)} aria-label="Назад"><ArrowLeft className="w-5 h-5 text-foreground" /></button>
         <h2 className="font-serif text-xl text-foreground flex-1">Запустити ефір</h2>
       </div>
       <div className="h-48 bg-secondary mx-4 mt-4 rounded-2xl flex items-center justify-center mb-6">

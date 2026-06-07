@@ -72,7 +72,7 @@ const PublicProfile = () => {
   return (
     <div className="pb-8">
       <div className="px-4 pt-4 pb-2 flex items-center gap-3">
-        <button onClick={() => navigate(-1)}><ArrowLeft className="w-5 h-5 text-foreground" /></button>
+        <button onClick={() => navigate(-1)} aria-label="Назад"><ArrowLeft className="w-5 h-5 text-foreground" /></button>
         <h2 className="font-serif text-lg text-foreground">Профіль</h2>
       </div>
 
