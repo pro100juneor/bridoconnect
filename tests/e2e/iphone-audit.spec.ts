@@ -53,15 +53,20 @@ test.describe.configure({ mode: "serial" });
 // fall back to a fake token — the audit still verifies layout / JS-crash.
 let originState: Array<{ name: string; value: string }> | null = null;
 
+// Each step bounded — when Supabase is down we want this to fall through
+// quickly to the fake-token path instead of timing out the whole hook (30 s
+// default → 47 dependent tests get marked "did not run").
 test.beforeAll(async ({ browser, baseURL }) => {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   try {
-    await page.goto("/auth", { waitUntil: "domcontentloaded", timeout: 8000 });
-    await page.getByTestId("login-email").fill("sponsor1@brido.local");
+    await page.goto("/auth", { waitUntil: "domcontentloaded", timeout: 5000 });
+    const email = page.getByTestId("login-email");
+    await email.waitFor({ state: "visible", timeout: 2000 });
+    await email.fill("sponsor1@brido.local");
     await page.getByTestId("login-password").fill("password123");
     await page.getByTestId("login-submit").click();
-    await page.waitForURL("**/app", { timeout: 10000 });
+    await page.waitForURL("**/app", { timeout: 5000 });
     const state = await ctx.storageState();
     const origin = state.origins.find((o) => baseURL?.startsWith(o.origin));
     if (origin) originState = origin.localStorage;
