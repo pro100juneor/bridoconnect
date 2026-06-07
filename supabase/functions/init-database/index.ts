@@ -223,13 +223,20 @@ $$ language plpgsql security definer;
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  // Only allow with secret key
+  // CRITICAL: secret must come from env. Previously had a hardcoded
+  // fallback ("bridoconnect-init-2026") that any attacker could guess
+  // to wipe / recreate the database schema. Fail closed if unset.
   const authHeader = req.headers.get("Authorization");
-  const secret = Deno.env.get("INIT_SECRET") || "bridoconnect-init-2026";
-  
-  if (!authHeader || !authHeader.includes(secret)) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { 
-      status: 401, headers: corsHeaders 
+  const secret = Deno.env.get("INIT_SECRET");
+  if (!secret) {
+    return new Response(JSON.stringify({ error: "INIT_SECRET not configured" }), {
+      status: 503, headers: corsHeaders,
+    });
+  }
+  const expected = `Bearer ${secret}`;
+  if (authHeader !== expected) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: corsHeaders,
     });
   }
 

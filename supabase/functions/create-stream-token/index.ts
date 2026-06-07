@@ -1,10 +1,26 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// CORS lock — was `*`, anyone could mint LiveKit host tokens from any site.
+const ALLOWED_ORIGINS = new Set([
+  "https://bridoconnect.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:8080",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:8080",
+]);
+function corsFor(origin: string | null) {
+  const allow = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://bridoconnect.vercel.app";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
+
+// LiveKit room names must be safe — guard against injection into the JWT claim
+// or downstream LiveKit infra. Alnum + dash/underscore, ≤64 chars.
+const ROOM_NAME_RE = /^[a-zA-Z0-9_-]{1,64}$/;
 
 // LiveKit token generation using JWT
 async function createLiveKitToken(roomName: string, participantName: string, isHost: boolean, apiKey: string, apiSecret: string) {
@@ -37,28 +53,35 @@ async function createLiveKitToken(roomName: string, participantName: string, isH
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const headers = corsFor(req.headers.get("origin"));
+  if (req.method === "OPTIONS") return new Response(null, { headers });
 
   try {
     const { room_name, is_host } = await req.json();
+    if (typeof room_name !== "string" || !ROOM_NAME_RE.test(room_name)) {
+      return new Response(JSON.stringify({ error: "invalid room_name" }), {
+        status: 400, headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
     const supabase = createClient(Deno.env.get("SUPABASE_URL") || "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "");
 
     const authHeader = req.headers.get("Authorization");
     const { data: { user } } = await supabase.auth.getUser(authHeader?.replace("Bearer ", "") || "");
-    if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
+    if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
 
     const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
-    const participantName = (profile as any)?.name || user.email || user.id;
+    const participantName = (profile as { name?: string } | null)?.name || user.email || user.id;
 
     const apiKey = Deno.env.get("LIVEKIT_API_KEY") || "";
     const apiSecret = Deno.env.get("LIVEKIT_API_SECRET") || "";
     const wsUrl = Deno.env.get("LIVEKIT_WS_URL") || "";
 
-    const token = await createLiveKitToken(room_name, participantName, is_host, apiKey, apiSecret);
+    const token = await createLiveKitToken(room_name, participantName, Boolean(is_host), apiKey, apiSecret);
 
     return new Response(JSON.stringify({ token, ws_url: wsUrl, room_name, participant_name: participantName }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+      { headers: { ...headers, "Content-Type": "application/json" } });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "unknown";
+    return new Response(JSON.stringify({ error: msg }), { status: 500, headers });
   }
 });
