@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStripe } from "@/hooks/useStripe";
 import { toast } from "@/hooks/use-toast";
 import ReviewModal from "@/components/ReviewModal";
+import { Confetti } from "@/components/Confetti";
+import { tap, notify } from "@/lib/native";
 
 const MOCK_DEAL = {
   id: "1",
@@ -56,7 +58,9 @@ const ActiveDeal = () => {
             creator_verified: p.verified || false,
           });
         } else {
-          setDeal(MOCK_DEAL);
+          // Deal genuinely not found in DB. Don't fall through to MOCK_DEAL
+          // — that previously rendered a fake "Анна С. з Києва" payment UI.
+          setDeal(null);
         }
         setDealLoading(false);
       });
@@ -84,10 +88,13 @@ const ActiveDeal = () => {
       navigate("/auth");
       return;
     }
+    void tap("medium");
     setPaying(true);
     try {
+      void notify("success");
       await createCheckout({ amount: n, dealId: id });
     } catch (e: any) {
+      void notify("error");
       toast({
         title: "Stripe ще не підключено",
         description: e?.message || "Платежі буде активовано найближчим часом.",
@@ -97,33 +104,53 @@ const ActiveDeal = () => {
     }
   };
 
+  const [showConfetti, setShowConfetti] = useState(false);
+
   if (dealLoading) {
+    // DESIGN.md §Loading: skeleton, not spinner
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      <div className="px-4 pt-4 space-y-3">
+        <div className="h-32 rounded-2xl bg-secondary animate-pulse" />
+        <div className="h-40 rounded-2xl bg-secondary animate-pulse" />
+        <div className="h-24 rounded-2xl bg-secondary animate-pulse" />
       </div>
     );
   }
 
-  const d = deal || MOCK_DEAL;
+  if (!deal) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
+        <h2 className="font-serif text-xl text-foreground mb-2">Угоду не знайдено</h2>
+        <p className="text-sm text-muted-foreground mb-6">Можливо, її було видалено або посилання застаріле.</p>
+        <Button variant="outline" onClick={() => navigate("/app")}>На стрічку</Button>
+      </div>
+    );
+  }
+
+  const d = deal;
   const pct = d.amount > 0 ? Math.round((d.raised / d.amount) * 100) : 0;
   const initials = (d.creator_name || "?").split(" ").map((s: string) => s[0]).join("").slice(0, 2).toUpperCase();
   const finished = d.status === "completed" || d.status === "cancelled";
 
   return (
-    <div className="pb-8">
+    <main className="pb-8 relative">
+      <Confetti trigger={showConfetti} />
       <div className="flex items-center gap-3 px-4 pt-4 pb-4 border-b border-border">
-        <button onClick={() => navigate(-1)} aria-label="Назад">
-          <ArrowLeft className="w-5 h-5 text-foreground" />
+        <button
+          onClick={() => navigate(-1)}
+          aria-label="Назад"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center"
+        >
+          <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-xl text-foreground flex-1">Угода</h2>
+        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">Угода</h2>
         <span className="text-xs bg-warning/10 text-warning px-2 py-1 rounded-full font-medium">
           {d.status === "completed" ? "Завершено" : d.status === "disputed" ? "Спір" : "В процесі"}
         </span>
       </div>
 
       <div className="px-4 py-4 space-y-4">
-        <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+        <div className="relative p-4 rounded-2xl bg-primary/5 border border-primary/20 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
               {initials}
@@ -135,11 +162,11 @@ const ActiveDeal = () => {
               <p className="text-xs text-muted-foreground">{d.creator_city}</p>
             </div>
             <button
-              onClick={() => navigate(`/app/chat/${id}`)}
-              className="ml-auto p-2 bg-primary/10 rounded-lg"
+              onClick={() => { void tap("light"); navigate(`/app/chat/${id}`); }}
+              className="ml-auto min-h-[44px] min-w-[44px] bg-primary/10 rounded-2xl flex items-center justify-center transition-transform duration-150 hover:-translate-y-px"
               aria-label="Чат"
             >
-              <MessageCircle className="w-5 h-5 text-primary" />
+              <MessageCircle className="w-5 h-5 text-primary" strokeWidth={1.75} />
             </button>
           </div>
           <p className="text-sm font-medium text-foreground mb-1">{d.title}</p>
@@ -159,14 +186,14 @@ const ActiveDeal = () => {
         </div>
 
         {!finished && (
-          <div className="p-4 rounded-xl border border-border">
+          <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
             <h3 className="font-semibold text-foreground mb-3">Підтримати угоду</h3>
             <div className="flex gap-2 mb-3">
               {["10", "25", "50", "100"].map(a => (
                 <button
                   key={a}
                   onClick={() => setAmount(a)}
-                  className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                  className={`flex-1 min-h-[44px] py-2 rounded-xl text-sm font-semibold border transition-all duration-150 hover:-translate-y-px ${
                     amount === a ? "bg-accent text-white border-accent" : "border-border text-foreground"
                   }`}
                 >
@@ -179,15 +206,15 @@ const ActiveDeal = () => {
               min="1"
               value={amount}
               onChange={e => setAmount(e.target.value)}
-              placeholder="Інша сума..."
-              className="w-full bg-secondary rounded-xl px-4 py-2.5 text-sm outline-none text-foreground mb-3"
+              placeholder="Інша сума…"
+              className="w-full bg-secondary rounded-xl px-4 py-2.5 text-sm outline-none text-foreground mb-3 focus:ring-2 focus:ring-accent/30"
             />
             <Button
-              className="w-full bg-accent hover:bg-accent/90 text-white"
+              className="w-full bg-accent hover:bg-accent/90 text-white transition-transform duration-150 hover:-translate-y-px"
               disabled={paying || !amount}
               onClick={handlePay}
             >
-              {paying ? "Відкриваємо оплату..." : `Підтримати €${amount || "..."}`}
+              {paying ? "Відкриваємо оплату…" : `Підтримати €${amount || "…"}`}
             </Button>
           </div>
         )}
@@ -221,8 +248,8 @@ const ActiveDeal = () => {
           </div>
         </div>
 
-        <div className="flex items-start gap-3 p-3 bg-success/10 rounded-xl">
-          <Shield className="w-5 h-5 text-success shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-3 bg-success/10 rounded-2xl">
+          <Shield className="w-5 h-5 text-success shrink-0 mt-0.5" strokeWidth={1.75} />
           <div>
             <p className="text-sm font-semibold text-foreground">Захист BridoConnect</p>
             <p className="text-xs text-muted-foreground">
@@ -235,16 +262,16 @@ const ActiveDeal = () => {
           <div className="flex gap-3">
             <Button
               variant="outline"
-              className="flex-1 border-destructive text-destructive hover:bg-destructive/10"
-              onClick={() => navigate(`/app/dispute/${id}`)}
+              className="flex-1 border-destructive text-destructive hover:bg-destructive/10 transition-transform duration-150 hover:-translate-y-px"
+              onClick={() => { void tap("light"); navigate(`/app/dispute/${id}`); }}
             >
-              <AlertTriangle className="w-4 h-4 mr-2" /> Спір
+              <AlertTriangle className="w-4 h-4 mr-2" strokeWidth={1.75} /> Спір
             </Button>
             <Button
-              className="flex-1 bg-success hover:bg-success/90 text-white"
-              onClick={() => setShowReview(true)}
+              className="flex-1 bg-success hover:bg-success/90 text-white transition-transform duration-150 hover:-translate-y-px"
+              onClick={() => { void tap("medium"); setShowReview(true); }}
             >
-              <CheckCircle className="w-4 h-4 mr-2" /> Завершити
+              <CheckCircle className="w-4 h-4 mr-2" strokeWidth={1.75} /> Завершити
             </Button>
           </div>
         )}
@@ -257,12 +284,14 @@ const ActiveDeal = () => {
           revieweeName={d.creator_name || "Користувач"}
           onClose={() => setShowReview(false)}
           onSuccess={() => {
+            void notify("success");
+            setShowConfetti(true);
             setShowReview(false);
-            navigate("/app/deals");
+            setTimeout(() => navigate("/app/deals"), 2200);
           }}
         />
       )}
-    </div>
+    </main>
   );
 };
 

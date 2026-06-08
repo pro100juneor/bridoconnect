@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 
 const faqs = [
@@ -45,35 +46,59 @@ const faqs = [
 ];
 
 const FaqPage = () => {
+  const reduced = useReducedMotion();
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="px-6 py-12 max-w-2xl mx-auto">
-        <h1 className="font-serif text-3xl text-foreground mb-2">Часті питання</h1>
-        <p className="text-muted-foreground mb-8">Відповіді на найпоширеніші запитання про BridoConnect.</p>
+    <main className="min-h-screen bg-background">
+      <section className="px-6 py-12 max-w-2xl mx-auto">
+        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-2 animate-fade-in">Часті питання</h1>
+        <p className="text-muted-foreground mb-8 leading-relaxed">Відповіді на найпоширеніші запитання про BridoConnect.</p>
 
         <div className="space-y-2">
-          {faqs.map((faq, i) => (
-            <div key={i} className="rounded-xl border border-border overflow-hidden">
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                className="w-full flex items-center justify-between px-4 py-4 text-left">
-                <span className="font-medium text-foreground text-sm pr-4">{faq.q}</span>
-                <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform ${open === i ? "rotate-180" : ""}`}
-                />
-              </button>
-              {open === i && (
-                <div className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">
-                  {faq.a}
-                </div>
-              )}
-            </div>
-          ))}
+          {faqs.map((faq, i) => {
+            const isOpen = open === i;
+            return (
+              <article
+                key={i}
+                className="relative rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8"
+              >
+                <button
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  className="w-full flex items-center justify-between px-4 py-4 min-h-[44px] text-left"
+                  aria-expanded={isOpen}
+                >
+                  <span className="font-medium text-foreground text-sm pr-4">{faq.q}</span>
+                  <motion.span
+                    animate={{ rotate: isOpen ? 180 : 0 }}
+                    transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 25 }}
+                    className="shrink-0"
+                  >
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
+                  </motion.span>
+                </button>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      key="content"
+                      initial={reduced ? false : { height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={reduced ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                      transition={reduced ? { duration: 0 } : { ease: [0.4, 0, 0.2, 1], duration: 0.28 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">
+                        {faq.a}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </article>
+            );
+          })}
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 export default FaqPage;

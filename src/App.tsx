@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import PublicLayout from "./components/public/PublicLayout";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { PageTransition } from "./components/PageTransition";
 
 import HomePage from "./pages/public/HomePage";
 import HowItWorksPage from "./pages/public/HowItWorksPage";
@@ -45,6 +46,7 @@ import ResetPassword from "./pages/app/ResetPassword";
 
 export default function App() {
   return (
+    <PageTransition>
     <Routes>
       <Route element={<PublicLayout />}>
         <Route path="/" element={<HomePage />} />
@@ -93,5 +95,6 @@ export default function App() {
 
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </PageTransition>
   );
 }

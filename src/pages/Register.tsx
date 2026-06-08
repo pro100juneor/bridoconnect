@@ -1,16 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { motion, useReducedMotion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, UserPlus, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, UserPlus, CheckCircle, HandHeart, HandHelping } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Confetti } from "@/components/Confetti";
 
 const Register = () => {
   const navigate = useNavigate();
+  const reduced = useReducedMotion();
   const [step, setStep] = useState<"form" | "success">("form");
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "", role: "sponsor" });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
+
+  useEffect(() => {
+    if (step !== "success") return;
+    setCelebrate(true);
+    const t = setTimeout(() => setCelebrate(false), 3000);
+    return () => clearTimeout(t);
+  }, [step]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,20 +87,36 @@ const Register = () => {
 
   if (step === "success") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mb-4">
-          <CheckCircle className="w-8 h-8 text-success" />
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center relative">
+        <Confetti trigger={celebrate && !reduced} />
+        <motion.div
+          initial={reduced ? false : { scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mb-4"
+        >
+          <CheckCircle className="w-8 h-8 text-success" strokeWidth={1.75} />
+        </motion.div>
         <h2 className="font-serif text-2xl text-foreground mb-2">Майже готово!</h2>
         <p className="text-muted-foreground text-sm mb-2">Ми надіслали лист підтвердження на:</p>
         <p className="font-semibold text-foreground mb-6">{form.email}</p>
         <p className="text-xs text-muted-foreground mb-6">Підтвердіть email і потім увійдіть в акаунт.</p>
-        <Button className="w-full bg-accent hover:bg-accent/90 text-white h-12" onClick={() => navigate("/auth")}>
+        <Button className="w-full bg-accent hover:bg-accent/90 text-white h-12 transition-transform duration-150 hover:-translate-y-px" onClick={() => navigate("/auth")}>
           До входу →
         </Button>
       </div>
     );
   }
+
+  // Form-field stagger: each field appears 0.05s after the previous.
+  const fieldEnter = (delay: number) =>
+    reduced
+      ? {}
+      : {
+          initial: { opacity: 0, y: 8 },
+          animate: { opacity: 1, y: 0 },
+          transition: { delay, duration: 0.3, ease: [0.4, 0, 0.2, 1] as const },
+        };
 
   return (
     <div className="min-h-screen flex flex-col px-6 pt-12 pb-8 bg-background">
@@ -99,51 +126,56 @@ const Register = () => {
       </div>
 
       <form onSubmit={handleRegister} className="space-y-4">
-        <div>
+        <motion.div {...fieldEnter(0.0)}>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Я хочу</label>
-          <div className="grid grid-cols-2 gap-2">
+          {/* DESIGN.md §Banned: 50/50 grid → vertical stack, taller editorial anchor */}
+          <div className="flex flex-col gap-2">
             {[
-              { value: "sponsor", label: "🤝 Допомагати" },
-              { value: "recipient", label: "🙏 Отримати допомогу" },
+              { value: "sponsor", label: "Допомагати", caption: "Спонсор · Донор", Icon: HandHeart, tall: true },
+              { value: "recipient", label: "Отримати допомогу", caption: "Виконавець · Отримувач", Icon: HandHelping },
             ].map((r) => (
               <button key={r.value} type="button"
                 onClick={() => setForm({ ...form, role: r.value })}
-                className={`p-3 rounded-xl border text-sm font-medium transition-colors ${form.role === r.value ? "border-accent bg-accent/10 text-accent" : "border-border text-foreground"}`}>
-                {r.label}
+                className={`flex items-center gap-3 ${r.tall ? "py-4" : "py-3"} px-4 rounded-xl border text-left transition-all duration-150 hover:-translate-y-px ${form.role === r.value ? "border-accent bg-accent/10 text-accent" : "border-border text-foreground"}`}>
+                <r.Icon className="w-5 h-5 shrink-0" strokeWidth={1.75} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold">{r.label}</div>
+                  <div className="text-[11px] text-muted-foreground">{r.caption}</div>
+                </div>
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        <div>
+        <motion.div {...fieldEnter(0.05)}>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Ім'я</label>
           <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required
             placeholder="Ваше ім'я" autoComplete="name"
             className="w-full bg-secondary rounded-xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30" />
-        </div>
+        </motion.div>
 
-        <div>
+        <motion.div {...fieldEnter(0.10)}>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Email</label>
           <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required
             placeholder="your@email.com" autoComplete="email"
             className="w-full bg-secondary rounded-xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30" />
-        </div>
+        </motion.div>
 
-        <div>
+        <motion.div {...fieldEnter(0.15)}>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Пароль</label>
           <div className="relative">
             <input type={showPass ? "text" : "password"} value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })} required
               placeholder="Мінімум 6 символів" autoComplete="new-password"
               className="w-full bg-secondary rounded-xl px-4 py-3 pr-12 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30" />
-            <button type="button" onClick={() => setShowPass((s) => !s)}
+            <button type="button" onClick={() => setShowPass((s) => !s)} aria-label={showPass ? "Сховати пароль" : "Показати пароль"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground p-1">
               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-        </div>
+        </motion.div>
 
-        <div>
+        <motion.div {...fieldEnter(0.20)}>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Підтвердіть пароль</label>
           <input type="password" value={form.confirm}
             onChange={(e) => setForm({ ...form, confirm: e.target.value })} required
@@ -152,12 +184,27 @@ const Register = () => {
           {form.confirm && form.password !== form.confirm && (
             <p className="text-xs text-destructive mt-1">Паролі не збігаються</p>
           )}
-        </div>
+        </motion.div>
 
-        <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-white gap-2 h-12" disabled={loading}>
-          {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <UserPlus className="w-4 h-4" />}
-          {loading ? "Реєструємо..." : "Зареєструватись"}
-        </Button>
+        <motion.div {...fieldEnter(0.25)}>
+          <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-white gap-2 h-12 transition-transform duration-150 hover:-translate-y-px" disabled={loading}>
+            {loading ? (
+              // DESIGN.md §Loading: no spinning circles — pulse instead.
+              <motion.span
+                animate={reduced ? {} : { opacity: [1, 0.4, 1] }}
+                transition={{ repeat: Infinity, duration: 0.9 }}
+                className="text-sm"
+              >
+                Реєструємо…
+              </motion.span>
+            ) : (
+              <>
+                <UserPlus className="w-4 h-4" strokeWidth={1.75} />
+                Зареєструватись
+              </>
+            )}
+          </Button>
+        </motion.div>
       </form>
 
       <div className="mt-5">

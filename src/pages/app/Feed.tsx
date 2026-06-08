@@ -1,7 +1,25 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Bell, RefreshCw } from "lucide-react";
+import {
+  Search, Bell, RefreshCw,
+  Utensils, Pill, Shirt, Home as HomeIcon, Banknote, Package, Wrench, HandHeart,
+  type LucideIcon,
+} from "lucide-react";
 import { useDeals } from "@/hooks/useDeals";
+
+// DESIGN.md §Banned: no inline emoji as UI icon. Map categories → Lucide.
+const categoryIcon = (cat: string): LucideIcon => {
+  const map: Record<string, LucideIcon> = {
+    Їжа: Utensils,
+    Ліки: Pill,
+    Одяг: Shirt,
+    Житло: HomeIcon,
+    Гроші: Banknote,
+    Товари: Package,
+    Завдання: Wrench,
+  };
+  return map[cat] ?? HandHeart;
+};
 
 const categories = ["Всі", "Гроші", "Товари", "Завдання", "Ліки", "Житло", "Їжа"];
 const flags = ["🇺🇦", "🏳️"];
@@ -96,8 +114,9 @@ const Feed = () => {
   const [activeFlag, setActiveFlag] = useState<string | null>(null);
   const { deals: realDeals, loading, refetch } = useDeals({ status: "active" });
 
-  // База: реальні деали, якщо є; інакше mock
-  const source = realDeals.length > 0 ? realDeals : MOCK_DEALS;
+  // Real deals only — mock fallback was surfacing fake Харків/Берлін
+  // names to live users when the DB happened to be empty.
+  const source = realDeals;
 
   // Фільтрація клієнтом (щоб працювало і для mock, і для реальних)
   const displayDeals = useMemo(() => {
@@ -124,6 +143,7 @@ const Feed = () => {
 
   return (
     <div className="pb-4">
+      <h1 className="sr-only">Стрічка запитів про допомогу</h1>
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <h2 className="font-serif text-xl text-foreground">Стрічка</h2>
         <div className="flex gap-2">
@@ -209,15 +229,29 @@ const Feed = () => {
       </div>
 
       {loading && (
-        <div className="flex justify-center py-8">
-          <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        // DESIGN.md §Loading: skeleton, no spinner for >500ms ops.
+        <div className="px-4 space-y-4">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="rounded-2xl border border-border overflow-hidden">
+              <div className="h-36 bg-secondary animate-pulse" />
+              <div className="p-4 space-y-2">
+                <div className="h-3 rounded bg-muted animate-pulse w-2/3" />
+                <div className="h-3 rounded bg-muted animate-pulse w-1/2" />
+                <div className="h-3 rounded bg-muted animate-pulse w-3/4 mt-3" />
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
       {!loading && displayDeals.length === 0 && (
         <div className="text-center py-16 px-6">
-          <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4 text-2xl">
-            🤷
+          <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
+            {/* SVG empty-state icon per DESIGN.md §States */}
+            <svg viewBox="0 0 24 24" className="w-7 h-7 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="20" y1="20" x2="16.5" y2="16.5" />
+            </svg>
           </div>
           <p className="font-semibold text-foreground mb-2">Нічого не знайдено</p>
           <p className="text-sm text-muted-foreground mb-4">
@@ -236,7 +270,7 @@ const Feed = () => {
       )}
 
       <div className="px-4 space-y-4">
-        {displayDeals.map((deal: any) => {
+        {displayDeals.map((deal: any, idx: number) => {
           const pct = deal.amount > 0 ? Math.round((deal.raised / deal.amount) * 100) : 0;
           const initials = (deal.creator_name || "?")
             .split(" ")
@@ -244,14 +278,17 @@ const Feed = () => {
             .join("")
             .slice(0, 2)
             .toUpperCase();
+          // DESIGN.md §Anti-patterns: break uniform-list rhythm — hero every 3rd.
+          const isHero = idx % 3 === 0;
+          const Icon = categoryIcon(deal.category);
           return (
             <div
               key={deal.id}
               onClick={() => navigate(`/app/deal/${deal.id}`)}
-              className="rounded-2xl border border-border overflow-hidden cursor-pointer active:scale-[0.99] transition-transform"
+              className="relative bg-card rounded-2xl border border-border overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-px hover:shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)] active:scale-[0.99] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 before:z-10"
             >
-              <div className="h-36 bg-primary/5 flex items-center justify-center relative">
-                <span className="text-6xl opacity-20">{categoryEmoji(deal.category)}</span>
+              <div className={`${isHero ? "h-48" : "h-28"} bg-primary/5 flex items-center justify-center relative`}>
+                <Icon className={`${isHero ? "w-16 h-16" : "w-10 h-10"} text-muted-foreground/30`} strokeWidth={1.75} aria-hidden="true" />
                 <div className="absolute top-3 left-3 flex gap-2">
                   {deal.creator_verified && (
                     <span className="bg-success/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
