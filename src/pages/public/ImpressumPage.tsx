@@ -4,13 +4,17 @@ import { ArrowLeft } from "lucide-react";
 const ImpressumPage = () => {
   const navigate = useNavigate();
   return (
-    <div className="min-h-screen bg-background px-6 py-10 max-w-2xl mx-auto">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground mb-8 text-sm">
-        <ArrowLeft className="w-4 h-4" /> Назад
+    <main className="min-h-screen bg-background px-6 py-10 max-w-2xl mx-auto">
+      <button
+        onClick={() => navigate(-1)}
+        aria-label="Назад"
+        className="flex items-center gap-2 text-muted-foreground mb-8 text-sm min-h-[44px]"
+      >
+        <ArrowLeft className="w-4 h-4" strokeWidth={1.75} /> Назад
       </button>
-      <h1 className="font-serif text-3xl text-foreground mb-8">Impressum</h1>
+      <h1 className="font-serif text-4xl tracking-tight text-foreground mb-8 animate-fade-in">Impressum</h1>
 
-      <div className="space-y-6 text-sm text-foreground">
+      <div className="space-y-6 text-sm text-foreground leading-relaxed">
         <section>
           <h2 className="font-semibold text-base mb-2">Angaben gemäß § 5 TMG</h2>
           <p>
@@ -69,7 +73,7 @@ const ImpressumPage = () => {
           </p>
         </section>
       </div>
-    </div>
+    </main>
   );
 };
 export default ImpressumPage;
