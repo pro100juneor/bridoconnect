@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Bell } from "lucide-react";
+import { Search, Bell, RefreshCw } from "lucide-react";
 import { useDeals } from "@/hooks/useDeals";
 
 const categories = ["Всі", "Гроші", "Товари", "Завдання", "Ліки", "Житло", "Їжа"];
@@ -132,6 +132,8 @@ const Feed = () => {
             className="p-2 text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Оновити"
           >
+            <RefreshCw className="w-5 h-5" />
+          </button>
           <button
             onClick={() => navigate("/app/search")}
             className="p-2 text-muted-foreground"
