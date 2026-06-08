@@ -58,7 +58,7 @@ const Auth = () => {
         <div>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Email</label>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-            placeholder="your@email.com" autoComplete="email"
+            placeholder="your@email.com" autoComplete="email" data-testid="login-email"
             className="w-full bg-secondary rounded-xl px-4 py-3 text-sm outline-none text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent/30" />
         </div>
 
@@ -66,7 +66,7 @@ const Auth = () => {
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Пароль</label>
           <div className="relative">
             <input type={showPass ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required
-              placeholder="Ваш пароль" autoComplete="current-password"
+              placeholder="Ваш пароль" autoComplete="current-password" data-testid="login-password"
               className="w-full bg-secondary rounded-xl px-4 py-3 pr-12 text-sm outline-none text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent/30" />
             <button type="button" onClick={() => setShowPass(s => !s)}
               aria-label={showPass ? "Сховати пароль" : "Показати пароль"}
@@ -80,7 +80,7 @@ const Auth = () => {
           <Link to="/reset-password" className="text-xs text-accent font-medium">Забули пароль?</Link>
         </div>
 
-        <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-white gap-2 h-12 transition-transform duration-150 hover:-translate-y-px" disabled={loading}>
+        <Button type="submit" data-testid="login-submit" className="w-full bg-accent hover:bg-accent/90 text-white gap-2 h-12 transition-transform duration-150 hover:-translate-y-px" disabled={loading}>
           {loading ? (
             // DESIGN.md §Loading: no spinner — 3-bar shimmer instead.
             <span className="flex items-center gap-1.5" aria-hidden="true">

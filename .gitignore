@@ -40,3 +40,5 @@ JUNIOR_VIP.md
 secrets/
 *.pem
 *.key
+test-results/
+supabase/.temp/

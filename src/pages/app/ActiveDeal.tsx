@@ -192,6 +192,7 @@ const ActiveDeal = () => {
               {["10", "25", "50", "100"].map(a => (
                 <button
                   key={a}
+                  data-testid={`donate-amount-${a}`}
                   onClick={() => setAmount(a)}
                   className={`flex-1 min-h-[44px] py-2 rounded-xl text-sm font-semibold border transition-all duration-150 hover:-translate-y-px ${
                     amount === a ? "bg-accent text-white border-accent" : "border-border text-foreground"
@@ -210,6 +211,7 @@ const ActiveDeal = () => {
               className="w-full bg-secondary rounded-xl px-4 py-2.5 text-sm outline-none text-foreground mb-3 focus:ring-2 focus:ring-accent/30"
             />
             <Button
+              data-testid="donate-submit"
               className="w-full bg-accent hover:bg-accent/90 text-white transition-transform duration-150 hover:-translate-y-px"
               disabled={paying || !amount}
               onClick={handlePay}
