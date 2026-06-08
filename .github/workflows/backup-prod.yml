@@ -1,0 +1,41 @@
+# Production DB backup → Cloudflare R2.
+# Disabled until prod Supabase exists. Flip `if: false` to enable.
+name: Backup prod DB to R2
+
+on:
+  schedule:
+    # Daily at 03:30 UTC (~05:30 Frankfurt)
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  backup:
+    if: false # TODO(prod): enable when prod Supabase URL + service-role key are set in repo secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        run: |
+          curl -fsSL https://supabase.com/install.sh | sh
+          echo "$HOME/.supabase/bin" >> $GITHUB_PATH
+
+      - name: Dump
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          TS=$(date -u +%Y%m%d_%H%M%S)
+          mkdir -p backups
+          supabase db dump --db-url "$SUPABASE_DB_URL" --file "backups/prod_${TS}.sql"
+          gzip "backups/prod_${TS}.sql"
+          echo "DUMP_FILE=backups/prod_${TS}.sql.gz" >> $GITHUB_ENV
+
+      - name: Upload to R2 (S3-compatible)
+        uses: shallwefootball/s3-upload-action@v1.3.3
+        with:
+          aws_key_id: ${{ secrets.R2_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          aws_bucket: ${{ secrets.R2_BUCKET }}
+          source_dir: backups
+          destination_dir: bridoconnect-backups
+          endpoint: ${{ secrets.R2_ENDPOINT }}

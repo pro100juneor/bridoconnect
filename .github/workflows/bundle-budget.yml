@@ -1,0 +1,39 @@
+name: Bundle budget
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  bundle-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: http://localhost:54321
+          VITE_SUPABASE_PUBLISHABLE_KEY: dummy_key_for_ci_build_only
+
+      - name: Compute main bundle gzip size
+        id: size
+        run: |
+          MAIN_JS=$(ls dist/assets/index-*.js | head -1)
+          GZ_SIZE=$(gzip -c "$MAIN_JS" | wc -c)
+          GZ_KB=$(awk "BEGIN { printf \"%.1f\", $GZ_SIZE/1024 }")
+          BUDGET_KB=200
+          echo "size_kb=$GZ_KB" >> $GITHUB_OUTPUT
+          echo "budget_kb=$BUDGET_KB" >> $GITHUB_OUTPUT
+          echo "## Main bundle: ${GZ_KB} KB gzip (budget ${BUDGET_KB} KB)" >> $GITHUB_STEP_SUMMARY
+          if (( $(echo "$GZ_KB > $BUDGET_KB" | bc -l) )); then
+            echo "::error::Bundle ${GZ_KB} KB exceeds budget ${BUDGET_KB} KB"
+            exit 1
+          fi
