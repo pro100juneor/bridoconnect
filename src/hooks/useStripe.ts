@@ -87,5 +87,18 @@ export const useStripe = () => {
     return resp.json();
   };
 
-  return { createCheckout, createSubscription, connectOnboard, fetchConnectStatus, releaseEscrow };
+  const refundDeal = async (dealId: string, reason?: string) => {
+    const resp = await authedFetch("refund-deal", { dealId, reason });
+    if (!resp.ok) throw new Error(await safeJsonError(resp, "Refund error"));
+    return resp.json();
+  };
+
+  return {
+    createCheckout,
+    createSubscription,
+    connectOnboard,
+    fetchConnectStatus,
+    releaseEscrow,
+    refundDeal,
+  };
 };

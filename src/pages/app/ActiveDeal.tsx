@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStripe } from "@/hooks/useStripe";
 import { usePaypal } from "@/hooks/usePaypal";
+import { useAdyen } from "@/hooks/useAdyen";
 import { toast } from "@/hooks/use-toast";
 import ReviewModal from "@/components/ReviewModal";
 import { Confetti } from "@/components/Confetti";
@@ -30,8 +31,9 @@ const ActiveDeal = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
-  const { createCheckout, releaseEscrow } = useStripe();
+  const { createCheckout, releaseEscrow, refundDeal } = useStripe();
   const { createOrder: createPaypalOrder } = usePaypal();
+  const { createPaymentSession: createAdyenSession } = useAdyen();
 
   const [deal, setDeal] = useState<any>(null);
   const [dealLoading, setDealLoading] = useState(true);
@@ -39,7 +41,8 @@ const ActiveDeal = () => {
   const [amount, setAmount] = useState("");
   const [paying, setPaying] = useState(false);
   const [releasing, setReleasing] = useState(false);
-  const [payMethod, setPayMethod] = useState<"stripe" | "paypal">("stripe");
+  const [refunding, setRefunding] = useState(false);
+  const [payMethod, setPayMethod] = useState<"stripe" | "paypal" | "adyen">("stripe");
 
   useEffect(() => {
     if (!id) return;
@@ -126,6 +129,14 @@ const ActiveDeal = () => {
       if (payMethod === "paypal") {
         if (!id) throw new Error("deal id missing");
         await createPaypalOrder({ amount: n, dealId: id });
+      } else if (payMethod === "adyen") {
+        if (!id) throw new Error("deal id missing");
+        const session = await createAdyenSession({ amount: n, dealId: id });
+        // Без Drop-in SDK: показываем session id и ждём WIP интеграции.
+        toast({
+          title: "Adyen session created",
+          description: `Session ${session.sessionId.slice(0, 12)}… — Drop-in UI підключиться у наступному релізі.`,
+        });
       } else {
         await createCheckout({ amount: n, dealId: id });
       }
@@ -137,6 +148,33 @@ const ActiveDeal = () => {
         variant: "destructive",
       });
       setPaying(false);
+    }
+  };
+
+  const handleRefund = async () => {
+    if (!id) return;
+    if (!confirm("Повернути кошти? Цю дію не можна скасувати.")) return;
+    void tap("medium");
+    setRefunding(true);
+    try {
+      await refundDeal(id, "sponsor requested");
+      void notify("success");
+      toast({
+        title: "Запит на повернення",
+        description: "Refund ініційовано, processor підтвердить через webhook.",
+      });
+      setDeal((prev: any) =>
+        prev ? { ...prev, status: "cancelled", refunded_at: new Date().toISOString() } : prev
+      );
+    } catch (e: any) {
+      void notify("error");
+      toast({
+        title: "Не вдалося повернути",
+        description: e?.message || "Спробуйте пізніше.",
+        variant: "destructive",
+      });
+    } finally {
+      setRefunding(false);
     }
   };
 
@@ -262,18 +300,18 @@ const ActiveDeal = () => {
           <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
             <h3 className="font-semibold text-foreground mb-3">Підтримати угоду</h3>
             <div className="flex gap-2 mb-3" role="tablist" aria-label="Спосіб оплати">
-              {(["stripe", "paypal"] as const).map((m) => (
+              {(["stripe", "paypal", "adyen"] as const).map((m) => (
                 <button
                   key={m}
                   role="tab"
                   data-testid={`pay-method-${m}`}
                   aria-selected={payMethod === m}
                   onClick={() => setPayMethod(m)}
-                  className={`flex-1 min-h-[44px] py-2 rounded-xl text-xs font-semibold border transition-all duration-150 ${
+                  className={`flex-1 min-h-[44px] py-2 rounded-xl text-[11px] font-semibold border transition-all duration-150 ${
                     payMethod === m ? "bg-primary text-white border-primary" : "border-border text-foreground"
                   }`}
                 >
-                  {m === "stripe" ? "Картка (Stripe)" : "PayPal"}
+                  {m === "stripe" ? "Картка" : m === "paypal" ? "PayPal" : "Локальні"}
                 </button>
               ))}
             </div>
@@ -365,10 +403,10 @@ const ActiveDeal = () => {
         </div>
 
         {!finished && (
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <Button
               variant="outline"
-              className="flex-1 border-destructive text-destructive hover:bg-destructive/10 transition-transform duration-150 hover:-translate-y-px"
+              className="flex-1 min-w-[100px] border-destructive text-destructive hover:bg-destructive/10 transition-transform duration-150 hover:-translate-y-px"
               onClick={() => {
                 void tap("light");
                 navigate(`/app/dispute/${id}`);
@@ -376,6 +414,17 @@ const ActiveDeal = () => {
             >
               <AlertTriangle className="w-4 h-4 mr-2" strokeWidth={1.75} /> Спір
             </Button>
+            {user?.id === d.sponsor_id && (d.raised || 0) > 0 && !d.escrow_released_at && !d.refunded_at && (
+              <Button
+                data-testid="refund-deal"
+                variant="outline"
+                className="flex-1 min-w-[120px] border-warning text-warning hover:bg-warning/10 transition-transform duration-150 hover:-translate-y-px"
+                disabled={refunding}
+                onClick={handleRefund}
+              >
+                {refunding ? "Повертаємо…" : "Повернути кошти"}
+              </Button>
+            )}
             <Button
               data-testid="release-escrow"
               className="flex-1 bg-success hover:bg-success/90 text-white transition-transform duration-150 hover:-translate-y-px"

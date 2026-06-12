@@ -22,9 +22,11 @@ import { usePaypal } from "@/hooks/usePaypal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { tap } from "@/lib/native";
+import { useT } from "@/i18n/useT";
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { t } = useT();
   const { user, signOut } = useAuth();
   const { profile, loading } = useProfile();
   const { connectOnboard, fetchConnectStatus } = useStripe();
@@ -116,7 +118,7 @@ const Profile = () => {
   if (loading) {
     return (
       <div>
-        <h1 className="sr-only">Профіль</h1>
+        <h1 className="sr-only">{t("profile.title")}</h1>
         <div className="px-4 pt-4 pb-6 space-y-4">
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 rounded-full bg-secondary animate-pulse" />
@@ -140,7 +142,9 @@ const Profile = () => {
       <h1 className="sr-only">Профіль</h1>
       <div className="px-4 pt-4 pb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">Профіль</h2>
+          <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">
+            {t("profile.title")}
+          </h2>
           <button
             onClick={() => {
               void tap("light");
@@ -188,7 +192,7 @@ const Profile = () => {
         <div className="space-y-3">
           <div className="relative bg-secondary rounded-2xl p-4 text-center before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 before:rounded-t-2xl">
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground block mb-1">
-              Допоміг
+              {t("profile.helped")}
             </span>
             <span className="font-serif text-3xl tracking-tight text-foreground">
               €{(profile?.total_helped || 0).toLocaleString()}
@@ -196,8 +200,8 @@ const Profile = () => {
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { value: String(profile?.deals_count || 0), label: "Угод" },
-              { value: profile?.rating ? profile.rating.toFixed(1) + "★" : "—", label: "Рейтинг" },
+              { value: String(profile?.deals_count || 0), label: t("profile.deals") },
+              { value: profile?.rating ? profile.rating.toFixed(1) + "★" : "—", label: t("profile.rating") },
             ].map((stat) => (
               <div
                 key={stat.label}
