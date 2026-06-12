@@ -4,6 +4,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // PayPal webhook handler.
 // События: PAYMENT.CAPTURE.COMPLETED, PAYMENT.CAPTURE.REFUNDED,
 // CHECKOUT.ORDER.APPROVED, MERCHANT.ONBOARDING.COMPLETED.
+//
+// Audit fixes:
+//   P0-5: OAuth response checked for ok + cached в module-scope с expires_in.
+//   P1-9: MERCHANT.ONBOARDING.COMPLETED — cross-check merchant_id если есть в profile.
+//   P0-4 partial: apply_paypal_payment RPC — атомарный + идемпотентный.
 
 const PAYPAL_BASE =
   Deno.env.get("PAYPAL_ENV") === "live" ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com";
@@ -13,21 +18,46 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
 );
 
-async function verifyWebhook(headers: Headers, body: string): Promise<boolean> {
-  const webhookId = Deno.env.get("PAYPAL_WEBHOOK_ID") || "";
-  if (!webhookId) return false;
+// Module-scope OAuth cache.
+let cachedToken: { value: string; expiresAt: number } | null = null;
+
+async function getPaypalToken(): Promise<string> {
+  if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
+    return cachedToken.value;
+  }
   const id = Deno.env.get("PAYPAL_CLIENT_ID") || "";
   const secret = Deno.env.get("PAYPAL_CLIENT_SECRET") || "";
   const basic = btoa(`${id}:${secret}`);
-  const tokenResp = await fetch(`${PAYPAL_BASE}/v1/oauth2/token`, {
+  const resp = await fetch(`${PAYPAL_BASE}/v1/oauth2/token`, {
     method: "POST",
     headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded" },
     body: "grant_type=client_credentials",
   });
-  const { access_token } = await tokenResp.json();
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`paypal oauth: ${resp.status} ${err}`);
+  }
+  const json = (await resp.json()) as { access_token: string; expires_in: number };
+  cachedToken = {
+    value: json.access_token,
+    expiresAt: Date.now() + (json.expires_in || 3600) * 1000,
+  };
+  return cachedToken.value;
+}
+
+async function verifyWebhook(headers: Headers, body: string): Promise<boolean> {
+  const webhookId = Deno.env.get("PAYPAL_WEBHOOK_ID") || "";
+  if (!webhookId) return false;
+  let token: string;
+  try {
+    token = await getPaypalToken();
+  } catch (e) {
+    console.error("token fetch failed:", e);
+    return false;
+  }
   const verify = await fetch(`${PAYPAL_BASE}/v1/notifications/verify-webhook-signature`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${access_token}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       auth_algo: headers.get("paypal-auth-algo"),
       cert_url: headers.get("paypal-cert-url"),
@@ -38,6 +68,10 @@ async function verifyWebhook(headers: Headers, body: string): Promise<boolean> {
       webhook_event: JSON.parse(body),
     }),
   });
+  if (!verify.ok) {
+    console.warn("verify call failed:", verify.status);
+    return false;
+  }
   const { verification_status } = await verify.json();
   return verification_status === "SUCCESS";
 }
@@ -94,11 +128,38 @@ serve(async (req) => {
           custom_id?: string;
           supplementary_data?: { related_ids?: { order_id?: string } };
         };
-        const customId = r.custom_id ? JSON.parse(r.custom_id) : {};
+        // P1-7 fix: guard JSON.parse on potentially-truncated custom_id.
+        let customId: { deal_id?: string; user_id?: string } = {};
+        try {
+          customId = r.custom_id ? JSON.parse(r.custom_id) : {};
+        } catch (e) {
+          console.error("custom_id parse failed (possible 127-char truncation):", r.custom_id, e);
+        }
         const amount = Number(r.amount.value);
         const cents = Math.round(amount * 100);
 
-        const inserted = await recordPaypalTx({
+        // P0-4 fix: atomic + idempotent via paypal_capture_id marker.
+        if (customId.deal_id) {
+          const { error: applyErr } = await supabase.rpc("apply_paypal_payment", {
+            p_deal_id: customId.deal_id,
+            p_amount: amount,
+            p_capture_id: r.id,
+            p_sponsor_id: customId.user_id || null,
+          });
+          if (applyErr) {
+            console.error("apply_paypal_payment:", applyErr);
+            throw applyErr;
+          }
+          await supabase
+            .from("deals")
+            .update({
+              paypal_order_id: r.supplementary_data?.related_ids?.order_id || null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", customId.deal_id);
+        }
+
+        await recordPaypalTx({
           event_id: event.id,
           user_id: customId.user_id || "",
           deal_id: customId.deal_id || null,
@@ -107,21 +168,6 @@ serve(async (req) => {
           type: "deal_payment",
           capture_id: r.id,
         });
-        if (!inserted) break;
-
-        if (customId.deal_id) {
-          await supabase.rpc("increment_raised", { deal_id: customId.deal_id, amount });
-          await supabase
-            .from("deals")
-            .update({
-              paypal_capture_id: r.id,
-              paypal_order_id: r.supplementary_data?.related_ids?.order_id || null,
-              sponsor_id: customId.user_id,
-              status: "active",
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", customId.deal_id);
-        }
         break;
       }
 
@@ -162,16 +208,27 @@ serve(async (req) => {
 
       case "MERCHANT.ONBOARDING.COMPLETED": {
         const r = event.resource as { merchant_id?: string; tracking_id?: string };
-        if (r.merchant_id) {
-          await supabase
-            .from("profiles")
-            .update({
-              paypal_merchant_id: r.merchant_id,
-              paypal_status: "active",
-              paypal_updated_at: new Date().toISOString(),
-            })
-            .eq("id", r.tracking_id || "");
+        if (!r.merchant_id || !r.tracking_id) break;
+        // P1-9 fix: tracking_id is attacker-controllable structurally; verify
+        // that no other profile already claims this merchant_id.
+        const { data: collision } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("paypal_merchant_id", r.merchant_id)
+          .neq("id", r.tracking_id)
+          .maybeSingle();
+        if (collision) {
+          console.warn("paypal merchant_id collision:", r.merchant_id, "other:", collision.id);
+          break;
         }
+        await supabase
+          .from("profiles")
+          .update({
+            paypal_merchant_id: r.merchant_id,
+            paypal_status: "active",
+            paypal_updated_at: new Date().toISOString(),
+          })
+          .eq("id", r.tracking_id);
         break;
       }
 

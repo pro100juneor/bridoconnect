@@ -42,3 +42,4 @@ secrets/
 *.key
 test-results/
 supabase/.temp/
+public/audio/

@@ -12,8 +12,7 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
 );
 
-// Insert transaction with (processor, stripe_event_id) UNIQUE.
-// Returns true if newly inserted; false on duplicate (already processed).
+// Insert transaction (idempotent at PG via UNIQUE constraint).
 async function recordTransaction(row: {
   event_id: string;
   user_id: string;
@@ -38,7 +37,6 @@ async function recordTransaction(row: {
     fee_platform_cents: row.fee_platform_cents ?? 0,
   });
   if (error) {
-    // 23505 = unique_violation → already processed, swallow.
     if ((error as { code?: string }).code === "23505") return false;
     console.error("recordTransaction error:", error);
     throw error;
@@ -76,7 +74,23 @@ serve(async (req) => {
             ? session.payment_intent
             : (session.payment_intent?.id ?? null);
 
-        const inserted = await recordTransaction({
+        // P0-4 fix: apply_stripe_payment is atomic + idempotent via PI marker.
+        // Even if recordTransaction (below) already returned false (duplicate
+        // event), the RPC still no-ops safely because the PI is already on the deal.
+        if (dealId && paymentIntentId) {
+          const { error: applyErr } = await supabase.rpc("apply_stripe_payment", {
+            p_deal_id: dealId,
+            p_amount: amount,
+            p_payment_intent_id: paymentIntentId,
+            p_sponsor_id: userId || null,
+          });
+          if (applyErr) {
+            console.error("apply_stripe_payment:", applyErr);
+            throw applyErr;
+          }
+        }
+
+        await recordTransaction({
           event_id: event.id,
           user_id: userId,
           deal_id: dealId,
@@ -87,40 +101,19 @@ serve(async (req) => {
           fee_platform_cents: feeCents,
         });
 
-        if (!inserted) break; // already processed
-
-        if (dealId) {
-          // Update deal raised + payment_intent_id (for later refund/escrow).
-          const { error: incErr } = await supabase.rpc("increment_raised", {
+        // Recipient-side mirror entry — separate event_id, separate idempotency.
+        if (dealId && recipientId) {
+          await supabase.from("transactions").insert({
+            processor: "stripe",
+            stripe_event_id: `${event.id}::recipient`,
+            user_id: recipientId,
             deal_id: dealId,
-            amount,
+            amount: amount - feeCents / 100,
+            amount_cents: amountCents - feeCents,
+            type: "deal_payment",
+            status: "held_in_escrow",
+            stripe_payment_intent_id: paymentIntentId,
           });
-          if (incErr) console.error("increment_raised:", incErr);
-
-          await supabase
-            .from("deals")
-            .update({
-              stripe_payment_intent_id: paymentIntentId,
-              sponsor_id: userId,
-              status: "active",
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", dealId);
-
-          // Mirror a recipient-side ledger entry so they see incoming funds.
-          if (recipientId) {
-            await supabase.from("transactions").insert({
-              processor: "stripe",
-              stripe_event_id: `${event.id}::recipient`,
-              user_id: recipientId,
-              deal_id: dealId,
-              amount: amount - feeCents / 100,
-              amount_cents: amountCents - feeCents,
-              type: "deal_payment",
-              status: "held_in_escrow",
-              stripe_payment_intent_id: paymentIntentId,
-            });
-          }
         }
         break;
       }
@@ -206,8 +199,6 @@ serve(async (req) => {
       }
 
       case "transfer.created": {
-        // For destination charges, transfer is auto on capture. We record it
-        // for reconciliation but actual escrow release is sponsor-triggered.
         const transfer = event.data.object as Stripe.Transfer;
         const sourceTx = transfer.source_transaction;
         if (sourceTx) {
@@ -227,12 +218,10 @@ serve(async (req) => {
       }
 
       default:
-        // Unknown event types are acked silently; Stripe will retry on 5xx.
         break;
     }
   } catch (err: unknown) {
     console.error("webhook handler error:", err);
-    // Return 500 so Stripe retries — safer than swallowing.
     return new Response("handler error", { status: 500 });
   }
 

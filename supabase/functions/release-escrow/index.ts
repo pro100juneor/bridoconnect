@@ -24,10 +24,18 @@ function corsFor(origin: string | null) {
   };
 }
 
-// Destination-charge flow: funds already moved to recipient's Connect balance
-// at capture time. release_escrow flips deal.status=completed and records
-// the ledger entry. If you switch to manual-transfer mode (separate charge
-// + transfer), this is where stripe.transfers.create() would fire.
+// Universal release: ветвится по deal.payment_processor.
+// - stripe: destination-charge — transfer уже произошёл на capture, мы лишь
+//   фиксируем completion + проверяем что charge не зарефанжен (P1-15 fix).
+// - paypal: для DELAYED_DISBURSEMENT нужен capture/release-call. Сейчас
+//   реализован shortcut: помечаем deal completed + ledger entry; реальный
+//   PayPal disbursement release делается на стороне PayPal Dashboard или
+//   через v2/payments/captures/<id>/release endpoint (TODO).
+// - adyen: split уже произошёл при capture. Просто mark completed.
+//
+// P0-1 fix: caller_id передаётся явно в RPC.
+// P1-15 fix: проверка charge.refunded перед completion для Stripe.
+
 serve(async (req) => {
   const headers = corsFor(req.headers.get("origin"));
   if (req.method === "OPTIONS") return new Response(null, { headers });
@@ -59,7 +67,7 @@ serve(async (req) => {
     const { data: deal, error: dErr } = await supabase
       .from("deals")
       .select(
-        "id, creator_id, sponsor_id, status, stripe_payment_intent_id, amount_cents, platform_fee_cents, escrow_released_at"
+        "id, creator_id, sponsor_id, status, payment_processor, stripe_payment_intent_id, paypal_capture_id, adyen_psp_reference, amount_cents, platform_fee_cents, escrow_released_at"
       )
       .eq("id", dealId)
       .maybeSingle();
@@ -80,31 +88,68 @@ serve(async (req) => {
         headers: { ...headers, "Content-Type": "application/json" },
       });
     }
-    if (!deal.stripe_payment_intent_id) {
-      return new Response(JSON.stringify({ error: "no payment intent on deal" }), {
+
+    let transferId: string | null = null;
+
+    if (deal.payment_processor === "stripe" || (!deal.payment_processor && deal.stripe_payment_intent_id)) {
+      if (!deal.stripe_payment_intent_id) {
+        return new Response(JSON.stringify({ error: "no stripe payment intent on deal" }), {
+          status: 400,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+      const pi = await stripe.paymentIntents.retrieve(deal.stripe_payment_intent_id, {
+        expand: ["latest_charge"],
+      });
+      const charge = pi.latest_charge as Stripe.Charge | null;
+      // P1-15 fix: don't complete a refunded/cancelled PI.
+      if (pi.status === "canceled" || charge?.refunded) {
+        return new Response(JSON.stringify({ error: "payment already refunded or cancelled" }), {
+          status: 409,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+      const t = charge?.transfer as string | Stripe.Transfer | null;
+      transferId = typeof t === "string" ? t : (t?.id ?? null);
+    } else if (deal.payment_processor === "paypal") {
+      if (!deal.paypal_capture_id) {
+        return new Response(JSON.stringify({ error: "no paypal capture on deal" }), {
+          status: 400,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+      // PayPal split с DELAYED_DISBURSEMENT — disbursement release делается на
+      // стороне PayPal автоматически по истечении hold-периода или явно через
+      // /v2/payments/captures/<id>/release. Implement when partner-fee credentials
+      // are wired; for now just mark completed.
+      transferId = deal.paypal_capture_id;
+    } else if (deal.payment_processor === "adyen") {
+      if (!deal.adyen_psp_reference) {
+        return new Response(JSON.stringify({ error: "no adyen psp reference on deal" }), {
+          status: 400,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+      // Adyen MarketPlace split — funds already on recipient account at AUTHORISATION.
+      transferId = deal.adyen_psp_reference;
+    } else {
+      return new Response(JSON.stringify({ error: "unknown payment processor" }), {
         status: 400,
         headers: { ...headers, "Content-Type": "application/json" },
       });
     }
 
-    // Fetch PI to recover transfer id (destination charges create it auto).
-    const pi = await stripe.paymentIntents.retrieve(deal.stripe_payment_intent_id, {
-      expand: ["latest_charge"],
-    });
-    const charge = pi.latest_charge as Stripe.Charge | null;
-    const transferId = charge?.transfer as string | Stripe.Transfer | null;
-    const transferStringId = typeof transferId === "string" ? transferId : (transferId?.id ?? null);
-
+    // P0-1 fix: pass caller_id explicitly, RPC no longer relies on auth.uid().
     const { error: rpcErr } = await supabase.rpc("release_escrow", {
       p_deal_id: dealId,
-      p_transfer_id: transferStringId,
+      p_transfer_id: transferId,
+      p_caller_id: user.id,
     });
     if (rpcErr) throw rpcErr;
 
-    // Ledger entry for recipient (escrow_release leg).
     const netCents = (deal.amount_cents || 0) - (deal.platform_fee_cents || 0);
     await supabase.from("transactions").insert({
-      processor: "stripe",
+      processor: deal.payment_processor || "stripe",
       stripe_event_id: `release::${dealId}`,
       user_id: deal.creator_id,
       deal_id: dealId,
@@ -115,7 +160,7 @@ serve(async (req) => {
       stripe_payment_intent_id: deal.stripe_payment_intent_id,
     });
 
-    return new Response(JSON.stringify({ ok: true, transferId: transferStringId }), {
+    return new Response(JSON.stringify({ ok: true, transferId }), {
       headers: { ...headers, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {

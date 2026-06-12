@@ -11,13 +11,14 @@ interface ReviewModalProps {
   dealId: string;
   revieweeId: string;
   revieweeName: string;
-  // Reviewee's role in the deal — recipient оценивает sponsor'а как 'as_sponsor' и наоборот.
-  // If omitted, defaults to 'as_recipient' (sponsor reviewing recipient — the common case).
-  revieweeRole?: "as_sponsor" | "as_recipient";
+  // Reviewee's role in the deal. Recipient оценивает sponsor'а как 'as_sponsor' и наоборот.
+  // Audit P1: REQUIRED — silent default → wrong rating bucket = data corruption.
+  revieweeRole: "as_sponsor" | "as_recipient";
   onSubmit?: () => void;
   onSuccess?: () => void;
 }
 
+const MAX_TAGS = 5;
 const SPONSOR_TAGS = ["Швидко відповів", "Підтримуючий", "Зрозумілий", "Гнучкий"];
 const RECIPIENT_TAGS = ["Надійний", "Чесний", "Швидко завершив", "Хороша комунікація"];
 
@@ -27,7 +28,7 @@ const ReviewModal = ({
   dealId,
   revieweeId,
   revieweeName,
-  revieweeRole = "as_recipient",
+  revieweeRole,
   onSubmit,
   onSuccess,
 }: ReviewModalProps) => {
@@ -42,7 +43,11 @@ const ReviewModal = ({
 
   const availableTags = revieweeRole === "as_sponsor" ? SPONSOR_TAGS : RECIPIENT_TAGS;
   const toggleTag = (t: string) =>
-    setTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+    setTags((prev) => {
+      if (prev.includes(t)) return prev.filter((x) => x !== t);
+      if (prev.length >= MAX_TAGS) return prev;
+      return [...prev, t];
+    });
 
   const handleSubmit = async () => {
     if (!user || rating === 0) return;

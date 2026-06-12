@@ -95,7 +95,25 @@ serve(async (req) => {
     }
 
     const { userId: targetId, context } = await req.json();
+
+    // P1-10 fix: limit screening to self unless caller is admin.
+    // Prevents PII leak via cross-user screening.
+    const { data: callerProfile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    const isAdmin = callerProfile?.role === "admin";
+    if (targetId && targetId !== user.id && !isAdmin) {
+      return new Response(JSON.stringify({ error: "forbidden: cannot screen other users" }), {
+        status: 403,
+        headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
     const screenedId = targetId || user.id;
+    // P1-10 fix: whitelist context values, prevent free-text injection into compliance log.
+    const ALLOWED_CONTEXTS = new Set(["checkout", "connect_onboard", "manual", "scheduled"]);
+    const safeContext = ALLOWED_CONTEXTS.has(context) ? context : "manual";
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -109,15 +127,20 @@ serve(async (req) => {
       });
     }
 
-    const isoCountry =
+    // P1-11 fix: free-text country → ISO2 via DB lookup function.
+    let isoCountry =
       profile.stripe_connect_country ||
       (profile.country && /^[A-Z]{2}$/.test(profile.country) ? profile.country : null);
+    if (!isoCountry && profile.country) {
+      const { data: iso } = await supabase.rpc("country_to_iso2", { p_name: profile.country });
+      if (typeof iso === "string") isoCountry = iso;
+    }
 
     const screen = await screenExternal(profile.name, isoCountry);
 
     await supabase.from("sanctions_screening_log").insert({
       user_id: screenedId,
-      context: context || "manual",
+      context: safeContext,
       lists_checked: ["complyadvantage_or_offline", "country_block"],
       matched_entries: screen.matched,
       risk_score: screen.risk_score,

@@ -23,9 +23,9 @@ const sections = [
       "BridoConnect bietet ein freiwilliges Verifizierungsverfahren an. Verifizierte Nutzer erhalten einen entsprechenden Badge. Die Verifizierung erhöht das Vertrauen auf der Plattform.",
   },
   {
-    title: "§ 5 Zahlungen, Stripe Connect und Treuhand",
+    title: "§ 5 Zahlungen und technische Abwicklung",
     content:
-      "Alle Zahlungen werden über Stripe Connect Express (Stripe Payments Europe Ltd., Dublin) abgewickelt. Stripe ist Merchant of Record; BridoConnect tritt ausschließlich als technischer Vermittler auf und ist weder Zahlungsdienstleister noch Treuhänder im Sinne des ZAG. Mittel werden direkt auf das Connect-Konto des Empfängers gebucht und für bis zu sieben (7) Tage als Treuhand-Saldo bei Stripe gehalten, bis der Sponsor den Empfang bestätigt oder die Frist abläuft.",
+      "Alle Zahlungen werden ausschließlich über Stripe Connect Express (Stripe Payments Europe Ltd., Dublin) bzw. PayPal Commerce Platform (PayPal (Europe) S.à r.l., Luxemburg) abgewickelt. Diese Dienstleister sind Merchant of Record, Zahlungsdienstleister im Sinne des ZAG/PSD2 und alleiniger Halter der Mittel während des gesamten Zahlungsvorgangs. BridoConnect tritt ausschließlich als technischer Vermittler auf, hat zu keinem Zeitpunkt Verfügungsgewalt über die Mittel, ist weder Treuhänder im Sinne der §§ 688 ff. BGB noch Zahlungsdienstleister im Sinne des ZAG und verfügt über keine BaFin-Lizenz. Beträge verbleiben technisch reserviert auf dem Empfängerkonto bei Stripe/PayPal für bis zu sieben (7) Tage, bis der Sponsor den Empfang bestätigt oder die Frist abläuft; der gesamte Hold-Mechanismus wird ausschließlich von Stripe/PayPal nach deren AGB gesteuert.",
   },
   {
     title: "§ 6 Servicegebühr",

@@ -46,7 +46,9 @@ const ActiveDeal = () => {
     setDealLoading(true);
     supabase
       .from("deals")
-      .select("*, profiles!creator_id(name, country, city, rating, verified, stripe_connect_status)")
+      .select(
+        "*, profiles!creator_id(name, country, city, rating, verified, stripe_connect_status, paypal_status)"
+      )
       .eq("id", id)
       .maybeSingle()
       .then(({ data }) => {
@@ -61,6 +63,7 @@ const ActiveDeal = () => {
             creator_rating: p.rating || 0,
             creator_verified: p.verified || false,
             creator_connect_status: p.stripe_connect_status || "none",
+            creator_paypal_status: p.paypal_status || "none",
           });
         } else {
           // Deal genuinely not found in DB. Don't fall through to MOCK_DEAL
@@ -102,6 +105,16 @@ const ActiveDeal = () => {
       toast({
         title: "Отримувач ще не підключив Stripe",
         description: "Спробуйте PayPal або зверніться пізніше.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // P1-4 fix: symmetrical PayPal gate.
+    if (payMethod === "paypal" && deal?.creator_paypal_status !== "active") {
+      void notify("error");
+      toast({
+        title: "Отримувач ще не підключив PayPal",
+        description: "Спробуйте Stripe або зверніться пізніше.",
         variant: "destructive",
       });
       return;
@@ -298,7 +311,10 @@ const ActiveDeal = () => {
               data-testid="donate-submit"
               className="w-full bg-accent hover:bg-accent/90 text-white transition-transform duration-150 hover:-translate-y-px"
               disabled={
-                paying || !amount || (payMethod === "stripe" && deal?.creator_connect_status !== "enabled")
+                paying ||
+                !amount ||
+                (payMethod === "stripe" && deal?.creator_connect_status !== "enabled") ||
+                (payMethod === "paypal" && deal?.creator_paypal_status !== "active")
               }
               onClick={handlePay}
             >
@@ -363,7 +379,9 @@ const ActiveDeal = () => {
             <Button
               data-testid="release-escrow"
               className="flex-1 bg-success hover:bg-success/90 text-white transition-transform duration-150 hover:-translate-y-px"
-              disabled={releasing || user?.id !== d.sponsor_id || (d.raised || 0) <= 0}
+              disabled={
+                releasing || !d.sponsor_id || !user?.id || user.id !== d.sponsor_id || (d.raised || 0) <= 0
+              }
               onClick={handleReleaseEscrow}
             >
               <CheckCircle className="w-4 h-4 mr-2" strokeWidth={1.75} />{" "}
@@ -378,6 +396,7 @@ const ActiveDeal = () => {
           dealId={id || ""}
           revieweeId={d.creator_id || "u1"}
           revieweeName={d.creator_name || "Користувач"}
+          revieweeRole="as_recipient"
           onClose={() => setShowReview(false)}
           onSuccess={() => {
             void notify("success");

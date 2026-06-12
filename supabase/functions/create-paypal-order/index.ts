@@ -135,7 +135,14 @@ serve(async (req) => {
                 },
               ],
             },
-            custom_id: JSON.stringify({ deal_id: dealId, user_id: user.id }),
+            // P1-7 fix: PayPal truncates custom_id at 127 chars. With 2 UUIDs +
+            // JSON wrapping we use ~63 chars — safe — but guard explicitly
+            // so a future schema change doesn't silently truncate.
+            custom_id: (() => {
+              const j = JSON.stringify({ deal_id: dealId, user_id: user.id });
+              if (j.length > 127) throw new Error(`custom_id overflow: ${j.length} > 127`);
+              return j;
+            })(),
           },
         ],
       }),

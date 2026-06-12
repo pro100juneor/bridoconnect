@@ -174,6 +174,10 @@ serve(async (req) => {
       });
 
       // Persist session id on deal for reconciliation.
+      // P1-6 fix: only overwrite stripe_session_id if it's NULL — prevents two
+      // concurrent checkouts from both completing if both webhooks fire (the
+      // first session_id wins, the second is orphaned). Actual idempotency
+      // still relies on the webhook side via apply_stripe_payment.
       if (dealId) {
         await supabase
           .from("deals")
@@ -181,8 +185,10 @@ serve(async (req) => {
             stripe_session_id: session.id,
             amount_cents: unitCents,
             platform_fee_cents: feeCents,
+            payment_processor: "stripe",
           })
-          .eq("id", dealId);
+          .eq("id", dealId)
+          .is("stripe_session_id", null);
       }
     }
 

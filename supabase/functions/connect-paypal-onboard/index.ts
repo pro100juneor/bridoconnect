@@ -119,13 +119,17 @@ serve(async (req) => {
     const json = await referral.json();
     const actionUrl = json.links?.find((l: { rel: string; href: string }) => l.rel === "action_url")?.href;
 
+    // P1-8 fix: TOCTOU — concurrent ONBOARDING.COMPLETED webhook may have set
+    // status to 'active' between our earlier check and this update. Only
+    // demote to 'pending' if still 'none' or 'pending'.
     await supabase
       .from("profiles")
       .update({
         paypal_status: "pending",
         paypal_updated_at: new Date().toISOString(),
       })
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .in("paypal_status", ["none", "pending"]);
 
     return new Response(JSON.stringify({ url: actionUrl }), {
       headers: { ...headers, "Content-Type": "application/json" },

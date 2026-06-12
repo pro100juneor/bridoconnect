@@ -52,6 +52,14 @@ serve(async (req) => {
     }
 
     const { amount, dealId, currency = "EUR", countryCode } = await req.json();
+    // P1-13 fix: hard-lock currency to EUR until per-currency minor-unit map
+    // is added. JPY/KRW have 0 minor units, would break unitMinor math.
+    if (currency !== "EUR") {
+      return new Response(JSON.stringify({ error: "only EUR supported in this release" }), {
+        status: 400,
+        headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
     const amt = Number(amount);
     if (!Number.isFinite(amt) || amt < MIN_EUR || amt > MAX_EUR) {
       return new Response(JSON.stringify({ error: `amount must be ${MIN_EUR}-${MAX_EUR}` }), {
