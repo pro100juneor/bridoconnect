@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useStripe, type ConnectStatus } from "@/hooks/useStripe";
+import { usePaypal } from "@/hooks/usePaypal";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { tap } from "@/lib/native";
 
@@ -26,10 +28,12 @@ const Profile = () => {
   const { user, signOut } = useAuth();
   const { profile, loading } = useProfile();
   const { connectOnboard, fetchConnectStatus } = useStripe();
+  const { onboardPaypal } = usePaypal();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [connect, setConnect] = useState<ConnectStatus | null>(null);
   const [connectLoading, setConnectLoading] = useState(false);
+  const [paypalStatus, setPaypalStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile?.role !== "recipient") return;
@@ -39,6 +43,18 @@ const Profile = () => {
       .catch(() => setConnect(null))
       .finally(() => setConnectLoading(false));
   }, [profile?.role]);
+
+  useEffect(() => {
+    if (!user || profile?.role !== "recipient") return;
+    supabase
+      .from("profiles")
+      .select("paypal_status")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setPaypalStatus((data as { paypal_status?: string }).paypal_status || "none");
+      });
+  }, [user, profile?.role]);
 
   // Returning from Stripe onboarding redirect — show feedback + refresh.
   useEffect(() => {
@@ -75,6 +91,16 @@ const Profile = () => {
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Помилка Stripe";
       toast({ title: "Stripe Connect", description: msg, variant: "destructive" });
+    }
+  };
+
+  const handlePaypal = async () => {
+    void tap("medium");
+    try {
+      await onboardPaypal();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Помилка PayPal";
+      toast({ title: "PayPal", description: msg, variant: "destructive" });
     }
   };
 
@@ -186,8 +212,9 @@ const Profile = () => {
       </div>
 
       {profile?.role === "recipient" && (
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-4 space-y-3">
           <ConnectCard connect={connect} loading={connectLoading} onConnect={handleConnect} />
+          <PaypalCard status={paypalStatus} onConnect={handlePaypal} />
         </div>
       )}
 
@@ -231,6 +258,51 @@ const STATUS_COPY: Record<ConnectStatus["status"], { label: string; tone: string
   enabled: { label: "Активний", tone: "text-success", cta: "Оновити дані" },
   restricted: { label: "Обмежено", tone: "text-destructive", cta: "Виправити та продовжити" },
   rejected: { label: "Відхилено", tone: "text-destructive", cta: "Звернутись до підтримки" },
+};
+
+const PaypalCard = ({ status, onConnect }: { status: string | null; onConnect: () => void }) => {
+  const s = status || "none";
+  const label =
+    s === "active"
+      ? "Активний"
+      : s === "pending"
+        ? "Очікує верифікації"
+        : s === "restricted"
+          ? "Обмежено"
+          : "Не підключено";
+  const tone =
+    s === "active"
+      ? "text-success"
+      : s === "pending"
+        ? "text-warning"
+        : s === "restricted"
+          ? "text-destructive"
+          : "text-muted-foreground";
+  const cta = s === "active" ? "Оновити дані" : "Підключити PayPal";
+  return (
+    <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 before:rounded-t-2xl">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center font-bold text-primary text-xs">
+          PP
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">PayPal Commerce</p>
+          <p className={`text-xs ${tone}`}>{label}</p>
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">
+        Альтернатива Stripe. Спонсори з 200+ країн зможуть підтримати через PayPal-баланс.
+      </p>
+      <Button
+        data-testid="paypal-onboard"
+        variant="outline"
+        className="w-full transition-transform duration-150 hover:-translate-y-px"
+        onClick={onConnect}
+      >
+        {cta}
+      </Button>
+    </div>
+  );
 };
 
 const ConnectCard = ({
