@@ -1,0 +1,46 @@
+{
+  "auth.login.title": "Вхід",
+  "auth.login.email": "Email",
+  "auth.login.password": "Пароль",
+  "auth.login.submit": "Увійти",
+  "auth.login.forgot": "Забули пароль?",
+  "auth.login.noAccount": "Немає акаунту?",
+  "auth.login.register": "Зареєструватись",
+
+  "profile.title": "Профіль",
+  "profile.helped": "Допоміг",
+  "profile.deals": "Угод",
+  "profile.rating": "Рейтинг",
+
+  "connect.stripe.title": "Stripe Connect",
+  "connect.stripe.none": "Не підключено",
+  "connect.stripe.pending": "Очікує верифікації",
+  "connect.stripe.enabled": "Активний",
+  "connect.stripe.restricted": "Обмежено",
+  "connect.stripe.cta.connect": "Підключити Stripe",
+  "connect.stripe.cta.update": "Оновити дані",
+
+  "connect.paypal.title": "PayPal Commerce",
+  "connect.paypal.cta.connect": "Підключити PayPal",
+
+  "deal.support.title": "Підтримати угоду",
+  "deal.support.amount.other": "Інша сума…",
+  "deal.support.cta": "Підтримати",
+  "deal.support.opening": "Відкриваємо оплату…",
+  "deal.support.notReady.stripe": "Отримувач ще не підключив Stripe",
+  "deal.support.notReady.paypal": "Отримувач ще не підключив PayPal",
+
+  "deal.escrow.release": "Підтвердити отримання",
+  "deal.escrow.releasing": "Завершуємо…",
+  "deal.escrow.done": "Кошти переведено отримувачу.",
+
+  "review.title": "Залишити відгук",
+  "review.send": "Надіслати відгук",
+  "review.sending": "Надсилаємо…",
+  "review.mutualBlind": "Mutual-blind: ваш відгук побачать тільки після того, як друга сторона теж залишить свій.",
+
+  "trust.label": "Trust score",
+  "trust.high": "Високий рівень довіри",
+  "trust.medium": "Помірний рівень довіри",
+  "trust.low": "Низький рівень довіри"
+}

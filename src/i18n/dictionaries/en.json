@@ -1,0 +1,46 @@
+{
+  "auth.login.title": "Sign in",
+  "auth.login.email": "Email",
+  "auth.login.password": "Password",
+  "auth.login.submit": "Sign in",
+  "auth.login.forgot": "Forgot password?",
+  "auth.login.noAccount": "No account?",
+  "auth.login.register": "Register",
+
+  "profile.title": "Profile",
+  "profile.helped": "Helped",
+  "profile.deals": "Deals",
+  "profile.rating": "Rating",
+
+  "connect.stripe.title": "Stripe Connect",
+  "connect.stripe.none": "Not connected",
+  "connect.stripe.pending": "Awaiting verification",
+  "connect.stripe.enabled": "Active",
+  "connect.stripe.restricted": "Restricted",
+  "connect.stripe.cta.connect": "Connect Stripe",
+  "connect.stripe.cta.update": "Update details",
+
+  "connect.paypal.title": "PayPal Commerce",
+  "connect.paypal.cta.connect": "Connect PayPal",
+
+  "deal.support.title": "Support this deal",
+  "deal.support.amount.other": "Other amount…",
+  "deal.support.cta": "Support",
+  "deal.support.opening": "Opening checkout…",
+  "deal.support.notReady.stripe": "Recipient has not connected Stripe yet",
+  "deal.support.notReady.paypal": "Recipient has not connected PayPal yet",
+
+  "deal.escrow.release": "Confirm receipt",
+  "deal.escrow.releasing": "Releasing…",
+  "deal.escrow.done": "Funds released to recipient.",
+
+  "review.title": "Leave a review",
+  "review.send": "Send review",
+  "review.sending": "Sending…",
+  "review.mutualBlind": "Mutual-blind: your review becomes visible only after the other party submits theirs.",
+
+  "trust.label": "Trust score",
+  "trust.high": "High trust",
+  "trust.medium": "Moderate trust",
+  "trust.low": "Low trust"
+}

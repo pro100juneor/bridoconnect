@@ -1,0 +1,46 @@
+{
+  "auth.login.title": "Anmelden",
+  "auth.login.email": "E-Mail",
+  "auth.login.password": "Passwort",
+  "auth.login.submit": "Anmelden",
+  "auth.login.forgot": "Passwort vergessen?",
+  "auth.login.noAccount": "Noch kein Konto?",
+  "auth.login.register": "Registrieren",
+
+  "profile.title": "Profil",
+  "profile.helped": "Geholfen",
+  "profile.deals": "Vereinbarungen",
+  "profile.rating": "Bewertung",
+
+  "connect.stripe.title": "Stripe Connect",
+  "connect.stripe.none": "Nicht verbunden",
+  "connect.stripe.pending": "Verifizierung läuft",
+  "connect.stripe.enabled": "Aktiv",
+  "connect.stripe.restricted": "Eingeschränkt",
+  "connect.stripe.cta.connect": "Stripe verbinden",
+  "connect.stripe.cta.update": "Daten aktualisieren",
+
+  "connect.paypal.title": "PayPal Commerce",
+  "connect.paypal.cta.connect": "PayPal verbinden",
+
+  "deal.support.title": "Diese Vereinbarung unterstützen",
+  "deal.support.amount.other": "Anderer Betrag…",
+  "deal.support.cta": "Unterstützen",
+  "deal.support.opening": "Zahlung wird geöffnet…",
+  "deal.support.notReady.stripe": "Empfänger hat Stripe noch nicht verbunden",
+  "deal.support.notReady.paypal": "Empfänger hat PayPal noch nicht verbunden",
+
+  "deal.escrow.release": "Empfang bestätigen",
+  "deal.escrow.releasing": "Wird freigegeben…",
+  "deal.escrow.done": "Mittel an Empfänger freigegeben.",
+
+  "review.title": "Bewertung abgeben",
+  "review.send": "Bewertung senden",
+  "review.sending": "Wird gesendet…",
+  "review.mutualBlind": "Mutual-blind: Ihre Bewertung wird erst sichtbar, wenn die Gegenseite ihre eigene abgegeben hat.",
+
+  "trust.label": "Trust Score",
+  "trust.high": "Hohes Vertrauen",
+  "trust.medium": "Mittleres Vertrauen",
+  "trust.low": "Niedriges Vertrauen"
+}
