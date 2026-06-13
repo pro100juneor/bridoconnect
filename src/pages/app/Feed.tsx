@@ -1,11 +1,21 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Search, Bell, RefreshCw,
-  Utensils, Pill, Shirt, Home as HomeIcon, Banknote, Package, Wrench, HandHeart,
+  Search,
+  Bell,
+  RefreshCw,
+  Utensils,
+  Pill,
+  Shirt,
+  Home as HomeIcon,
+  Banknote,
+  Package,
+  Wrench,
+  HandHeart,
   type LucideIcon,
 } from "lucide-react";
 import { useDeals } from "@/hooks/useDeals";
+import { useT } from "@/i18n/useT";
 
 // DESIGN.md §Banned: no inline emoji as UI icon. Map categories → Lucide.
 const categoryIcon = (cat: string): LucideIcon => {
@@ -110,9 +120,24 @@ const categoryEmoji = (cat: string) => {
 
 const Feed = () => {
   const navigate = useNavigate();
+  const { t } = useT();
   const [activeCategory, setActiveCategory] = useState("Всі");
   const [activeFlag, setActiveFlag] = useState<string | null>(null);
   const { deals: realDeals, loading, refetch } = useDeals({ status: "active" });
+
+  // Category translation map — categories stay UA in DB, labels translate via i18n.
+  const categoryLabel = (cat: string) => {
+    const keys: Record<string, string> = {
+      Всі: "feed.category.all",
+      Гроші: "feed.category.money",
+      Товари: "feed.category.goods",
+      Завдання: "feed.category.tasks",
+      Ліки: "feed.category.meds",
+      Житло: "feed.category.housing",
+      Їжа: "feed.category.food",
+    };
+    return t(keys[cat] || "", cat);
+  };
 
   // Real deals only — mock fallback was surfacing fake Харків/Берлін
   // names to live users when the DB happened to be empty.
@@ -143,9 +168,9 @@ const Feed = () => {
 
   return (
     <div className="pb-4">
-      <h1 className="sr-only">Стрічка запитів про допомогу</h1>
+      <h1 className="sr-only">{t("feed.titleSr")}</h1>
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
-        <h2 className="font-serif text-xl text-foreground">Стрічка</h2>
+        <h2 className="font-serif text-xl text-foreground">{t("feed.title")}</h2>
         <div className="flex gap-2">
           <button
             onClick={() => refetch()}
@@ -182,7 +207,7 @@ const Feed = () => {
           >
             Всі
           </button>
-          {flags.map(f => (
+          {flags.map((f) => (
             <button
               key={f}
               onClick={() => setActiveFlag(activeFlag === f ? null : f)}
@@ -196,7 +221,7 @@ const Feed = () => {
           ))}
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {categories.map(cat => (
+          {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
@@ -206,7 +231,7 @@ const Feed = () => {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {cat}
+              {categoryLabel(cat)}
             </button>
           ))}
         </div>
@@ -248,15 +273,22 @@ const Feed = () => {
         <div className="text-center py-16 px-6">
           <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
             {/* SVG empty-state icon per DESIGN.md §States */}
-            <svg viewBox="0 0 24 24" className="w-7 h-7 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              className="w-7 h-7 text-muted-foreground"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.75}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <circle cx="11" cy="11" r="7" />
               <line x1="20" y1="20" x2="16.5" y2="16.5" />
             </svg>
           </div>
           <p className="font-semibold text-foreground mb-2">Нічого не знайдено</p>
-          <p className="text-sm text-muted-foreground mb-4">
-            За обраними фільтрами немає активних запитів.
-          </p>
+          <p className="text-sm text-muted-foreground mb-4">За обраними фільтрами немає активних запитів.</p>
           <button
             onClick={() => {
               setActiveCategory("Всі");
@@ -288,8 +320,14 @@ const Feed = () => {
               onClick={() => navigate(`/app/deal/${deal.id}`)}
               className="relative bg-card rounded-2xl border border-border overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-px hover:shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)] active:scale-[0.99] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 before:z-10"
             >
-              <div className={`${isHero ? "h-48" : "h-28"} bg-primary/5 flex items-center justify-center relative`}>
-                <Icon className={`${isHero ? "w-16 h-16" : "w-10 h-10"} text-muted-foreground/30`} strokeWidth={1.75} aria-hidden="true" />
+              <div
+                className={`${isHero ? "h-48" : "h-28"} bg-primary/5 flex items-center justify-center relative`}
+              >
+                <Icon
+                  className={`${isHero ? "w-16 h-16" : "w-10 h-10"} text-muted-foreground/30`}
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                />
                 <div className="absolute top-3 left-3 flex gap-2">
                   {deal.creator_verified && (
                     <span className="bg-success/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">

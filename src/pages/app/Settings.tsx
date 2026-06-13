@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePreferences } from "@/hooks/usePreferences";
 import { toast } from "@/hooks/use-toast";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -71,14 +72,14 @@ const Settings = () => {
           label: "Push-сповіщення",
           toggle: true,
           toggleValue: prefs.push_notifications,
-          onChange: v => handleToggle("push_notifications", v),
+          onChange: (v) => handleToggle("push_notifications", v),
         },
         {
           icon: Mail,
           label: "Email-сповіщення",
           toggle: true,
           toggleValue: prefs.email_notifications,
-          onChange: v => handleToggle("email_notifications", v),
+          onChange: (v) => handleToggle("email_notifications", v),
         },
       ],
     },
@@ -90,7 +91,7 @@ const Settings = () => {
           label: "Двофакторна автентифікація",
           toggle: true,
           toggleValue: prefs.two_factor,
-          onChange: v => handleToggle("two_factor", v),
+          onChange: (v) => handleToggle("two_factor", v),
         },
         {
           icon: Shield,
@@ -108,7 +109,7 @@ const Settings = () => {
           label: "Темна тема",
           toggle: true,
           toggleValue: prefs.dark_mode,
-          onChange: v => handleToggle("dark_mode", v),
+          onChange: (v) => handleToggle("dark_mode", v),
         },
         { icon: Globe, label: "Мова", value: "Українська" },
       ],
@@ -135,13 +136,16 @@ const Settings = () => {
         )}
       </div>
       <div className="px-4 space-y-5 mt-4">
-        {sections.map(section => (
+        <div className="bg-secondary rounded-2xl p-4">
+          <LocaleSwitcher />
+        </div>
+        {sections.map((section) => (
           <div key={section.title}>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
               {section.title}
             </p>
             <div className="bg-secondary rounded-2xl overflow-hidden divide-y divide-border">
-              {section.items.map(item => (
+              {section.items.map((item) => (
                 <div
                   key={item.label}
                   onClick={() => {
@@ -173,7 +177,10 @@ const Settings = () => {
           </div>
         ))}
         <button
-          onClick={() => { void tap("medium"); handleSignOut(); }}
+          onClick={() => {
+            void tap("medium");
+            handleSignOut();
+          }}
           className="w-full flex items-center gap-3 px-4 py-3 min-h-[44px] bg-destructive/10 rounded-2xl text-destructive transition-transform duration-150 hover:-translate-y-px"
         >
           <LogOut className="w-5 h-5" strokeWidth={1.75} />

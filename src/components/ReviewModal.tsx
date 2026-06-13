@@ -6,47 +6,73 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
 interface ReviewModalProps {
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
   dealId: string;
   revieweeId: string;
   revieweeName: string;
+  // Reviewee's role in the deal. Recipient оценивает sponsor'а как 'as_sponsor' и наоборот.
+  // Audit P1: REQUIRED — silent default → wrong rating bucket = data corruption.
+  revieweeRole: "as_sponsor" | "as_recipient";
   onSubmit?: () => void;
+  onSuccess?: () => void;
 }
 
-const ReviewModal = ({ isOpen, onClose, dealId, revieweeId, revieweeName, onSubmit }: ReviewModalProps) => {
+const MAX_TAGS = 5;
+const SPONSOR_TAGS = ["Швидко відповів", "Підтримуючий", "Зрозумілий", "Гнучкий"];
+const RECIPIENT_TAGS = ["Надійний", "Чесний", "Швидко завершив", "Хороша комунікація"];
+
+const ReviewModal = ({
+  isOpen = true,
+  onClose,
+  dealId,
+  revieweeId,
+  revieweeName,
+  revieweeRole,
+  onSubmit,
+  onSuccess,
+}: ReviewModalProps) => {
   const { user } = useAuth();
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
   const [text, setText] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
+
+  const availableTags = revieweeRole === "as_sponsor" ? SPONSOR_TAGS : RECIPIENT_TAGS;
+  const toggleTag = (t: string) =>
+    setTags((prev) => {
+      if (prev.includes(t)) return prev.filter((x) => x !== t);
+      if (prev.length >= MAX_TAGS) return prev;
+      return [...prev, t];
+    });
 
   const handleSubmit = async () => {
     if (!user || rating === 0) return;
     setLoading(true);
 
+    // Trigger on_review_revealed will recompute rating_as_* — no manual update needed.
     const { error } = await supabase.from("reviews").insert({
       deal_id: dealId,
       reviewer_id: user.id,
       reviewee_id: revieweeId,
       rating,
       text: text.trim(),
+      role: revieweeRole,
+      tags,
     });
 
     if (error) {
       toast({ title: "Помилка", description: error.message, variant: "destructive" });
     } else {
-      // Оновлюємо рейтинг профілю
-      const { data: reviews } = await supabase
-        .from("reviews").select("rating").eq("reviewee_id", revieweeId);
-      if (reviews && reviews.length > 0) {
-        const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
-        await supabase.from("profiles").update({ rating: Math.round(avg * 100) / 100 }).eq("id", revieweeId);
-      }
-      toast({ title: "Відгук надіслано ✅" });
+      toast({
+        title: "Відгук надіслано ✅",
+        description: "Він стане видимим, коли друга сторона теж залишить відгук.",
+      });
       onSubmit?.();
+      onSuccess?.();
       onClose();
     }
     setLoading(false);
@@ -58,37 +84,74 @@ const ReviewModal = ({ isOpen, onClose, dealId, revieweeId, revieweeName, onSubm
       <div className="relative bg-background rounded-t-3xl w-full max-w-md p-6 pb-10">
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-serif text-xl text-foreground">Залишити відгук</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-muted-foreground" /></button>
+          <button onClick={onClose} aria-label="Закрити">
+            <X className="w-5 h-5 text-muted-foreground" />
+          </button>
         </div>
 
-        <p className="text-sm text-muted-foreground mb-4">Оцініть вашу співпрацю з <span className="font-semibold text-foreground">{revieweeName}</span></p>
+        <p className="text-sm text-muted-foreground mb-4">
+          Оцініть співпрацю з <span className="font-semibold text-foreground">{revieweeName}</span>
+        </p>
 
         <div className="flex justify-center gap-2 mb-6">
           {[1, 2, 3, 4, 5].map((star) => (
-            <button key={star}
+            <button
+              key={star}
+              data-testid={`star-${star}`}
               onMouseEnter={() => setHovered(star)}
               onMouseLeave={() => setHovered(0)}
               onClick={() => setRating(star)}
-              className="transition-transform active:scale-90">
-              <Star className={`w-10 h-10 transition-colors ${
-                star <= (hovered || rating) ? "fill-warning text-warning" : "text-muted-foreground/30"
-              }`} />
+              className="transition-transform active:scale-90"
+              aria-label={`${star} stars`}
+            >
+              <Star
+                className={`w-10 h-10 transition-colors ${
+                  star <= (hovered || rating) ? "fill-warning text-warning" : "text-muted-foreground/30"
+                }`}
+              />
             </button>
           ))}
         </div>
 
-        <div className="mb-6">
-          <textarea value={text} onChange={(e) => setText(e.target.value)}
-            rows={3} placeholder="Розкажіть про вашу співпрацю (необов'язково)..."
-            className="w-full bg-secondary rounded-xl px-4 py-3 text-sm outline-none text-foreground placeholder:text-muted-foreground resize-none focus:ring-2 focus:ring-accent/30" />
+        <div className="flex flex-wrap gap-2 mb-4">
+          {availableTags.map((t) => (
+            <button
+              key={t}
+              data-testid={`tag-${t}`}
+              onClick={() => toggleTag(t)}
+              className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                tags.includes(t)
+                  ? "bg-accent text-white border-accent"
+                  : "border-border text-foreground hover:bg-secondary"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
         </div>
 
-        <Button onClick={handleSubmit} disabled={rating === 0 || loading}
-          className="w-full bg-accent hover:bg-accent/90 text-white h-12">
-          {loading
-            ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-            : null}
-          {loading ? "Надсилаємо..." : "Надіслати відгук"}
+        <div className="mb-4">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={3}
+            placeholder="Розкажіть про співпрацю (необов'язково)…"
+            className="w-full bg-secondary rounded-xl px-4 py-3 text-sm outline-none text-foreground placeholder:text-muted-foreground resize-none focus:ring-2 focus:ring-accent/30"
+          />
+        </div>
+
+        <p className="text-[10px] text-muted-foreground mb-4 leading-relaxed">
+          Mutual-blind: ваш відгук побачать тільки після того, як друга сторона теж залишить свій. Це
+          попереджає взаємний шантаж.
+        </p>
+
+        <Button
+          data-testid="review-submit"
+          onClick={handleSubmit}
+          disabled={rating === 0 || loading}
+          className="w-full bg-accent hover:bg-accent/90 text-white h-12"
+        >
+          {loading ? "Надсилаємо…" : "Надіслати відгук"}
         </Button>
       </div>
     </div>

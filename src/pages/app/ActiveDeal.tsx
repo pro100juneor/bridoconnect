@@ -5,44 +5,40 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStripe } from "@/hooks/useStripe";
+import { usePaypal } from "@/hooks/usePaypal";
+import { useAdyen } from "@/hooks/useAdyen";
+import { useT } from "@/i18n/useT";
 import { toast } from "@/hooks/use-toast";
 import ReviewModal from "@/components/ReviewModal";
 import { Confetti } from "@/components/Confetti";
 import { tap, notify } from "@/lib/native";
 
-const MOCK_DEAL = {
-  id: "1",
-  title: "Допомога з орендою житла",
-  description: "Сім'я з Харкова потребує тимчасового житла.",
-  amount: 320,
-  raised: 200,
-  status: "active",
-  category: "Житло",
-  urgent: false,
-  creator_id: "u1",
-  creator_name: "Оксана К.",
-  creator_flag: "🇺🇦",
-  creator_city: "Харків",
-};
-
 const ActiveDeal = () => {
   const navigate = useNavigate();
+  const { t } = useT();
   const { id } = useParams();
   const { user } = useAuth();
-  const { createCheckout } = useStripe();
+  const { createCheckout, releaseEscrow, refundDeal } = useStripe();
+  const { createOrder: createPaypalOrder } = usePaypal();
+  const { createPaymentSession: createAdyenSession } = useAdyen();
 
   const [deal, setDeal] = useState<any>(null);
   const [dealLoading, setDealLoading] = useState(true);
   const [showReview, setShowReview] = useState(false);
   const [amount, setAmount] = useState("");
   const [paying, setPaying] = useState(false);
+  const [releasing, setReleasing] = useState(false);
+  const [refunding, setRefunding] = useState(false);
+  const [payMethod, setPayMethod] = useState<"stripe" | "paypal" | "adyen">("stripe");
 
   useEffect(() => {
     if (!id) return;
     setDealLoading(true);
     supabase
       .from("deals")
-      .select("*, profiles!creator_id(name, country, city, rating, verified)")
+      .select(
+        "*, profiles!creator_id(name, country, city, rating, verified, stripe_connect_status, paypal_status)"
+      )
       .eq("id", id)
       .maybeSingle()
       .then(({ data }) => {
@@ -56,6 +52,8 @@ const ActiveDeal = () => {
             creator_city: p.city || "",
             creator_rating: p.rating || 0,
             creator_verified: p.verified || false,
+            creator_connect_status: p.stripe_connect_status || "none",
+            creator_paypal_status: p.paypal_status || "none",
           });
         } else {
           // Deal genuinely not found in DB. Don't fall through to MOCK_DEAL
@@ -69,11 +67,11 @@ const ActiveDeal = () => {
   const steps = (() => {
     const s = deal?.status || "active";
     return [
-      { label: "Угоду відкрито", done: true },
-      { label: "Кошти зарезервовано", done: (deal?.raised || 0) > 0 },
-      { label: "Підтвердження", done: s === "completed" || s === "active" },
-      { label: "Кошти відправлено", done: s === "completed" },
-      { label: "Завершено", done: s === "completed" },
+      { label: t("deal.status.opened"), done: true },
+      { label: t("deal.status.reserved"), done: (deal?.raised || 0) > 0 },
+      { label: t("deal.status.confirmation"), done: s === "completed" || s === "active" },
+      { label: t("deal.status.sent"), done: s === "completed" },
+      { label: t("deal.status.finished"), done: s === "completed" },
     ];
   })();
 
@@ -84,23 +82,111 @@ const ActiveDeal = () => {
       return;
     }
     if (!user) {
-      toast({ title: "Потрібен вхід", description: "Увійдіть, щоб підтримати угоду", variant: "destructive" });
+      toast({
+        title: "Потрібен вхід",
+        description: "Увійдіть, щоб підтримати угоду",
+        variant: "destructive",
+      });
       navigate("/auth");
+      return;
+    }
+    if (payMethod === "stripe" && deal?.creator_connect_status !== "enabled") {
+      void notify("error");
+      toast({
+        title: "Отримувач ще не підключив Stripe",
+        description: "Спробуйте PayPal або зверніться пізніше.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // P1-4 fix: symmetrical PayPal gate.
+    if (payMethod === "paypal" && deal?.creator_paypal_status !== "active") {
+      void notify("error");
+      toast({
+        title: "Отримувач ще не підключив PayPal",
+        description: "Спробуйте Stripe або зверніться пізніше.",
+        variant: "destructive",
+      });
       return;
     }
     void tap("medium");
     setPaying(true);
     try {
       void notify("success");
-      await createCheckout({ amount: n, dealId: id });
+      if (payMethod === "paypal") {
+        if (!id) throw new Error("deal id missing");
+        await createPaypalOrder({ amount: n, dealId: id });
+      } else if (payMethod === "adyen") {
+        if (!id) throw new Error("deal id missing");
+        const session = await createAdyenSession({ amount: n, dealId: id });
+        // Без Drop-in SDK: показываем session id и ждём WIP интеграции.
+        toast({
+          title: "Adyen session created",
+          description: `Session ${session.sessionId.slice(0, 12)}… — Drop-in UI підключиться у наступному релізі.`,
+        });
+      } else {
+        await createCheckout({ amount: n, dealId: id });
+      }
     } catch (e: any) {
       void notify("error");
       toast({
-        title: "Stripe ще не підключено",
-        description: e?.message || "Платежі буде активовано найближчим часом.",
+        title: "Помилка платежу",
+        description: e?.message || "Спробуйте ще раз.",
         variant: "destructive",
       });
       setPaying(false);
+    }
+  };
+
+  const handleRefund = async () => {
+    if (!id) return;
+    if (!confirm(t("deal.refund.confirm"))) return;
+    void tap("medium");
+    setRefunding(true);
+    try {
+      await refundDeal(id, "sponsor requested");
+      void notify("success");
+      toast({
+        title: "Запит на повернення",
+        description: "Refund ініційовано, processor підтвердить через webhook.",
+      });
+      setDeal((prev: any) =>
+        prev ? { ...prev, status: "cancelled", refunded_at: new Date().toISOString() } : prev
+      );
+    } catch (e: any) {
+      void notify("error");
+      toast({
+        title: "Не вдалося повернути",
+        description: e?.message || "Спробуйте пізніше.",
+        variant: "destructive",
+      });
+    } finally {
+      setRefunding(false);
+    }
+  };
+
+  const handleReleaseEscrow = async () => {
+    if (!id) return;
+    void tap("medium");
+    setReleasing(true);
+    try {
+      await releaseEscrow(id);
+      void notify("success");
+      toast({ title: "Готово", description: "Кошти переведено отримувачу." });
+      setDeal((prev: any) =>
+        prev ? { ...prev, status: "completed", escrow_released_at: new Date().toISOString() } : prev
+      );
+      setShowConfetti(true);
+      setShowReview(true);
+    } catch (e: any) {
+      void notify("error");
+      toast({
+        title: "Не вдалося завершити",
+        description: e?.message || "Спробуйте ще раз.",
+        variant: "destructive",
+      });
+    } finally {
+      setReleasing(false);
     }
   };
 
@@ -120,16 +206,25 @@ const ActiveDeal = () => {
   if (!deal) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
-        <h2 className="font-serif text-xl text-foreground mb-2">Угоду не знайдено</h2>
-        <p className="text-sm text-muted-foreground mb-6">Можливо, її було видалено або посилання застаріле.</p>
-        <Button variant="outline" onClick={() => navigate("/app")}>На стрічку</Button>
+        <h2 className="font-serif text-xl text-foreground mb-2">{t("deal.notFound.title")}</h2>
+        <p className="text-sm text-muted-foreground mb-6">
+          Можливо, її було видалено або посилання застаріле.
+        </p>
+        <Button variant="outline" onClick={() => navigate("/app")}>
+          На стрічку
+        </Button>
       </div>
     );
   }
 
   const d = deal;
   const pct = d.amount > 0 ? Math.round((d.raised / d.amount) * 100) : 0;
-  const initials = (d.creator_name || "?").split(" ").map((s: string) => s[0]).join("").slice(0, 2).toUpperCase();
+  const initials = (d.creator_name || "?")
+    .split(" ")
+    .map((s: string) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
   const finished = d.status === "completed" || d.status === "cancelled";
 
   return (
@@ -162,7 +257,10 @@ const ActiveDeal = () => {
               <p className="text-xs text-muted-foreground">{d.creator_city}</p>
             </div>
             <button
-              onClick={() => { void tap("light"); navigate(`/app/chat/${id}`); }}
+              onClick={() => {
+                void tap("light");
+                navigate(`/app/chat/${id}`);
+              }}
               className="ml-auto min-h-[44px] min-w-[44px] bg-primary/10 rounded-2xl flex items-center justify-center transition-transform duration-150 hover:-translate-y-px"
               aria-label="Чат"
             >
@@ -187,9 +285,33 @@ const ActiveDeal = () => {
 
         {!finished && (
           <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
-            <h3 className="font-semibold text-foreground mb-3">Підтримати угоду</h3>
+            <h3 className="font-semibold text-foreground mb-3">{t("deal.support.title")}</h3>
+            <div className="flex gap-2 mb-3" role="tablist" aria-label="Спосіб оплати">
+              {(["stripe", "paypal", "adyen"] as const).map((m) => (
+                <button
+                  key={m}
+                  role="tab"
+                  data-testid={`pay-method-${m}`}
+                  aria-selected={payMethod === m}
+                  onClick={() => setPayMethod(m)}
+                  className={`flex-1 min-h-[44px] py-2 rounded-xl text-[11px] font-semibold border transition-all duration-150 ${
+                    payMethod === m ? "bg-primary text-white border-primary" : "border-border text-foreground"
+                  }`}
+                >
+                  {m === "stripe" ? "Картка" : m === "paypal" ? "PayPal" : "Локальні"}
+                </button>
+              ))}
+            </div>
+            {payMethod === "stripe" && deal?.creator_connect_status !== "enabled" && (
+              <div className="mb-3 p-3 rounded-xl bg-warning/10 border border-warning/20">
+                <p className="text-xs text-warning font-medium">
+                  Отримувач ще не завершив підключення Stripe. Оплата буде доступна після верифікації або
+                  через PayPal.
+                </p>
+              </div>
+            )}
             <div className="flex gap-2 mb-3">
-              {["10", "25", "50", "100"].map(a => (
+              {["10", "25", "50", "100"].map((a) => (
                 <button
                   key={a}
                   data-testid={`donate-amount-${a}`}
@@ -206,14 +328,19 @@ const ActiveDeal = () => {
               type="number"
               min="1"
               value={amount}
-              onChange={e => setAmount(e.target.value)}
+              onChange={(e) => setAmount(e.target.value)}
               placeholder="Інша сума…"
               className="w-full bg-secondary rounded-xl px-4 py-2.5 text-sm outline-none text-foreground mb-3 focus:ring-2 focus:ring-accent/30"
             />
             <Button
               data-testid="donate-submit"
               className="w-full bg-accent hover:bg-accent/90 text-white transition-transform duration-150 hover:-translate-y-px"
-              disabled={paying || !amount}
+              disabled={
+                paying ||
+                !amount ||
+                (payMethod === "stripe" && deal?.creator_connect_status !== "enabled") ||
+                (payMethod === "paypal" && deal?.creator_paypal_status !== "active")
+              }
               onClick={handlePay}
             >
               {paying ? "Відкриваємо оплату…" : `Підтримати €${amount || "…"}`}
@@ -241,7 +368,9 @@ const ActiveDeal = () => {
                       <div className="w-2 h-2 rounded-full bg-muted-foreground" />
                     )}
                   </div>
-                  <p className={`text-sm pt-1 ${step.done ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                  <p
+                    className={`text-sm pt-1 ${step.done ? "text-foreground font-medium" : "text-muted-foreground"}`}
+                  >
                     {step.label}
                   </p>
                 </div>
@@ -253,7 +382,7 @@ const ActiveDeal = () => {
         <div className="flex items-start gap-3 p-3 bg-success/10 rounded-2xl">
           <Shield className="w-5 h-5 text-success shrink-0 mt-0.5" strokeWidth={1.75} />
           <div>
-            <p className="text-sm font-semibold text-foreground">Захист BridoConnect</p>
+            <p className="text-sm font-semibold text-foreground">{t("deal.protection.title")}</p>
             <p className="text-xs text-muted-foreground">
               Кошти переводяться тільки після підтвердження обох сторін
             </p>
@@ -261,19 +390,38 @@ const ActiveDeal = () => {
         </div>
 
         {!finished && (
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <Button
               variant="outline"
-              className="flex-1 border-destructive text-destructive hover:bg-destructive/10 transition-transform duration-150 hover:-translate-y-px"
-              onClick={() => { void tap("light"); navigate(`/app/dispute/${id}`); }}
+              className="flex-1 min-w-[100px] border-destructive text-destructive hover:bg-destructive/10 transition-transform duration-150 hover:-translate-y-px"
+              onClick={() => {
+                void tap("light");
+                navigate(`/app/dispute/${id}`);
+              }}
             >
               <AlertTriangle className="w-4 h-4 mr-2" strokeWidth={1.75} /> Спір
             </Button>
+            {user?.id === d.sponsor_id && (d.raised || 0) > 0 && !d.escrow_released_at && !d.refunded_at && (
+              <Button
+                data-testid="refund-deal"
+                variant="outline"
+                className="flex-1 min-w-[120px] border-warning text-warning hover:bg-warning/10 transition-transform duration-150 hover:-translate-y-px"
+                disabled={refunding}
+                onClick={handleRefund}
+              >
+                {refunding ? t("deal.refund.loading") : t("deal.refund")}
+              </Button>
+            )}
             <Button
+              data-testid="release-escrow"
               className="flex-1 bg-success hover:bg-success/90 text-white transition-transform duration-150 hover:-translate-y-px"
-              onClick={() => { void tap("medium"); setShowReview(true); }}
+              disabled={
+                releasing || !d.sponsor_id || !user?.id || user.id !== d.sponsor_id || (d.raised || 0) <= 0
+              }
+              onClick={handleReleaseEscrow}
             >
-              <CheckCircle className="w-4 h-4 mr-2" strokeWidth={1.75} /> Завершити
+              <CheckCircle className="w-4 h-4 mr-2" strokeWidth={1.75} />{" "}
+              {releasing ? t("deal.escrow.releasing") : t("deal.escrow.release")}
             </Button>
           </div>
         )}
@@ -284,6 +432,7 @@ const ActiveDeal = () => {
           dealId={id || ""}
           revieweeId={d.creator_id || "u1"}
           revieweeName={d.creator_name || "Користувач"}
+          revieweeRole="as_recipient"
           onClose={() => setShowReview(false)}
           onSuccess={() => {
             void notify("success");

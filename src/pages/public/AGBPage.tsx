@@ -4,35 +4,52 @@ import { ArrowLeft } from "lucide-react";
 const sections = [
   {
     title: "§ 1 Geltungsbereich",
-    content: "Diese Allgemeinen Geschäftsbedingungen gelten für alle Nutzer der Plattform BridoConnect, betrieben von Firma „Luftarbeiter“, Inh. Oleksii Kusov, Mosenstraße 3, 08209 Auerbach."
+    content:
+      "Diese Allgemeinen Geschäftsbedingungen gelten für alle Nutzer der Plattform BridoConnect, betrieben von Firma „Luftarbeiter“, Inh. Oleksii Kusov, Mosenstraße 3, 08209 Auerbach.",
   },
   {
     title: "§ 2 Leistungsbeschreibung",
-    content: "BridoConnect ist eine P2P-Plattform für humanitäre Hilfe. Die Plattform vermittelt zwischen Hilfesuchenden und Spendern. BridoConnect ist kein Treuhänder und keine Wohltätigkeitsorganisation."
+    content:
+      "BridoConnect ist eine P2P-Plattform für humanitäre Hilfe. Die Plattform vermittelt zwischen Hilfesuchenden und Spendern. BridoConnect ist kein Treuhänder und keine Wohltätigkeitsorganisation.",
   },
   {
     title: "§ 3 Registrierung",
-    content: "Für die Nutzung der Plattform ist eine Registrierung erforderlich. Der Nutzer muss volljährig sein. Die Angaben bei der Registrierung müssen wahrheitsgemäß sein."
+    content:
+      "Für die Nutzung der Plattform ist eine Registrierung erforderlich. Der Nutzer muss volljährig sein. Die Angaben bei der Registrierung müssen wahrheitsgemäß sein.",
   },
   {
     title: "§ 4 Verifizierung",
-    content: "BridoConnect bietet ein freiwilliges Verifizierungsverfahren an. Verifizierte Nutzer erhalten einen entsprechenden Badge. Die Verifizierung erhöht das Vertrauen auf der Plattform."
+    content:
+      "BridoConnect bietet ein freiwilliges Verifizierungsverfahren an. Verifizierte Nutzer erhalten einen entsprechenden Badge. Die Verifizierung erhöht das Vertrauen auf der Plattform.",
   },
   {
-    title: "§ 5 Zahlungen und Gebühren",
-    content: "Zahlungen werden über Stripe abgewickelt. BridoConnect erhebt eine Servicegebühr von 5% auf alle Transaktionen. Premium-Nutzer sind von der Servicegebühr befreit."
+    title: "§ 5 Zahlungen und technische Abwicklung",
+    content:
+      "Alle Zahlungen werden ausschließlich über Stripe Connect Express (Stripe Payments Europe Ltd., Dublin) bzw. PayPal Commerce Platform (PayPal (Europe) S.à r.l., Luxemburg) abgewickelt. Diese Dienstleister sind Merchant of Record, Zahlungsdienstleister im Sinne des ZAG/PSD2 und alleiniger Halter der Mittel während des gesamten Zahlungsvorgangs. BridoConnect tritt ausschließlich als technischer Vermittler auf, hat zu keinem Zeitpunkt Verfügungsgewalt über die Mittel, ist weder Treuhänder im Sinne der §§ 688 ff. BGB noch Zahlungsdienstleister im Sinne des ZAG und verfügt über keine BaFin-Lizenz. Beträge verbleiben technisch reserviert auf dem Empfängerkonto bei Stripe/PayPal für bis zu sieben (7) Tage, bis der Sponsor den Empfang bestätigt oder die Frist abläuft; der gesamte Hold-Mechanismus wird ausschließlich von Stripe/PayPal nach deren AGB gesteuert.",
   },
   {
-    title: "§ 6 Haftung",
-    content: "BridoConnect haftet nicht für die Richtigkeit der von Nutzern eingestellten Informationen. Nutzer sind selbst verantwortlich für ihre Angaben. BridoConnect übernimmt keine Haftung für Transaktionen zwischen Nutzern."
+    title: "§ 6 Servicegebühr",
+    content:
+      "BridoConnect erhebt eine plattformseitige Servicegebühr von 5% auf jede vermittelte Transaktion (application_fee_amount), die zum Zeitpunkt der Zahlung einbehalten wird. Stripe-Verarbeitungskosten (typisch 1,4% + 0,25 € für EU-Karten) werden zusätzlich vom Empfänger getragen. Premium-Nutzer sind von der BridoConnect-Servicegebühr befreit; Stripe-Gebühren bleiben bestehen.",
   },
   {
-    title: "§ 7 Kündigung",
-    content: "Nutzer können ihr Konto jederzeit löschen. BridoConnect kann Konten bei Verstößen gegen diese AGB ohne Vorankündigung sperren oder löschen."
+    title: "§ 7 Rückerstattung und Streitigkeiten",
+    content:
+      "Sponsoren können binnen 14 Tagen nach Zahlung eine Rückerstattung anfordern, sofern die Treuhand-Frist noch nicht abgelaufen ist und keine Empfangsbestätigung erfolgt ist. Streitfälle werden über die plattforminterne Dispute-Funktion eröffnet; bei Charge-Back über Stripe wird der Deal automatisch als „disputed“ markiert. Endgültige Entscheidungen über Rückerstattungen liegen bei Stripe nach deren AGB.",
   },
   {
-    title: "§ 8 Anwendbares Recht",
-    content: "Es gilt deutsches Recht. Gerichtsstand ist Auerbach/Vogtland, sofern der Nutzer Kaufmann ist."
+    title: "§ 8 Haftung",
+    content:
+      "BridoConnect haftet nicht für die Richtigkeit der von Nutzern eingestellten Informationen. Nutzer sind selbst verantwortlich für ihre Angaben. BridoConnect übernimmt keine Haftung für Transaktionen zwischen Nutzern, insbesondere nicht für die zweckgemäße Verwendung von Spenden.",
+  },
+  {
+    title: "§ 9 Kündigung",
+    content:
+      "Nutzer können ihr Konto jederzeit löschen. BridoConnect kann Konten bei Verstößen gegen diese AGB ohne Vorankündigung sperren oder löschen. Empfänger müssen vor Auszahlung ein Stripe-Connect-Konto vollständig verifizieren (KYC).",
+  },
+  {
+    title: "§ 10 Anwendbares Recht",
+    content: "Es gilt deutsches Recht. Gerichtsstand ist Auerbach/Vogtland, sofern der Nutzer Kaufmann ist.",
   },
 ];
 
@@ -48,7 +65,9 @@ const AGBPage = () => {
         <ArrowLeft className="w-4 h-4" strokeWidth={1.75} /> Назад
       </button>
       <h1 className="font-serif text-4xl tracking-tight text-foreground mb-2 animate-fade-in">AGB</h1>
-      <p className="text-muted-foreground text-sm mb-8 leading-relaxed">Allgemeine Geschäftsbedingungen · Загальні умови</p>
+      <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
+        Allgemeine Geschäftsbedingungen · Загальні умови
+      </p>
       <div className="space-y-6">
         {sections.map((s, i) => (
           <section key={i}>

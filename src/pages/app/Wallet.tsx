@@ -14,6 +14,7 @@ import { Drawer } from "vaul";
 import { Button } from "@/components/ui/button";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useStripe } from "@/hooks/useStripe";
+import { useT } from "@/i18n/useT";
 import { toast } from "@/hooks/use-toast";
 import { tap, notify } from "@/lib/native";
 
@@ -28,6 +29,7 @@ const QUICK_AMOUNTS = [10, 25, 50, 100, 250];
 
 const Wallet = () => {
   const navigate = useNavigate();
+  const { t } = useT();
   const { transactions, balance, loading, refetch } = useTransactions();
   const { createCheckout } = useStripe();
 
@@ -56,8 +58,7 @@ const Wallet = () => {
       toast({
         title: "Stripe не підключено",
         description:
-          e?.message ||
-          "Платежі буде активовано після підключення Stripe. Зверніться до адміністратора.",
+          e?.message || "Платежі буде активовано після підключення Stripe. Зверніться до адміністратора.",
         variant: "destructive",
       });
       setDepositing(false);
@@ -65,23 +66,21 @@ const Wallet = () => {
   };
 
   const totalOut = transactions
-    .filter(t => t.type === "deal_payment" || t.type === "withdrawal")
+    .filter((t) => t.type === "deal_payment" || t.type === "withdrawal")
     .reduce((s, t) => s + t.amount, 0);
   const totalIn = transactions
-    .filter(t => t.type === "deposit" || t.type === "refund")
+    .filter((t) => t.type === "deposit" || t.type === "refund")
     .reduce((s, t) => s + t.amount, 0);
 
   return (
     <div className="pb-8">
-      <h1 className="sr-only">Гаманець</h1>
+      <h1 className="sr-only">{t("wallet.title")}</h1>
       <div className="px-4 pt-4 pb-6 bg-primary text-white rounded-b-3xl mb-4">
-        <h2 className="font-serif text-xl mb-6">Гаманець</h2>
+        <h2 className="font-serif text-xl mb-6">{t("wallet.title")}</h2>
         <div className="text-center mb-6">
           <p className="text-white/60 text-sm mb-1">Доступний баланс</p>
           <p className="text-4xl font-bold">€{balance.toFixed(2)}</p>
-          <p className="text-white/40 text-xs mt-1">
-            ≈ ${(balance * 1.09).toFixed(0)} USD
-          </p>
+          <p className="text-white/40 text-xs mt-1">≈ ${(balance * 1.09).toFixed(0)} USD</p>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <Button
@@ -91,7 +90,7 @@ const Wallet = () => {
             className="flex flex-col gap-1 h-14 bg-white/10 hover:bg-white/20 text-white border-0"
           >
             <Plus className="w-4 h-4" />
-            <span className="text-xs">Поповнити</span>
+            <span className="text-xs">{t("wallet.topup")}</span>
           </Button>
           <Button
             variant="secondary"
@@ -142,7 +141,10 @@ const Wallet = () => {
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-foreground">Транзакції</h3>
           <button
-            onClick={() => { void tap("light"); void refetch(); }}
+            onClick={() => {
+              void tap("light");
+              void refetch();
+            }}
             className="text-muted-foreground hover:text-foreground transition-transform duration-150 hover:-translate-y-px min-h-[44px] min-w-[44px] flex items-center justify-end"
             aria-label="Оновити"
           >
@@ -156,20 +158,24 @@ const Wallet = () => {
               <WalletIcon className="w-7 h-7 text-muted-foreground" strokeWidth={1.5} aria-hidden="true" />
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed text-center max-w-[16rem]">
-              Транзакцій ще немає.<br />Поповніть гаманець, щоб почати.
+              Транзакцій ще немає.
+              <br />
+              Поповніть гаманець, щоб почати.
             </p>
           </div>
         )}
 
         <div className="space-y-2">
-          {transactions.map(t => {
+          {transactions.map((t) => {
             const isOut = t.type === "deal_payment" || t.type === "withdrawal";
             return (
               <div
                 key={t.id}
                 onClick={() => t.deal_id && navigate(`/app/deal/${t.deal_id}`)}
                 className={`flex items-center gap-3 p-3 rounded-2xl transition-shadow duration-200 ${
-                  t.deal_id ? "cursor-pointer hover:shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)]" : ""
+                  t.deal_id
+                    ? "cursor-pointer hover:shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)]"
+                    : ""
                 }`}
               >
                 <div
@@ -184,9 +190,7 @@ const Wallet = () => {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">
-                    {TYPE_LABEL[t.type] || t.type}
-                  </p>
+                  <p className="text-sm font-medium text-foreground">{TYPE_LABEL[t.type] || t.type}</p>
                   <p className="text-xs text-muted-foreground">
                     {new Date(t.created_at).toLocaleDateString("uk", {
                       day: "numeric",
@@ -196,11 +200,7 @@ const Wallet = () => {
                     })}
                   </p>
                 </div>
-                <span
-                  className={`font-semibold text-sm ${
-                    isOut ? "text-accent" : "text-success"
-                  }`}
-                >
+                <span className={`font-semibold text-sm ${isOut ? "text-accent" : "text-success"}`}>
                   {isOut ? "-" : "+"}€{t.amount.toFixed(0)}
                 </span>
               </div>
@@ -227,7 +227,7 @@ const Wallet = () => {
                 </button>
               </div>
               <div className="grid grid-cols-5 gap-2 mb-4">
-                {QUICK_AMOUNTS.map(a => (
+                {QUICK_AMOUNTS.map((a) => (
                   <button
                     key={a}
                     onClick={() => setDepositAmount(String(a))}
@@ -247,7 +247,7 @@ const Wallet = () => {
                   type="number"
                   min="1"
                   value={depositAmount}
-                  onChange={e => setDepositAmount(e.target.value)}
+                  onChange={(e) => setDepositAmount(e.target.value)}
                   className="w-full bg-secondary rounded-xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
                 />
               </div>

@@ -44,8 +44,8 @@ async function main() {
     console.error("Usage: --prompt <text> --out <path> [--duration 5|10]");
     process.exit(1);
   }
-  if (![5, 10].includes(duration)) {
-    console.error("duration must be 5 or 10");
+  if (![4, 5, 6, 8, 10].includes(duration)) {
+    console.error("duration must be 4, 5, 6, 8 or 10");
     process.exit(1);
   }
   const apiKey = await loadKey();
@@ -59,10 +59,10 @@ async function main() {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gen3a_turbo",
+      model: process.env.RUNWAY_MODEL || "gen4_turbo",
       promptText: prompt,
       duration,
-      ratio: "1280:768",
+      ratio: process.env.RUNWAY_RATIO || "1280:720",
     }),
   });
 
