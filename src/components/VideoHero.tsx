@@ -37,16 +37,31 @@ function detectInitialLang(): string {
  */
 export const VideoHero = ({ variant = "hero" }: { variant?: "hero" | "explainer" }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [lang, setLang] = useState<string>(() => detectInitialLang());
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
 
   const currentLang = useMemo(() => LANGS.find((l) => l.code === lang) || LANGS[9], [lang]);
 
+  // iOS WebKit: autoPlay attribute alone isn't always enough on first load
+  // (especially in PWA / Capacitor context). Imperatively start playback after mount.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true;
+    v.playsInline = true;
+    v.play().catch(() => {
+      // Some iOS versions / low-power mode block autoplay even when muted.
+      // Fall back to animated CSS background.
+      setVideoFailed(true);
+    });
+  }, []);
+
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, lang);
-    // Swap source — if was playing, restart from 0 in new language.
     const a = audioRef.current;
     if (!a) return;
     const wasPlaying = !a.paused;
@@ -78,22 +93,27 @@ export const VideoHero = ({ variant = "hero" }: { variant?: "hero" | "explainer"
       }`}
       aria-label="BridoConnect explainer"
     >
-      <video
-        className="absolute inset-0 w-full h-full object-cover"
-        src="/videos/hero-loop.mp4"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        aria-hidden="true"
-      />
+      {!videoFailed && (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-cover"
+          src="/videos/hero-loop.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          onError={() => setVideoFailed(true)}
+          aria-hidden="true"
+        />
+      )}
       <div
         className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 z-[1]"
         aria-hidden="true"
       />
       <div
-        className="absolute inset-0 brido-hero-bg opacity-0 [.video-failed_&]:opacity-100 transition-opacity"
+        className={`absolute inset-0 brido-hero-bg transition-opacity ${videoFailed ? "opacity-100" : "opacity-0"}`}
         aria-hidden="true"
       >
         <div className="brido-orb brido-orb-1" />
