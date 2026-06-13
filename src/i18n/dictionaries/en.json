@@ -29,10 +29,33 @@
   "deal.support.opening": "Opening checkout…",
   "deal.support.notReady.stripe": "Recipient has not connected Stripe yet",
   "deal.support.notReady.paypal": "Recipient has not connected PayPal yet",
-
+  "deal.payMethod.card": "Card",
+  "deal.payMethod.paypal": "PayPal",
+  "deal.payMethod.local": "Local",
+  "deal.status.title": "Status",
+  "deal.status.opened": "Deal opened",
+  "deal.status.reserved": "Funds reserved",
+  "deal.status.confirmation": "Confirmation",
+  "deal.status.sent": "Funds released",
+  "deal.status.finished": "Completed",
+  "deal.dispute": "Dispute",
+  "deal.refund": "Refund",
+  "deal.refund.confirm": "Refund these funds? This cannot be undone.",
+  "deal.refund.loading": "Refunding…",
   "deal.escrow.release": "Confirm receipt",
   "deal.escrow.releasing": "Releasing…",
   "deal.escrow.done": "Funds released to recipient.",
+  "deal.protection.title": "BridoConnect Protection",
+  "deal.protection.desc": "Funds release only after both parties confirm",
+  "deal.notFound.title": "Deal not found",
+  "deal.notFound.desc": "It may have been deleted or the link is stale.",
+  "deal.notFound.back": "To feed",
+
+  "wallet.title": "Wallet",
+  "wallet.balance": "Balance",
+  "wallet.topup": "Top up",
+  "wallet.transactions": "Transactions",
+  "wallet.empty": "No transactions yet",
 
   "review.title": "Leave a review",
   "review.send": "Send review",
@@ -42,5 +65,10 @@
   "trust.label": "Trust score",
   "trust.high": "High trust",
   "trust.medium": "Moderate trust",
-  "trust.low": "Low trust"
+  "trust.low": "Low trust",
+
+  "common.back": "Back",
+  "common.cancel": "Cancel",
+  "common.confirm": "Confirm",
+  "common.loading": "Loading…"
 }

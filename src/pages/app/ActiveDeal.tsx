@@ -7,28 +7,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStripe } from "@/hooks/useStripe";
 import { usePaypal } from "@/hooks/usePaypal";
 import { useAdyen } from "@/hooks/useAdyen";
+import { useT } from "@/i18n/useT";
 import { toast } from "@/hooks/use-toast";
 import ReviewModal from "@/components/ReviewModal";
 import { Confetti } from "@/components/Confetti";
 import { tap, notify } from "@/lib/native";
 
-const MOCK_DEAL = {
-  id: "1",
-  title: "Допомога з орендою житла",
-  description: "Сім'я з Харкова потребує тимчасового житла.",
-  amount: 320,
-  raised: 200,
-  status: "active",
-  category: "Житло",
-  urgent: false,
-  creator_id: "u1",
-  creator_name: "Оксана К.",
-  creator_flag: "🇺🇦",
-  creator_city: "Харків",
-};
-
 const ActiveDeal = () => {
   const navigate = useNavigate();
+  const { t } = useT();
   const { id } = useParams();
   const { user } = useAuth();
   const { createCheckout, releaseEscrow, refundDeal } = useStripe();
@@ -80,11 +67,11 @@ const ActiveDeal = () => {
   const steps = (() => {
     const s = deal?.status || "active";
     return [
-      { label: "Угоду відкрито", done: true },
-      { label: "Кошти зарезервовано", done: (deal?.raised || 0) > 0 },
-      { label: "Підтвердження", done: s === "completed" || s === "active" },
-      { label: "Кошти відправлено", done: s === "completed" },
-      { label: "Завершено", done: s === "completed" },
+      { label: t("deal.status.opened"), done: true },
+      { label: t("deal.status.reserved"), done: (deal?.raised || 0) > 0 },
+      { label: t("deal.status.confirmation"), done: s === "completed" || s === "active" },
+      { label: t("deal.status.sent"), done: s === "completed" },
+      { label: t("deal.status.finished"), done: s === "completed" },
     ];
   })();
 
@@ -153,7 +140,7 @@ const ActiveDeal = () => {
 
   const handleRefund = async () => {
     if (!id) return;
-    if (!confirm("Повернути кошти? Цю дію не можна скасувати.")) return;
+    if (!confirm(t("deal.refund.confirm"))) return;
     void tap("medium");
     setRefunding(true);
     try {
@@ -219,7 +206,7 @@ const ActiveDeal = () => {
   if (!deal) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
-        <h2 className="font-serif text-xl text-foreground mb-2">Угоду не знайдено</h2>
+        <h2 className="font-serif text-xl text-foreground mb-2">{t("deal.notFound.title")}</h2>
         <p className="text-sm text-muted-foreground mb-6">
           Можливо, її було видалено або посилання застаріле.
         </p>
@@ -298,7 +285,7 @@ const ActiveDeal = () => {
 
         {!finished && (
           <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
-            <h3 className="font-semibold text-foreground mb-3">Підтримати угоду</h3>
+            <h3 className="font-semibold text-foreground mb-3">{t("deal.support.title")}</h3>
             <div className="flex gap-2 mb-3" role="tablist" aria-label="Спосіб оплати">
               {(["stripe", "paypal", "adyen"] as const).map((m) => (
                 <button
@@ -395,7 +382,7 @@ const ActiveDeal = () => {
         <div className="flex items-start gap-3 p-3 bg-success/10 rounded-2xl">
           <Shield className="w-5 h-5 text-success shrink-0 mt-0.5" strokeWidth={1.75} />
           <div>
-            <p className="text-sm font-semibold text-foreground">Захист BridoConnect</p>
+            <p className="text-sm font-semibold text-foreground">{t("deal.protection.title")}</p>
             <p className="text-xs text-muted-foreground">
               Кошти переводяться тільки після підтвердження обох сторін
             </p>
@@ -422,7 +409,7 @@ const ActiveDeal = () => {
                 disabled={refunding}
                 onClick={handleRefund}
               >
-                {refunding ? "Повертаємо…" : "Повернути кошти"}
+                {refunding ? t("deal.refund.loading") : t("deal.refund")}
               </Button>
             )}
             <Button
@@ -434,7 +421,7 @@ const ActiveDeal = () => {
               onClick={handleReleaseEscrow}
             >
               <CheckCircle className="w-4 h-4 mr-2" strokeWidth={1.75} />{" "}
-              {releasing ? "Завершуємо…" : "Підтвердити отримання"}
+              {releasing ? t("deal.escrow.releasing") : t("deal.escrow.release")}
             </Button>
           </div>
         )}

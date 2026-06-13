@@ -29,10 +29,33 @@
   "deal.support.opening": "Відкриваємо оплату…",
   "deal.support.notReady.stripe": "Отримувач ще не підключив Stripe",
   "deal.support.notReady.paypal": "Отримувач ще не підключив PayPal",
-
+  "deal.payMethod.card": "Картка",
+  "deal.payMethod.paypal": "PayPal",
+  "deal.payMethod.local": "Локальні",
+  "deal.status.title": "Статус",
+  "deal.status.opened": "Угоду відкрито",
+  "deal.status.reserved": "Кошти зарезервовано",
+  "deal.status.confirmation": "Підтвердження",
+  "deal.status.sent": "Кошти відправлено",
+  "deal.status.finished": "Завершено",
+  "deal.dispute": "Спір",
+  "deal.refund": "Повернути кошти",
+  "deal.refund.confirm": "Повернути кошти? Цю дію не можна скасувати.",
+  "deal.refund.loading": "Повертаємо…",
   "deal.escrow.release": "Підтвердити отримання",
   "deal.escrow.releasing": "Завершуємо…",
   "deal.escrow.done": "Кошти переведено отримувачу.",
+  "deal.protection.title": "Захист BridoConnect",
+  "deal.protection.desc": "Кошти переводяться тільки після підтвердження обох сторін",
+  "deal.notFound.title": "Угоду не знайдено",
+  "deal.notFound.desc": "Можливо, її було видалено або посилання застаріле.",
+  "deal.notFound.back": "На стрічку",
+
+  "wallet.title": "Гаманець",
+  "wallet.balance": "Баланс",
+  "wallet.topup": "Поповнити",
+  "wallet.transactions": "Транзакції",
+  "wallet.empty": "Поки що транзакцій немає",
 
   "review.title": "Залишити відгук",
   "review.send": "Надіслати відгук",
@@ -42,5 +65,10 @@
   "trust.label": "Trust score",
   "trust.high": "Високий рівень довіри",
   "trust.medium": "Помірний рівень довіри",
-  "trust.low": "Низький рівень довіри"
+  "trust.low": "Низький рівень довіри",
+
+  "common.back": "Назад",
+  "common.cancel": "Скасувати",
+  "common.confirm": "Підтвердити",
+  "common.loading": "Завантаження…"
 }
