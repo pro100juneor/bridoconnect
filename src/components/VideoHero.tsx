@@ -28,12 +28,12 @@ function detectInitialLang(): string {
 }
 
 /**
- * Animated hero with multi-language voiceover.
+ * Hero with Runway-generated background video + multi-language voiceover.
  *
- * Pure CSS + SVG animation (no AI-generated video — Runway credits exhausted at
- * v1.0.0-rc1; regenerate later via scripts/runway-gen.mjs once topped up).
- * Audio: 10 ElevenLabs voiceovers in public/audio/narration/{lang}.mp3,
- * ~35 sec each, narrating what BridoConnect is.
+ * Video: public/videos/hero-loop.mp4 (Seedance2 Fast, 5s loop, warm humans
+ * helping across borders). Audio: 10 ElevenLabs voiceovers in
+ * public/audio/narration/{lang}.mp3, ~35 sec each.
+ * Animated CSS+SVG layer remains as fallback when video fails to load.
  */
 export const VideoHero = ({ variant = "hero" }: { variant?: "hero" | "explainer" }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -78,7 +78,24 @@ export const VideoHero = ({ variant = "hero" }: { variant?: "hero" | "explainer"
       }`}
       aria-label="BridoConnect explainer"
     >
-      <div className="absolute inset-0 brido-hero-bg" aria-hidden="true">
+      <video
+        className="absolute inset-0 w-full h-full object-cover"
+        src="/videos/hero-loop.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 z-[1]"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 brido-hero-bg opacity-0 [.video-failed_&]:opacity-100 transition-opacity"
+        aria-hidden="true"
+      >
         <div className="brido-orb brido-orb-1" />
         <div className="brido-orb brido-orb-2" />
         <div className="brido-orb brido-orb-3" />
