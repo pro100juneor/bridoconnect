@@ -219,6 +219,7 @@ const Profile = () => {
         <div className="px-4 pb-4 space-y-3">
           <ConnectCard connect={connect} loading={connectLoading} onConnect={handleConnect} />
           <PaypalCard status={paypalStatus} onConnect={handlePaypal} />
+          <CryptoCard userId={user?.id} />
         </div>
       )}
 
@@ -262,6 +263,101 @@ const STATUS_COPY: Record<ConnectStatus["status"], { label: string; tone: string
   enabled: { label: "Активний", tone: "text-success", cta: "Оновити дані" },
   restricted: { label: "Обмежено", tone: "text-destructive", cta: "Виправити та продовжити" },
   rejected: { label: "Відхилено", tone: "text-destructive", cta: "Звернутись до підтримки" },
+};
+
+const CryptoCard = ({ userId }: { userId: string | undefined }) => {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [addrUsdt, setAddrUsdt] = useState("");
+  const [addrBtc, setAddrBtc] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from("profiles")
+      .select("crypto_enabled, crypto_addresses")
+      .eq("id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setEnabled(!!(data as { crypto_enabled?: boolean }).crypto_enabled);
+          const addrs =
+            (data as { crypto_addresses?: { usdt_trc20?: string; btc_ln?: string } }).crypto_addresses || {};
+          setAddrUsdt(addrs.usdt_trc20 || "");
+          setAddrBtc(addrs.btc_ln || "");
+        }
+      });
+  }, [userId]);
+
+  const save = async () => {
+    if (!userId) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        crypto_enabled: !enabled,
+        crypto_addresses: { usdt_trc20: addrUsdt.trim() || null, btc_ln: addrBtc.trim() || null },
+      })
+      .eq("id", userId);
+    setSaving(false);
+    if (error) {
+      toast({ title: "Crypto", description: error.message, variant: "destructive" });
+    } else {
+      setEnabled((v) => !v);
+      toast({
+        title: "Crypto",
+        description: enabled ? "Виплати в крипті вимкнено" : "Виплати в крипті увімкнено",
+      });
+    }
+  };
+
+  return (
+    <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 before:rounded-t-2xl">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-2xl bg-warning/10 flex items-center justify-center font-bold text-warning text-xs">
+          ₿
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">Crypto donations</p>
+          <p className={`text-xs ${enabled ? "text-success" : "text-muted-foreground"}`}>
+            {enabled ? "Активно" : "Не підключено"}
+          </p>
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">
+        BTC Lightning + USDT TRC20. Для отримання без банку (sanctioned regions, refugees).
+      </p>
+      {enabled && (
+        <div className="space-y-2 mb-3">
+          <input
+            data-testid="crypto-usdt-input"
+            type="text"
+            value={addrUsdt}
+            onChange={(e) => setAddrUsdt(e.target.value)}
+            placeholder="USDT TRC20 адреса (T...)"
+            className="w-full bg-secondary rounded-xl px-3 py-2 text-xs outline-none text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent/30"
+          />
+          <input
+            data-testid="crypto-btcln-input"
+            type="text"
+            value={addrBtc}
+            onChange={(e) => setAddrBtc(e.target.value)}
+            placeholder="Lightning LNURL (lnurl1...)"
+            className="w-full bg-secondary rounded-xl px-3 py-2 text-xs outline-none text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent/30"
+          />
+        </div>
+      )}
+      <Button
+        data-testid="crypto-toggle"
+        variant="outline"
+        className="w-full transition-transform duration-150 hover:-translate-y-px"
+        disabled={saving}
+        onClick={save}
+      >
+        {enabled ? "Зберегти / Вимкнути" : "Увімкнути crypto"}
+      </Button>
+    </div>
+  );
 };
 
 const PaypalCard = ({ status, onConnect }: { status: string | null; onConnect: () => void }) => {

@@ -67,6 +67,16 @@
   "trust.medium": "Помірний рівень довіри",
   "trust.low": "Низький рівень довіри",
 
+  "feed.title": "Стрічка",
+  "feed.titleSr": "Стрічка запитів про допомогу",
+  "feed.category.all": "Всі",
+  "feed.category.money": "Гроші",
+  "feed.category.goods": "Товари",
+  "feed.category.tasks": "Завдання",
+  "feed.category.meds": "Ліки",
+  "feed.category.housing": "Житло",
+  "feed.category.food": "Їжа",
+
   "common.back": "Назад",
   "common.cancel": "Скасувати",
   "common.confirm": "Підтвердити",

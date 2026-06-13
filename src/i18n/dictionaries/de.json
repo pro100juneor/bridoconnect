@@ -67,6 +67,16 @@
   "trust.medium": "Mittleres Vertrauen",
   "trust.low": "Niedriges Vertrauen",
 
+  "feed.title": "Feed",
+  "feed.titleSr": "Feed der Hilfsanfragen",
+  "feed.category.all": "Alle",
+  "feed.category.money": "Geld",
+  "feed.category.goods": "Waren",
+  "feed.category.tasks": "Aufgaben",
+  "feed.category.meds": "Medikamente",
+  "feed.category.housing": "Wohnen",
+  "feed.category.food": "Essen",
+
   "common.back": "Zurück",
   "common.cancel": "Abbrechen",
   "common.confirm": "Bestätigen",

@@ -67,6 +67,16 @@
   "trust.medium": "Moderate trust",
   "trust.low": "Low trust",
 
+  "feed.title": "Feed",
+  "feed.titleSr": "Feed of aid requests",
+  "feed.category.all": "All",
+  "feed.category.money": "Money",
+  "feed.category.goods": "Goods",
+  "feed.category.tasks": "Tasks",
+  "feed.category.meds": "Medicine",
+  "feed.category.housing": "Housing",
+  "feed.category.food": "Food",
+
   "common.back": "Back",
   "common.cancel": "Cancel",
   "common.confirm": "Confirm",
