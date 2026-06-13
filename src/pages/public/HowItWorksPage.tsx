@@ -1,12 +1,33 @@
 import { useNavigate } from "react-router-dom";
 import { Shield, Search, MessageCircle, CheckCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import VideoHero from "@/components/VideoHero";
 
 const steps = [
-  { icon: Search, num: "01", title: "Знайди того, кому потрібна допомога", desc: "Переглядай верифіковані запити у стрічці. Фільтруй за категорією, країною або сумою." },
-  { icon: MessageCircle, num: "02", title: "Напиши і домовся", desc: "Зв'яжись безпосередньо через захищений чат. Уточни деталі перед відправкою коштів." },
-  { icon: Shield, num: "03", title: "Угода з захистом", desc: "Кошти резервуються у системі. Одержувач отримує тільки після підтвердження виконання." },
-  { icon: CheckCircle, num: "04", title: "Підтвердження і відгук", desc: "Обидві сторони підтверджують угоду. Залиш відгук і продовжуй допомагати." },
+  {
+    icon: Search,
+    num: "01",
+    title: "Знайди того, кому потрібна допомога",
+    desc: "Переглядай верифіковані запити у стрічці. Фільтруй за категорією, країною або сумою.",
+  },
+  {
+    icon: MessageCircle,
+    num: "02",
+    title: "Напиши і домовся",
+    desc: "Зв'яжись безпосередньо через захищений чат. Уточни деталі перед відправкою коштів.",
+  },
+  {
+    icon: Shield,
+    num: "03",
+    title: "Угода з захистом",
+    desc: "Кошти резервуються у системі. Одержувач отримує тільки після підтвердження виконання.",
+  },
+  {
+    icon: CheckCircle,
+    num: "04",
+    title: "Підтвердження і відгук",
+    desc: "Обидві сторони підтверджують угоду. Залиш відгук і продовжуй допомагати.",
+  },
 ];
 
 const HowItWorksPage = () => {
@@ -14,19 +35,14 @@ const HowItWorksPage = () => {
   return (
     <main className="min-h-screen bg-background">
       <section className="px-6 py-16 max-w-2xl mx-auto">
-        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">Як це працює</h1>
-        <p className="text-muted-foreground mb-12 leading-relaxed">BridoConnect — прозора P2P платформа гуманітарної допомоги без посередників.</p>
-        {/* Hero video placeholder — replace with Runway video */}
-        <div className="relative w-full aspect-video bg-gradient-to-br from-primary/10 to-accent/5 rounded-2xl overflow-hidden mb-10 border border-border before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
-              <svg className="w-8 h-8 text-accent ml-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
-            <p className="text-sm text-muted-foreground font-medium">Дивитись як це працює</p>
-            <p className="text-xs text-muted-foreground/60">2 хв</p>
-          </div>
+        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">
+          Як це працює
+        </h1>
+        <p className="text-muted-foreground mb-12 leading-relaxed">
+          BridoConnect — прозора P2P платформа гуманітарної допомоги без посередників.
+        </p>
+        <div className="mb-10">
+          <VideoHero variant="explainer" />
         </div>
         <ol className="space-y-8">
           {steps.map((step) => (
