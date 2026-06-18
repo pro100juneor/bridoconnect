@@ -34,18 +34,19 @@ render_shot "03-amount-selected.png"
 # Verify all clips exist
 ls -la /tmp/walk-*.mp4
 
-# 3. Concat — 9 клипов × 5s = 45s, чтобы покрыть всю длительность audio (45.7s).
-# Phone-screens повторяются дважды (acknowledge + result).
+# 3. Concat — 11 клипов × 5s = 55s для покрытия 53s audio с eleven_v3 + emotion tags.
 cat > /tmp/walk/concat.txt <<EOF
 file '/tmp/walk-ua-mother-night.mp4'
 file '/tmp/walk-ua-grandma-generator.mp4'
 file '/tmp/walk-ua-volunteer-packages.mp4'
+file '/tmp/walk-ua-children-receiving.mp4'
 file '/tmp/walk-01-feed.mp4'
 file '/tmp/walk-02-deal.mp4'
 file '/tmp/walk-03-amount-selected.mp4'
-file '/tmp/walk-ua-children-receiving.mp4'
 file '/tmp/walk-ua-mother-night.mp4'
 file '/tmp/walk-ua-volunteer-packages.mp4'
+file '/tmp/walk-ua-grandma-generator.mp4'
+file '/tmp/walk-ua-children-receiving.mp4'
 EOF
 
 ffmpeg -y -f concat -safe 0 -i /tmp/walk/concat.txt \
