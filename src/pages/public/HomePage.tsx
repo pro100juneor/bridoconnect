@@ -188,6 +188,11 @@ export default function HomePage() {
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-orange-400 to-red-500" />
         <div className="relative z-10 max-w-5xl mx-auto px-6 sm:px-8 w-full grid lg:grid-cols-2 gap-8 lg:gap-12 items-center py-12">
           <div>
+            {/* Mobile-first: VideoHero показываем выше headline на маленьких экранах,
+                на lg+ — справа в отдельной колонке. */}
+            <div className="lg:hidden mb-8">
+              <VideoHero variant="hero" />
+            </div>
             <div
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-8 text-xs text-white/70 font-medium"
               style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)" }}
