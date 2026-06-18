@@ -35,7 +35,19 @@ function detectInitialLang(): string {
  * public/audio/narration/{lang}.mp3, ~35 sec each.
  * Animated CSS+SVG layer remains as fallback when video fails to load.
  */
-export const VideoHero = ({ variant = "hero" }: { variant?: "hero" | "explainer" }) => {
+// Premium video source per variant. hero-connection — gen4.5 cinematic; other
+// scenes are seedance2 supporting cuts. hero-loop.mp4 kept as legacy fallback.
+const VIDEO_SRC: Record<"hero" | "explainer" | "trust" | "direct" | "hope" | "people" | "global", string> = {
+  hero: "/videos/hero-connection.mp4",
+  explainer: "/videos/direct-exchange.mp4",
+  trust: "/videos/trust-shield.mp4",
+  direct: "/videos/direct-exchange.mp4",
+  hope: "/videos/hope.mp4",
+  people: "/videos/verified-people.mp4",
+  global: "/videos/global-reach.mp4",
+};
+
+export const VideoHero = ({ variant = "hero" }: { variant?: keyof typeof VIDEO_SRC }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [lang, setLang] = useState<string>(() => detectInitialLang());
@@ -84,7 +96,7 @@ export const VideoHero = ({ variant = "hero" }: { variant?: "hero" | "explainer"
     }
   };
 
-  const isExplainer = variant === "explainer";
+  const isExplainer = variant !== "hero";
 
   return (
     <section
@@ -97,7 +109,7 @@ export const VideoHero = ({ variant = "hero" }: { variant?: "hero" | "explainer"
         <video
           ref={videoRef}
           className="absolute inset-0 w-full h-full object-cover"
-          src="/videos/hero-loop.mp4"
+          src={VIDEO_SRC[variant]}
           autoPlay
           muted
           loop

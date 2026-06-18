@@ -15,6 +15,7 @@ const recipients = [
     raised: 1840,
     rating: 4.9,
     deals: 17,
+    photo: "/images/recipients/uk-mother.jpg",
   },
   {
     name: "Аміна Х.",
@@ -26,6 +27,7 @@ const recipients = [
     raised: 2304,
     rating: 5.0,
     deals: 9,
+    photo: "/images/recipients/syrian-father.jpg",
   },
   {
     name: "Фатіма А.",
@@ -37,6 +39,7 @@ const recipients = [
     raised: 1232,
     rating: 4.8,
     deals: 23,
+    photo: "/images/recipients/afghan-teacher.jpg",
   },
   {
     name: "Ахмед М.",
@@ -48,6 +51,7 @@ const recipients = [
     raised: 960,
     rating: 4.7,
     deals: 5,
+    photo: "/images/recipients/syrian-father.jpg",
   },
   {
     name: "Надія Р.",
@@ -59,6 +63,7 @@ const recipients = [
     raised: 340,
     rating: 4.9,
     deals: 4,
+    photo: "/images/recipients/uk-mother.jpg",
   },
   {
     name: "Карім О.",
@@ -70,6 +75,7 @@ const recipients = [
     raised: 180,
     rating: 4.6,
     deals: 3,
+    photo: "/images/recipients/afghan-teacher.jpg",
   },
 ];
 
@@ -341,15 +347,19 @@ export default function HomePage() {
             <InView
               className={`bg-card border border-border rounded-2xl overflow-hidden ${CARD_INSET} ${CARD_SHADOW}`}
             >
-              <div
-                className="h-36 flex items-center justify-center relative"
-                style={{ background: "linear-gradient(135deg,rgba(15,52,96,0.7),rgba(15,52,96,0.9))" }}
-              >
-                <span className="text-6xl opacity-30">{r.flag}</span>
+              <div className="h-36 relative overflow-hidden">
+                <img
+                  src={r.photo}
+                  alt=""
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                <span className="absolute top-3 right-3 text-3xl drop-shadow">{r.flag}</span>
                 <div className="absolute bottom-3 left-3">
                   <span
-                    className="text-xs px-2.5 py-1 rounded-full font-medium text-white"
-                    style={{ background: "rgba(29,138,90,0.9)" }}
+                    className="text-xs px-2.5 py-1 rounded-full font-medium text-white backdrop-blur-md"
+                    style={{ background: "rgba(29,138,90,0.85)" }}
                   >
                     ✓ Верифіковано
                   </span>

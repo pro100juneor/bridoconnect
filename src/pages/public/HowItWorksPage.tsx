@@ -45,22 +45,58 @@ const HowItWorksPage = () => {
           <VideoHero variant="explainer" />
         </div>
         <ol className="space-y-8">
-          {steps.map((step) => (
-            <li key={step.num} className="flex gap-5">
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0 transition-shadow duration-200 hover:shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)]">
-                  <step.icon className="w-6 h-6 text-accent" strokeWidth={1.75} />
+          {steps.map((step, idx) => {
+            const stepVideos = [
+              "/videos/verified-people.mp4",
+              "/videos/direct-exchange.mp4",
+              "/videos/trust-shield.mp4",
+              "/videos/hope.mp4",
+            ];
+            return (
+              <li key={step.num} className="flex gap-5">
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0 transition-shadow duration-200 hover:shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)]">
+                    <step.icon className="w-6 h-6 text-accent" strokeWidth={1.75} />
+                  </div>
+                  <div className="w-0.5 flex-1 bg-border mt-2" />
                 </div>
-                <div className="w-0.5 flex-1 bg-border mt-2" />
-              </div>
-              <div className="pb-8">
-                <span className="text-sm font-bold text-accent tracking-widest">{step.num}</span>
-                <h3 className="font-semibold text-lg text-foreground mt-1 mb-2">{step.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{step.desc}</p>
-              </div>
-            </li>
-          ))}
+                <div className="pb-8 flex-1 min-w-0">
+                  <span className="text-sm font-bold text-accent tracking-widest">{step.num}</span>
+                  <h3 className="font-semibold text-lg text-foreground mt-1 mb-2">{step.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-3">{step.desc}</p>
+                  <video
+                    src={stepVideos[idx]}
+                    className="w-full aspect-video rounded-xl object-cover border border-border"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    aria-hidden="true"
+                  />
+                </div>
+              </li>
+            );
+          })}
         </ol>
+
+        <div className="mt-12 mb-8 rounded-2xl overflow-hidden relative aspect-[16/9] border border-border">
+          <video
+            src="/videos/global-reach.mp4"
+            className="absolute inset-0 w-full h-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-hidden="true"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <div className="absolute bottom-5 left-5 right-5 text-white">
+            <p className="text-[10px] uppercase tracking-widest text-white/70 mb-1">Глобально</p>
+            <p className="font-serif text-2xl leading-tight">200+ країн · 6 платіжних коридорів</p>
+          </div>
+        </div>
         <Button
           className="w-full bg-accent hover:bg-accent/90 text-white mt-4 min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
           onClick={() => navigate("/register")}
