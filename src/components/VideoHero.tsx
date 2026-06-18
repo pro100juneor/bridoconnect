@@ -1,19 +1,58 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Play, Pause, Volume2, VolumeX, Globe } from "lucide-react";
 
-// 10 главных языков мира по числу носителей. Каждому соответствует
-// public/audio/narration/{code}.mp3 (сгенерировано через ElevenLabs multilingual v2).
+// 48 наиболее распространённых языков мира + UA. Каждому соответствует
+// public/audio/narration/{code}.mp3 (ElevenLabs multilingual_v2, ~55 sec
+// explainer: что такое BridoConnect и как им пользоваться).
 const LANGS: Array<{ code: string; label: string; flag: string }> = [
+  { code: "uk", label: "Українська", flag: "🇺🇦" },
   { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
   { code: "zh", label: "中文", flag: "🇨🇳" },
   { code: "hi", label: "हिन्दी", flag: "🇮🇳" },
-  { code: "es", label: "Español", flag: "🇪🇸" },
-  { code: "fr", label: "Français", flag: "🇫🇷" },
   { code: "ar", label: "العربية", flag: "🇸🇦" },
-  { code: "bn", label: "বাংলা", flag: "🇧🇩" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
   { code: "pt", label: "Português", flag: "🇧🇷" },
+  { code: "bn", label: "বাংলা", flag: "🇧🇩" },
+  { code: "ru", label: "Русский", flag: "🇷🇺" },
   { code: "ja", label: "日本語", flag: "🇯🇵" },
-  { code: "uk", label: "Українська", flag: "🇺🇦" },
+  { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "ko", label: "한국어", flag: "🇰🇷" },
+  { code: "id", label: "Indonesia", flag: "🇮🇩" },
+  { code: "it", label: "Italiano", flag: "🇮🇹" },
+  { code: "tr", label: "Türkçe", flag: "🇹🇷" },
+  { code: "fa", label: "فارسی", flag: "🇮🇷" },
+  { code: "vi", label: "Tiếng Việt", flag: "🇻🇳" },
+  { code: "ur", label: "اردو", flag: "🇵🇰" },
+  { code: "pl", label: "Polski", flag: "🇵🇱" },
+  { code: "ta", label: "தமிழ்", flag: "🇮🇳" },
+  { code: "nl", label: "Nederlands", flag: "🇳🇱" },
+  { code: "th", label: "ไทย", flag: "🇹🇭" },
+  { code: "ms", label: "Melayu", flag: "🇲🇾" },
+  { code: "fil", label: "Filipino", flag: "🇵🇭" },
+  { code: "sw", label: "Kiswahili", flag: "🇰🇪" },
+  { code: "mr", label: "मराठी", flag: "🇮🇳" },
+  { code: "te", label: "తెలుగు", flag: "🇮🇳" },
+  { code: "gu", label: "ગુજરાતી", flag: "🇮🇳" },
+  { code: "ro", label: "Română", flag: "🇷🇴" },
+  { code: "el", label: "Ελληνικά", flag: "🇬🇷" },
+  { code: "cs", label: "Čeština", flag: "🇨🇿" },
+  { code: "hu", label: "Magyar", flag: "🇭🇺" },
+  { code: "sv", label: "Svenska", flag: "🇸🇪" },
+  { code: "he", label: "עברית", flag: "🇮🇱" },
+  { code: "da", label: "Dansk", flag: "🇩🇰" },
+  { code: "fi", label: "Suomi", flag: "🇫🇮" },
+  { code: "no", label: "Norsk", flag: "🇳🇴" },
+  { code: "sk", label: "Slovenčina", flag: "🇸🇰" },
+  { code: "bg", label: "Български", flag: "🇧🇬" },
+  { code: "hr", label: "Hrvatski", flag: "🇭🇷" },
+  { code: "sr", label: "Српски", flag: "🇷🇸" },
+  { code: "sq", label: "Shqip", flag: "🇦🇱" },
+  { code: "mk", label: "Македонски", flag: "🇲🇰" },
+  { code: "lt", label: "Lietuvių", flag: "🇱🇹" },
+  { code: "lv", label: "Latviešu", flag: "🇱🇻" },
+  { code: "et", label: "Eesti", flag: "🇪🇪" },
+  { code: "ca", label: "Català", flag: "🏴󠁥󠁳󠁣󠁴󠁿" },
 ];
 
 const STORAGE_KEY = "brido_video_lang";
@@ -22,8 +61,12 @@ function detectInitialLang(): string {
   if (typeof window === "undefined") return "uk";
   const stored = window.localStorage.getItem(STORAGE_KEY);
   if (stored && LANGS.some((l) => l.code === stored)) return stored;
-  const browser = (navigator.language || "uk").slice(0, 2).toLowerCase();
-  if (LANGS.some((l) => l.code === browser)) return browser;
+  // Browser locale: try full code first (zh-CN → zh, pt-BR → pt), then 2-letter.
+  const full = (navigator.language || "uk").toLowerCase();
+  const two = full.slice(0, 2);
+  // Special cases: navigator.language often returns "fil" or "tl" for Filipino.
+  if (full.startsWith("fil") || full === "tl") return "fil";
+  if (LANGS.some((l) => l.code === two)) return two;
   return "uk";
 }
 
@@ -54,9 +97,15 @@ export const VideoHero = ({ variant = "hero" }: { variant?: keyof typeof VIDEO_S
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerQuery, setPickerQuery] = useState("");
   const [videoFailed, setVideoFailed] = useState(false);
 
-  const currentLang = useMemo(() => LANGS.find((l) => l.code === lang) || LANGS[9], [lang]);
+  const currentLang = useMemo(() => LANGS.find((l) => l.code === lang) || LANGS[0], [lang]);
+  const filteredLangs = useMemo(() => {
+    const q = pickerQuery.trim().toLowerCase();
+    if (!q) return LANGS;
+    return LANGS.filter((l) => l.label.toLowerCase().includes(q) || l.code.includes(q));
+  }, [pickerQuery]);
 
   // iOS WebKit: autoPlay attribute alone isn't always enough on first load
   // (especially in PWA / Capacitor context). Imperatively start playback after mount.
@@ -181,27 +230,42 @@ export const VideoHero = ({ variant = "hero" }: { variant?: keyof typeof VIDEO_S
 
         {pickerOpen && (
           <div
-            className="absolute top-14 right-4 bg-black/70 backdrop-blur-xl rounded-2xl p-2 z-20 shadow-2xl max-w-[200px]"
+            className="absolute top-14 right-4 bg-black/80 backdrop-blur-xl rounded-2xl p-2 z-20 shadow-2xl w-[240px] max-h-[60vh] flex flex-col"
             role="listbox"
           >
-            {LANGS.map((l) => (
-              <button
-                key={l.code}
-                data-testid={`video-lang-${l.code}`}
-                onClick={() => {
-                  setLang(l.code);
-                  setPickerOpen(false);
-                }}
-                className={`w-full text-left px-3 py-1.5 rounded-lg text-xs flex items-center gap-2 transition-colors ${
-                  l.code === lang ? "bg-white/20 text-white" : "text-white/70 hover:bg-white/10"
-                }`}
-                aria-selected={l.code === lang}
-                role="option"
-              >
-                <span>{l.flag}</span>
-                <span>{l.label}</span>
-              </button>
-            ))}
+            <input
+              type="text"
+              value={pickerQuery}
+              onChange={(e) => setPickerQuery(e.target.value)}
+              placeholder="Search 48 languages…"
+              className="w-full bg-white/10 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-xs mb-1.5 outline-none focus:bg-white/20"
+              autoFocus
+            />
+            <div className="overflow-y-auto flex-1 -mr-1 pr-1">
+              {filteredLangs.length === 0 ? (
+                <p className="text-white/50 text-xs px-3 py-2">No match</p>
+              ) : (
+                filteredLangs.map((l) => (
+                  <button
+                    key={l.code}
+                    data-testid={`video-lang-${l.code}`}
+                    onClick={() => {
+                      setLang(l.code);
+                      setPickerOpen(false);
+                      setPickerQuery("");
+                    }}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs flex items-center gap-2 transition-colors ${
+                      l.code === lang ? "bg-white/20 text-white" : "text-white/70 hover:bg-white/10"
+                    }`}
+                    aria-selected={l.code === lang}
+                    role="option"
+                  >
+                    <span>{l.flag}</span>
+                    <span className="truncate">{l.label}</span>
+                  </button>
+                ))
+              )}
+            </div>
           </div>
         )}
 
