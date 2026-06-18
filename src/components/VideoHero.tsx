@@ -81,7 +81,7 @@ function detectInitialLang(): string {
 // Premium video source per variant. hero-connection — gen4.5 cinematic; other
 // scenes are seedance2 supporting cuts. hero-loop.mp4 kept as legacy fallback.
 const VIDEO_SRC: Record<"hero" | "explainer" | "trust" | "direct" | "hope" | "people" | "global", string> = {
-  hero: "/videos/hero-story.mp4", // 30s stitched arc: 6 clips × 5s с crossfade
+  hero: "/videos/hero-story-ua.mp4", // 35s UA-context: 4 Runway cinematic + 3 phone walkthrough
   explainer: "/videos/direct-exchange.mp4",
   trust: "/videos/trust-shield.mp4",
   direct: "/videos/direct-exchange.mp4",
