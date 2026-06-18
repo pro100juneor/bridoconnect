@@ -149,9 +149,7 @@ export const VideoHero = ({ variant = "hero" }: { variant?: keyof typeof VIDEO_S
 
   return (
     <section
-      className={`relative w-full overflow-hidden rounded-3xl ${
-        isExplainer ? "aspect-[16/9]" : "aspect-[4/3] sm:aspect-[16/9]"
-      }`}
+      className="relative w-full overflow-hidden rounded-3xl aspect-[16/9]"
       aria-label="BridoConnect explainer"
     >
       {!videoFailed && (
