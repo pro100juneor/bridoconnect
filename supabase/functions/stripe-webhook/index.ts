@@ -64,9 +64,10 @@ serve(async (req) => {
         const md = session.metadata || {};
         const dealId = md.dealId || null;
         const streamId = md.streamId || null;
+        const productId = md.productId || null;
         const userId = md.user_id || "";
         const recipientId = md.recipient_id || null;
-        const type = md.type || (dealId ? "deal_payment" : "deposit");
+        const type = md.type || (productId ? "product_purchase" : dealId ? "deal_payment" : "deposit");
         const amountCents = session.amount_total || 0;
         const amount = amountCents / 100;
         const feeCents = Number(md.platform_fee_cents || 0);
@@ -88,6 +89,36 @@ serve(async (req) => {
           if (applyErr) {
             console.error("apply_stripe_payment:", applyErr);
             throw applyErr;
+          }
+        }
+
+        // Product purchase: create the order once (idempotent on session id)
+        // and decrement stock. Clients never write orders — only this webhook.
+        if (productId && recipientId) {
+          const { data: existing } = await supabase
+            .from("orders")
+            .select("id")
+            .eq("stripe_session_id", session.id)
+            .maybeSingle();
+          if (!existing) {
+            const { error: orderErr } = await supabase.from("orders").insert({
+              buyer_id: userId,
+              product_id: productId,
+              seller_id: recipientId,
+              amount_cents: amountCents,
+              platform_fee_cents: feeCents,
+              status: "paid",
+              stripe_session_id: session.id,
+              stripe_payment_intent_id: paymentIntentId,
+            });
+            if (orderErr) {
+              console.error("order insert:", orderErr);
+            } else {
+              const { error: decErr } = await supabase.rpc("decrement_stock", {
+                p_product_id: productId,
+              });
+              if (decErr) console.error("decrement_stock:", decErr);
+            }
           }
         }
 

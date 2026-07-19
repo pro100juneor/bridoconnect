@@ -28,6 +28,7 @@ import CreateDeal from "./pages/app/CreateDeal";
 import Shop from "./pages/app/Shop";
 import ShopDetail from "./pages/app/ShopDetail";
 import ProductDetail from "./pages/app/ProductDetail";
+import CreateProduct from "./pages/app/CreateProduct";
 import Profile from "./pages/app/Profile";
 import EditProfile from "./pages/app/EditProfile";
 import PublicProfile from "./pages/app/PublicProfile";
@@ -75,6 +76,7 @@ export default function App() {
             <Route path="/app/live/:id" element={<StreamViewer />} />
             <Route path="/app/create-deal" element={<CreateDeal />} />
             <Route path="/app/shop" element={<Shop />} />
+            <Route path="/app/shop/new" element={<CreateProduct />} />
             <Route path="/app/shop/seller/:id" element={<ShopDetail />} />
             <Route path="/app/shop/:id" element={<ProductDetail />} />
             <Route path="/app/profile" element={<Profile />} />

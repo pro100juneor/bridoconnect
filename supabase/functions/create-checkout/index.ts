@@ -59,11 +59,13 @@ serve(async (req) => {
       });
     }
 
-    const { amount, dealId, streamId, type, priceId } = await req.json();
+    const { amount, dealId, streamId, productId, type, priceId } = await req.json();
 
     if (
       type !== undefined &&
-      !["subscription", "deposit", "deal_payment", "deal", "stream_donation"].includes(type)
+      !["subscription", "deposit", "deal_payment", "deal", "stream_donation", "product_purchase"].includes(
+        type
+      )
     ) {
       return new Response(JSON.stringify({ error: "invalid type" }), {
         status: 400,
@@ -85,6 +87,82 @@ serve(async (req) => {
         success_url: `${origin}/app/premium?success=true`,
         cancel_url: `${origin}/app/premium`,
         metadata: { type: "subscription", user_id: user.id },
+      });
+    } else if (productId) {
+      // Product purchase: amount comes from the product's DB price (never the
+      // client body) — this prevents a caller from paying an arbitrary amount.
+      const { data: product, error: pErr } = await supabase
+        .from("products")
+        .select("id, seller_id, title, price_cents, stock, status")
+        .eq("id", productId)
+        .maybeSingle();
+      if (pErr || !product) {
+        return new Response(JSON.stringify({ error: "product not found" }), {
+          status: 404,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+      if (product.status !== "active" || product.stock <= 0) {
+        return new Response(JSON.stringify({ error: "product unavailable" }), {
+          status: 400,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: seller, error: sErr } = await supabase
+        .from("profiles")
+        .select("stripe_connect_account_id, stripe_connect_status")
+        .eq("id", product.seller_id)
+        .maybeSingle();
+      if (sErr || !seller?.stripe_connect_account_id || seller.stripe_connect_status !== "enabled") {
+        return new Response(
+          JSON.stringify({
+            error: "recipient_not_onboarded",
+            message: "Seller has not completed Stripe onboarding",
+          }),
+          { status: 409, headers: { ...headers, "Content-Type": "application/json" } }
+        );
+      }
+
+      const unitCents = product.price_cents;
+      const feeCents = Math.round((unitCents * PLATFORM_FEE_BPS) / 10_000);
+
+      session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "eur",
+              product_data: {
+                name: product.title,
+                description: `Товар BridoConnect`,
+              },
+              unit_amount: unitCents,
+            },
+            quantity: 1,
+          },
+        ],
+        success_url: `${origin}/app/shop/${productId}?success=true`,
+        cancel_url: `${origin}/app/shop/${productId}`,
+        metadata: {
+          productId,
+          seller_id: product.seller_id,
+          type: "product_purchase",
+          user_id: user.id,
+          recipient_id: product.seller_id,
+          platform_fee_cents: String(feeCents),
+        },
+        payment_intent_data: {
+          application_fee_amount: feeCents,
+          transfer_data: { destination: seller.stripe_connect_account_id },
+          metadata: {
+            product_id: productId,
+            seller_id: product.seller_id,
+            buyer_id: user.id,
+            platform_fee_cents: String(feeCents),
+          },
+        },
       });
     } else {
       const amt = Number(amount);
