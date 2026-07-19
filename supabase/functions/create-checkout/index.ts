@@ -30,6 +30,24 @@ const MAX_EUR = 10_000;
 // 5% platform fee — keep in sync with docs/AGB.
 const PLATFORM_FEE_BPS = 500;
 
+// Resolve a display/checkout currency against the currency_rates whitelist.
+// Base prices are stored in EUR; we convert to `target minor units` = round(eur * rate).
+// NOTE: rates are static rows — production needs a live FX feed refreshing this table.
+async function resolveCurrency(
+  supabase: ReturnType<typeof createClient>,
+  currency: unknown
+): Promise<{ code: string; rate: number } | null> {
+  const code = String(currency || "eur").toLowerCase();
+  if (code === "eur") return { code: "eur", rate: 1 };
+  const { data } = await supabase
+    .from("currency_rates")
+    .select("rate_per_eur")
+    .eq("code", code)
+    .maybeSingle();
+  if (!data) return null; // not in whitelist
+  return { code, rate: Number((data as { rate_per_eur: number }).rate_per_eur) };
+}
+
 serve(async (req) => {
   const headers = corsFor(req.headers.get("origin"));
   if (req.method === "OPTIONS") return new Response(null, { headers });
@@ -59,13 +77,19 @@ serve(async (req) => {
       });
     }
 
-    const { amount, dealId, streamId, productId, type, priceId } = await req.json();
+    const { amount, dealId, streamId, productId, productIds, currency, type, priceId } = await req.json();
 
     if (
       type !== undefined &&
-      !["subscription", "deposit", "deal_payment", "deal", "stream_donation", "product_purchase"].includes(
-        type
-      )
+      ![
+        "subscription",
+        "deposit",
+        "deal_payment",
+        "deal",
+        "stream_donation",
+        "product_purchase",
+        "cart_purchase",
+      ].includes(type)
     ) {
       return new Response(JSON.stringify({ error: "invalid type" }), {
         status: 400,
@@ -88,9 +112,106 @@ serve(async (req) => {
         cancel_url: `${origin}/app/premium`,
         metadata: { type: "subscription", user_id: user.id },
       });
+    } else if (Array.isArray(productIds) && productIds.length > 0) {
+      // Cart purchase: several positions, all from ONE seller (a single Connect
+      // destination charge). Amounts come from DB prices, never the client body.
+      const cur = await resolveCurrency(supabase, currency);
+      if (!cur) {
+        return new Response(JSON.stringify({ error: "invalid currency" }), {
+          status: 400,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: products, error: pErr } = await supabase
+        .from("products")
+        .select("id, seller_id, title, price_cents, stock, status")
+        .in("id", productIds);
+      if (pErr || !products || products.length !== productIds.length) {
+        return new Response(JSON.stringify({ error: "product not found" }), {
+          status: 400,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+      if (products.some((p) => p.status !== "active" || p.stock <= 0)) {
+        return new Response(JSON.stringify({ error: "product unavailable" }), {
+          status: 400,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+      const sellerIds = new Set(products.map((p) => p.seller_id));
+      if (sellerIds.size !== 1) {
+        return new Response(JSON.stringify({ error: "mixed sellers" }), {
+          status: 400,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+      const sellerId = products[0].seller_id;
+
+      const { data: seller, error: sErr } = await supabase
+        .from("profiles")
+        .select("stripe_connect_account_id, stripe_connect_status")
+        .eq("id", sellerId)
+        .maybeSingle();
+      if (sErr || !seller?.stripe_connect_account_id || seller.stripe_connect_status !== "enabled") {
+        return new Response(
+          JSON.stringify({
+            error: "recipient_not_onboarded",
+            message: "Seller has not completed Stripe onboarding",
+          }),
+          { status: 409, headers: { ...headers, "Content-Type": "application/json" } }
+        );
+      }
+
+      const line_items = products.map((p) => ({
+        price_data: {
+          currency: cur.code,
+          product_data: { name: p.title, description: `Товар BridoConnect` },
+          unit_amount: Math.round(p.price_cents * cur.rate),
+        },
+        quantity: 1,
+      }));
+      const totalCents = products.reduce((s, p) => s + Math.round(p.price_cents * cur.rate), 0);
+      const feeCents = Math.round((totalCents * PLATFORM_FEE_BPS) / 10_000);
+      const idsJson = JSON.stringify(products.map((p) => p.id));
+
+      session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        payment_method_types: ["card"],
+        line_items,
+        success_url: `${origin}/app/shop?success=true`,
+        cancel_url: `${origin}/app/cart`,
+        metadata: {
+          productIds: idsJson,
+          seller_id: sellerId,
+          type: "cart_purchase",
+          user_id: user.id,
+          recipient_id: sellerId,
+          currency: cur.code,
+          platform_fee_cents: String(feeCents),
+        },
+        payment_intent_data: {
+          application_fee_amount: feeCents,
+          transfer_data: { destination: seller.stripe_connect_account_id },
+          metadata: {
+            productIds: idsJson,
+            seller_id: sellerId,
+            buyer_id: user.id,
+            platform_fee_cents: String(feeCents),
+          },
+        },
+      });
     } else if (productId) {
       // Product purchase: amount comes from the product's DB price (never the
       // client body) — this prevents a caller from paying an arbitrary amount.
+      const cur = await resolveCurrency(supabase, currency);
+      if (!cur) {
+        return new Response(JSON.stringify({ error: "invalid currency" }), {
+          status: 400,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+
       const { data: product, error: pErr } = await supabase
         .from("products")
         .select("id, seller_id, title, price_cents, stock, status")
@@ -124,7 +245,7 @@ serve(async (req) => {
         );
       }
 
-      const unitCents = product.price_cents;
+      const unitCents = Math.round(product.price_cents * cur.rate);
       const feeCents = Math.round((unitCents * PLATFORM_FEE_BPS) / 10_000);
 
       session = await stripe.checkout.sessions.create({
@@ -133,7 +254,7 @@ serve(async (req) => {
         line_items: [
           {
             price_data: {
-              currency: "eur",
+              currency: cur.code,
               product_data: {
                 name: product.title,
                 description: `Товар BridoConnect`,
@@ -151,6 +272,7 @@ serve(async (req) => {
           type: "product_purchase",
           user_id: user.id,
           recipient_id: product.seller_id,
+          currency: cur.code,
           platform_fee_cents: String(feeCents),
         },
         payment_intent_data: {

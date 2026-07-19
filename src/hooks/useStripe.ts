@@ -68,8 +68,16 @@ export const useStripe = () => {
     if (url) window.location.href = url;
   };
 
-  const buyProduct = async ({ productId }: { productId: string }) => {
-    const resp = await authedFetch("create-checkout", { productId, type: "product_purchase" });
+  const buyProduct = async ({ productId, currency }: { productId: string; currency?: string }) => {
+    const resp = await authedFetch("create-checkout", { productId, type: "product_purchase", currency });
+    if (!resp.ok) throw new Error(await safeJsonError(resp, "Stripe error"));
+    const { url } = await resp.json();
+    if (url) window.location.href = url;
+  };
+
+  // Cart checkout: several positions, all from ONE seller (Connect destination).
+  const checkoutCart = async ({ productIds, currency }: { productIds: string[]; currency?: string }) => {
+    const resp = await authedFetch("create-checkout", { productIds, type: "cart_purchase", currency });
     if (!resp.ok) throw new Error(await safeJsonError(resp, "Stripe error"));
     const { url } = await resp.json();
     if (url) window.location.href = url;
@@ -111,6 +119,7 @@ export const useStripe = () => {
     createCheckout,
     createStreamDonation,
     buyProduct,
+    checkoutCart,
     createSubscription,
     connectOnboard,
     fetchConnectStatus,

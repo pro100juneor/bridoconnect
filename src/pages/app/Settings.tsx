@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePreferences } from "@/hooks/usePreferences";
 import { toast } from "@/hooks/use-toast";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -138,6 +139,9 @@ const Settings = () => {
       <div className="px-4 space-y-5 mt-4">
         <div className="bg-secondary rounded-2xl p-4">
           <LocaleSwitcher />
+        </div>
+        <div className="bg-secondary rounded-2xl p-4">
+          <CurrencySwitcher />
         </div>
         {sections.map((section) => (
           <div key={section.title}>

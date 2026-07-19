@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { tap, notify } from "@/lib/native";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { useStripe } from "@/hooks/useStripe";
+import { useCart } from "@/hooks/useCart";
+import { useCurrency } from "@/hooks/useCurrency";
+import { toast } from "@/hooks/use-toast";
 
 const flagFor = (country?: string | null) => (country === "Україна" ? "🇺🇦" : "🏳️");
 
@@ -13,6 +16,8 @@ const ProductDetail = () => {
   const { id } = useParams();
   const { getProduct } = useProducts();
   const { buyProduct } = useStripe();
+  const { add } = useCart();
+  const { code, convert } = useCurrency();
   const [liked, setLiked] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,12 +46,25 @@ const ProductDetail = () => {
     void tap("medium");
     setPaying(true);
     try {
-      await buyProduct({ productId: id });
+      await buyProduct({ productId: id, currency: code });
     } catch (e) {
       void notify("error");
       alert(e instanceof Error ? e.message : "Не вдалося почати оплату");
       setPaying(false);
     }
+  };
+
+  const handleAddToCart = () => {
+    if (!id || !product) return;
+    void tap("light");
+    add({
+      productId: id,
+      sellerId: product.seller_id,
+      title: product.title,
+      priceCents: product.price_cents,
+      image: product.images[0],
+    });
+    toast({ title: "Додано в кошик" });
   };
 
   if (loading) {
@@ -126,7 +144,7 @@ const ProductDetail = () => {
         <div className="relative flex items-center justify-between p-4 bg-secondary rounded-2xl overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
           <div>
             <p className="text-xs text-muted-foreground">Ціна</p>
-            <p className="text-3xl font-bold text-foreground">€{(product.price_cents / 100).toFixed(2)}</p>
+            <p className="text-3xl font-bold text-foreground">{convert(product.price_cents).formatted}</p>
           </div>
           <button
             onClick={() => {
@@ -193,20 +211,29 @@ const ProductDetail = () => {
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/85 backdrop-blur-md border-t border-border flex gap-3">
         <Button
           variant="outline"
+          aria-label="Додати в кошик"
+          className="min-h-[44px] min-w-[44px] px-3 transition-transform duration-150 hover:-translate-y-px"
+          disabled={!available}
+          onClick={handleAddToCart}
+        >
+          <ShoppingCart className="w-4 h-4" strokeWidth={1.75} />
+        </Button>
+        <Button
+          variant="outline"
           className="flex-1 min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
           onClick={() => {
             void tap("light");
             navigate("/app/chats");
           }}
         >
-          Написати продавцю
+          Написати
         </Button>
         <Button
           className="flex-1 min-h-[44px] transition-transform duration-150 hover:-translate-y-px bg-accent hover:bg-accent/90 text-white"
           disabled={paying || !onboarded || !available}
           onClick={handleBuy}
         >
-          {paying ? "Оплата…" : !available ? "Немає в наявності" : "Купити"}
+          {paying ? "Оплата…" : !available ? "Немає" : "Купити"}
         </Button>
       </div>
     </main>

@@ -103,7 +103,6 @@ export const useProducts = () => {
     description?: string;
     price_cents: number;
     category?: string;
-    stock?: number;
     files?: File[];
   }): Promise<{ id?: string; error?: string }> => {
     const {
@@ -130,7 +129,7 @@ export const useProducts = () => {
         currency: "eur",
         category: payload.category ?? null,
         images,
-        stock: payload.stock ?? 1,
+        stock: 1, // one position = exactly one physical unit
         status: "active",
       } as any)
       .select("id")

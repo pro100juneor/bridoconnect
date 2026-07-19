@@ -122,6 +122,63 @@ serve(async (req) => {
           }
         }
 
+        // Cart purchase: one order for the whole cart (idempotent on session id)
+        // + one order_items row per position, then decrement each product's stock.
+        if (type === "cart_purchase" && recipientId) {
+          let ids: string[] = [];
+          try {
+            ids = JSON.parse(md.productIds || "[]");
+          } catch {
+            ids = [];
+          }
+          if (ids.length > 0) {
+            const { data: existing } = await supabase
+              .from("orders")
+              .select("id")
+              .eq("stripe_session_id", session.id)
+              .maybeSingle();
+            if (!existing) {
+              const { data: order, error: orderErr } = await supabase
+                .from("orders")
+                .insert({
+                  buyer_id: userId,
+                  product_id: ids[0], // orders.product_id is NOT NULL — use first as representative
+                  seller_id: recipientId,
+                  amount_cents: amountCents,
+                  platform_fee_cents: feeCents,
+                  status: "paid",
+                  stripe_session_id: session.id,
+                  stripe_payment_intent_id: paymentIntentId,
+                })
+                .select("id")
+                .single();
+              if (orderErr) {
+                console.error("cart order insert:", orderErr);
+              } else if (order) {
+                const { data: prods } = await supabase
+                  .from("products")
+                  .select("id, price_cents")
+                  .in("id", ids);
+                const priceMap = new Map(
+                  (prods || []).map((p: { id: string; price_cents: number }) => [p.id, p.price_cents])
+                );
+                for (const pid of ids) {
+                  const { error: itemErr } = await supabase.from("order_items").insert({
+                    order_id: order.id,
+                    product_id: pid,
+                    price_cents: priceMap.get(pid) ?? 0,
+                  });
+                  if (itemErr) console.error("order_items insert:", itemErr);
+                  const { error: decErr } = await supabase.rpc("decrement_stock", {
+                    p_product_id: pid,
+                  });
+                  if (decErr) console.error("decrement_stock:", decErr);
+                }
+              }
+            }
+          }
+        }
+
         // Stream donation: bump the host's raised total.
         if (streamId && paymentIntentId) {
           const { error: incErr } = await supabase.rpc("increment_stream_raised", {

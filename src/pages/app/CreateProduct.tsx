@@ -4,6 +4,7 @@ import { ArrowLeft, ImagePlus, PackagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { tap, notify } from "@/lib/native";
 import { useProducts } from "@/hooks/useProducts";
+import { toast } from "@/hooks/use-toast";
 
 const categories = ["Їжа", "Одяг", "Ліки", "Освіта", "Побут", "Зв'язок"];
 
@@ -15,7 +16,6 @@ const CreateProduct = () => {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
-  const [stock, setStock] = useState("1");
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -45,12 +45,15 @@ const CreateProduct = () => {
       description: description.trim() || undefined,
       price_cents: Math.round(priceNum * 100),
       category: category || undefined,
-      stock: Math.max(parseInt(stock, 10) || 1, 0),
       files,
     });
     if (error || !id) {
       void notify("error");
-      alert(error || "Не вдалося створити товар");
+      if (error && /capacity/i.test(error)) {
+        toast({ title: "Досягнуто ліміту магазину (5000 позицій)", variant: "destructive" });
+      } else {
+        alert(error || "Не вдалося створити товар");
+      }
       setSaving(false);
       return;
     }
@@ -135,32 +138,19 @@ const CreateProduct = () => {
           />
         </div>
 
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-              Ціна (€) *
-            </label>
-            <input
-              type="number"
-              min="1"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="0"
-              className="w-full bg-secondary rounded-2xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
-            />
-          </div>
-          <div className="w-28">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-              Кількість
-            </label>
-            <input
-              type="number"
-              min="1"
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              className="w-full bg-secondary rounded-2xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
-            />
-          </div>
+        <div>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+            Ціна (€) *
+          </label>
+          <input
+            type="number"
+            min="1"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            placeholder="0"
+            className="w-full bg-secondary rounded-2xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
+          />
+          <p className="text-xs text-muted-foreground mt-1">Одна позиція — одна одиниця товару</p>
         </div>
 
         <div>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { tap } from "@/lib/native";
 import { supabase } from "@/integrations/supabase/client";
 import { useProducts, Product } from "@/hooks/useProducts";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface SellerInfo {
   name: string;
@@ -20,6 +21,7 @@ const ShopDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { productsBySeller } = useProducts();
+  const { convert } = useCurrency();
   const [seller, setSeller] = useState<SellerInfo | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,7 +136,7 @@ const ShopDetail = () => {
                       <p className="text-sm font-medium text-foreground">{p.title}</p>
                       <p className="text-xs text-muted-foreground">{p.category || "Товар"}</p>
                     </div>
-                    <p className="font-bold text-foreground">€{(p.price_cents / 100).toFixed(0)}</p>
+                    <p className="font-bold text-foreground">{convert(p.price_cents).formatted}</p>
                   </button>
                 ))}
               </div>

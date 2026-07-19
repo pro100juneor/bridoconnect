@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { ShoppingBag, Star, Heart, Plus } from "lucide-react";
+import { ShoppingBag, Star, Heart, Plus, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { tap } from "@/lib/native";
 import { useProducts, Product } from "@/hooks/useProducts";
+import { useCart } from "@/hooks/useCart";
+import { useCurrency } from "@/hooks/useCurrency";
 
 const cats = ["Всі", "Їжа", "Одяг", "Ліки", "Освіта", "Побут", "Зв'язок"];
 
@@ -12,6 +14,8 @@ const flagFor = (country?: string | null) => (country === "Україна" ? "�
 const Shop = () => {
   const navigate = useNavigate();
   const { listProducts } = useProducts();
+  const { items } = useCart();
+  const { convert } = useCurrency();
   const [active, setActive] = useState("Всі");
   const [liked, setLiked] = useState<string[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -45,9 +49,26 @@ const Shop = () => {
     <div className="pb-8">
       <h1 className="sr-only">Гуманітарний магазин</h1>
       <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-3">
-        <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in mb-3">
-          Гуманітарний магазин
-        </h2>
+        <div className="flex items-start justify-between mb-3">
+          <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">
+            Гуманітарний магазин
+          </h2>
+          <button
+            onClick={() => {
+              void tap("light");
+              navigate("/app/cart");
+            }}
+            aria-label="Кошик"
+            className="relative shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
+          >
+            <ShoppingCart className="w-5 h-5 text-foreground" strokeWidth={1.75} />
+            {items.length > 0 && (
+              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-accent text-white text-[10px] font-semibold rounded-full">
+                {items.length}
+              </span>
+            )}
+          </button>
+        </div>
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {cats.map((cat) => (
             <button
@@ -142,7 +163,7 @@ const Shop = () => {
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-foreground">€{(p.price_cents / 100).toFixed(0)}</span>
+                      <span className="font-bold text-foreground">{convert(p.price_cents).formatted}</span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
