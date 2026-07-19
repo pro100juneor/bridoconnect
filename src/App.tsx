@@ -19,6 +19,7 @@ import AGBPage from "./pages/public/AGBPage";
 // Heavy routes are code-split so livekit-client (streams) and the 200-theme
 // storefront engine don't bloat the main bundle.
 const StorefrontPage = lazy(() => import("./pages/public/StorefrontPage"));
+const RecipientPage = lazy(() => import("./pages/public/RecipientPage"));
 
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
@@ -36,6 +37,7 @@ import CreateProduct from "./pages/app/CreateProduct";
 const StorefrontEditor = lazy(() => import("./pages/app/StorefrontEditor"));
 import Cart from "./pages/app/Cart";
 import Profile from "./pages/app/Profile";
+const RecipientPageEditor = lazy(() => import("./pages/app/RecipientPageEditor"));
 import EditProfile from "./pages/app/EditProfile";
 import PublicProfile from "./pages/app/PublicProfile";
 import Wallet from "./pages/app/Wallet";
@@ -74,6 +76,9 @@ export default function App() {
           {/* Public branded storefront — no login, no shared layout (self-contained). */}
           <Route path="/store/:slug" element={<StorefrontPage />} />
 
+          {/* Public recipient page — social-style profile, open to everyone. */}
+          <Route path="/u/:slug" element={<RecipientPage />} />
+
           <Route path="/auth" element={<Auth />} />
           <Route path="/register" element={<Register />} />
           <Route path="/reset-password" element={<ResetPassword />} />
@@ -93,6 +98,7 @@ export default function App() {
               <Route path="/app/shop/:id" element={<ProductDetail />} />
               <Route path="/app/profile" element={<Profile />} />
               <Route path="/app/profile/edit" element={<EditProfile />} />
+              <Route path="/app/my-page" element={<RecipientPageEditor />} />
               <Route path="/app/search" element={<Search />} />
               <Route path="/app/chats" element={<ChatList />} />
               <Route path="/app/chat/:id" element={<Chat />} />

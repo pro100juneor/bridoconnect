@@ -13,6 +13,7 @@ import {
   LogOut,
   CheckCircle2,
   Wallet,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -225,6 +226,7 @@ const Profile = () => {
 
       <div className="px-4 space-y-2 pb-4">
         {[
+          { icon: Globe, label: "Моя публічна сторінка", color: "text-accent", path: "/app/my-page" },
           { icon: Heart, label: "Активні угоди", color: "text-accent", path: "/app/deals" },
           { icon: Star, label: "Обрані виконавці", color: "text-warning", path: "/app/wishlist" },
           { icon: CreditCard, label: "Гаманець", color: "text-primary", path: "/app/wallet" },
