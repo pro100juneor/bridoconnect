@@ -15,6 +15,7 @@ import VerificationPage from "./pages/public/VerificationPage";
 import ImpressumPage from "./pages/public/ImpressumPage";
 import DatenschutzPage from "./pages/public/DatenschutzPage";
 import AGBPage from "./pages/public/AGBPage";
+import StorefrontPage from "./pages/public/StorefrontPage";
 
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
@@ -29,6 +30,7 @@ import Shop from "./pages/app/Shop";
 import ShopDetail from "./pages/app/ShopDetail";
 import ProductDetail from "./pages/app/ProductDetail";
 import CreateProduct from "./pages/app/CreateProduct";
+import StorefrontEditor from "./pages/app/StorefrontEditor";
 import Cart from "./pages/app/Cart";
 import Profile from "./pages/app/Profile";
 import EditProfile from "./pages/app/EditProfile";
@@ -65,6 +67,9 @@ export default function App() {
           <Route path="/agb" element={<AGBPage />} />
         </Route>
 
+        {/* Public branded storefront — no login, no shared layout (self-contained). */}
+        <Route path="/store/:slug" element={<StorefrontPage />} />
+
         <Route path="/auth" element={<Auth />} />
         <Route path="/register" element={<Register />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -79,6 +84,7 @@ export default function App() {
             <Route path="/app/shop" element={<Shop />} />
             <Route path="/app/cart" element={<Cart />} />
             <Route path="/app/shop/new" element={<CreateProduct />} />
+            <Route path="/app/shop/design" element={<StorefrontEditor />} />
             <Route path="/app/shop/seller/:id" element={<ShopDetail />} />
             <Route path="/app/shop/:id" element={<ProductDetail />} />
             <Route path="/app/profile" element={<Profile />} />

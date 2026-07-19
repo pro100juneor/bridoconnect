@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Star, MessageCircle, MapPin, Shield, Package } from "lucide-react";
+import { ArrowLeft, Star, MessageCircle, MapPin, Shield, Package, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { tap } from "@/lib/native";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,19 +24,27 @@ const ShopDetail = () => {
   const { convert } = useCurrency();
   const [seller, setSeller] = useState<SellerInfo | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [storeSlug, setStoreSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
     let alive = true;
     (async () => {
-      const [{ data: profile }, list] = await Promise.all([
+      const [{ data: profile }, list, { data: shop }] = await Promise.all([
         supabase.from("profiles").select("name, country, city, rating, verified").eq("id", id).maybeSingle(),
         productsBySeller(id),
+        (supabase as any)
+          .from("shop_profiles")
+          .select("slug")
+          .eq("seller_id", id)
+          .eq("published", true)
+          .maybeSingle(),
       ]);
       if (!alive) return;
       setSeller((profile as SellerInfo) || null);
       setProducts(list);
+      setStoreSlug((shop as { slug?: string } | null)?.slug ?? null);
       setLoading(false);
     })();
     return () => {
@@ -94,16 +102,29 @@ const ShopDetail = () => {
                 </div>
               </div>
             </div>
-            <Button
-              variant="outline"
-              className="w-full gap-2 min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
-              onClick={() => {
-                void tap("light");
-                navigate("/app/chats");
-              }}
-            >
-              <MessageCircle className="w-4 h-4" strokeWidth={1.75} /> Написати продавцю
-            </Button>
+            <div className="flex flex-col gap-2">
+              {storeSlug && (
+                <Button
+                  className="w-full gap-2 min-h-[44px] bg-accent hover:bg-accent/90 text-white transition-transform duration-150 hover:-translate-y-px"
+                  onClick={() => {
+                    void tap("light");
+                    navigate(`/store/${storeSlug}`);
+                  }}
+                >
+                  <Store className="w-4 h-4" strokeWidth={1.75} /> Брендована вітрина
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                className="w-full gap-2 min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
+                onClick={() => {
+                  void tap("light");
+                  navigate("/app/chats");
+                }}
+              >
+                <MessageCircle className="w-4 h-4" strokeWidth={1.75} /> Написати продавцю
+              </Button>
+            </div>
           </div>
 
           <div className="px-4 pt-4">

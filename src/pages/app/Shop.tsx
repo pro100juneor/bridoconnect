@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ShoppingBag, Star, Heart, Plus, ShoppingCart } from "lucide-react";
+import { ShoppingBag, Star, Heart, Plus, ShoppingCart, Palette } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { tap } from "@/lib/native";
@@ -53,21 +53,33 @@ const Shop = () => {
           <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">
             Гуманітарний магазин
           </h2>
-          <button
-            onClick={() => {
-              void tap("light");
-              navigate("/app/cart");
-            }}
-            aria-label="Кошик"
-            className="relative shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
-          >
-            <ShoppingCart className="w-5 h-5 text-foreground" strokeWidth={1.75} />
-            {items.length > 0 && (
-              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-accent text-white text-[10px] font-semibold rounded-full">
-                {items.length}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={() => {
+                void tap("light");
+                navigate("/app/shop/design");
+              }}
+              aria-label="Оформити магазин"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center"
+            >
+              <Palette className="w-5 h-5 text-foreground" strokeWidth={1.75} />
+            </button>
+            <button
+              onClick={() => {
+                void tap("light");
+                navigate("/app/cart");
+              }}
+              aria-label="Кошик"
+              className="relative min-h-[44px] min-w-[44px] flex items-center justify-center"
+            >
+              <ShoppingCart className="w-5 h-5 text-foreground" strokeWidth={1.75} />
+              {items.length > 0 && (
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-accent text-white text-[10px] font-semibold rounded-full">
+                  {items.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {cats.map((cat) => (
