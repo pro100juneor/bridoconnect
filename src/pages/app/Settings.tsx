@@ -12,6 +12,7 @@ import {
   FileText,
   Smartphone,
   Mail,
+  Lock,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
@@ -99,6 +100,12 @@ const Settings = () => {
           label: "Верифікація акаунту",
           arrow: true,
           path: "/verification",
+        },
+        {
+          icon: Lock,
+          label: "Приватність спонсора",
+          arrow: true,
+          path: "/app/sponsor-privacy",
         },
       ],
     },

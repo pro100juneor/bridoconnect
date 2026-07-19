@@ -40,6 +40,8 @@ import Profile from "./pages/app/Profile";
 const RecipientPageEditor = lazy(() => import("./pages/app/RecipientPageEditor"));
 import EditProfile from "./pages/app/EditProfile";
 import PublicProfile from "./pages/app/PublicProfile";
+import SponsorPage from "./pages/app/SponsorPage";
+import SponsorPrivacy from "./pages/app/SponsorPrivacy";
 import Wallet from "./pages/app/Wallet";
 import Settings from "./pages/app/Settings";
 import Admin from "./pages/app/Admin";
@@ -109,6 +111,8 @@ export default function App() {
               <Route path="/app/wallet" element={<Wallet />} />
               <Route path="/app/wishlist" element={<Wishlist />} />
               <Route path="/app/user/:id" element={<PublicProfile />} />
+              <Route path="/app/sponsor/:id" element={<SponsorPage />} />
+              <Route path="/app/sponsor-privacy" element={<SponsorPrivacy />} />
               <Route path="/app/settings" element={<Settings />} />
               <Route path="/app/admin" element={<Admin />} />
               <Route path="/app/premium" element={<Premium />} />
