@@ -59,7 +59,7 @@ products/orders/RLS, каталог з БД, сторінка товару, пр
 - ✅ Кошик + продаж кількох позицій одного продавця (order_items).
 - ✅ Конвертація ціни за валютою регіону/налаштування (currency_rates + useCurrency); базове зберігання в EUR.
 - 🔒 Реальна оплата кошика — чекає Фазу 1.
-- ⬜ **TODO живий FX-feed** (зараз курси статичні в `currency_rates`) — щоденне оновлення rate_per_eur.
+- ✅ **Живий FX-feed** — edge `refresh-fx-rates` (open.er-api.com, без ключа) + pg_cron щодня (міграція 025); курси в `currency_rates` живі.
 
 ### 3.3 ✅ Медіа товару — ЗРОБЛЕНО (код, на staging)
 
@@ -89,9 +89,9 @@ products/orders/RLS, каталог з БД, сторінка товару, пр
 
 ## ⬜ Фаза 4 — Продакшн-обвязка та розкатка
 
-1. ⬜ Email-сповіщення на події (угода/оплата/ефір/спір/KYC) — функція `send-email` є, потрібні тригери у webhook/edge. 🔒 `RESEND_API_KEY` + домен.
+1. 🟡 Email-сповіщення на події (оплата угоди/ефіру/товару, release escrow) — тригери підключено (webhook + release-escrow, `_shared/email.ts`). Відправка вмикається з 🔒 `RESEND_API_KEY` + домен.
 2. ⬜ Observability вживу (Sentry/PostHog + consent) 🔒 ключі.
-3. ⬜ Код-спліт важких маршрутів (livekit ~500 КБ, storefront-теми) — lazy-load, зменшити головний бандл (зараз ~1 МБ).
+3. ✅ Код-спліт важких маршрутів — livekit (~511 КБ) + storefront вантажаться lazy; головний бандл 1000 → 489 КБ (142 КБ gzip).
 4. ⬜ E2E проти staging (playwright-набір є) — з піднятим бекендом.
 5. ⬜ iOS: TestFlight → App Store 🔒 Apple акаунт.
 6. ⬜ Хостинг фронту: Vercel (staging→prod) або Docker-стек.
