@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import PublicLayout from "./components/public/PublicLayout";
 import AppLayout from "./components/layout/AppLayout";
@@ -15,7 +16,9 @@ import VerificationPage from "./pages/public/VerificationPage";
 import ImpressumPage from "./pages/public/ImpressumPage";
 import DatenschutzPage from "./pages/public/DatenschutzPage";
 import AGBPage from "./pages/public/AGBPage";
-import StorefrontPage from "./pages/public/StorefrontPage";
+// Heavy routes are code-split so livekit-client (streams) and the 200-theme
+// storefront engine don't bloat the main bundle.
+const StorefrontPage = lazy(() => import("./pages/public/StorefrontPage"));
 
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
@@ -23,14 +26,14 @@ import NotFound from "./pages/NotFound";
 
 import Feed from "./pages/app/Feed";
 import LiveStreams from "./pages/app/LiveStreams";
-import StartStream from "./pages/app/StartStream";
-import StreamViewer from "./pages/app/StreamViewer";
+const StartStream = lazy(() => import("./pages/app/StartStream"));
+const StreamViewer = lazy(() => import("./pages/app/StreamViewer"));
 import CreateDeal from "./pages/app/CreateDeal";
 import Shop from "./pages/app/Shop";
 import ShopDetail from "./pages/app/ShopDetail";
 import ProductDetail from "./pages/app/ProductDetail";
 import CreateProduct from "./pages/app/CreateProduct";
-import StorefrontEditor from "./pages/app/StorefrontEditor";
+const StorefrontEditor = lazy(() => import("./pages/app/StorefrontEditor"));
 import Cart from "./pages/app/Cart";
 import Profile from "./pages/app/Profile";
 import EditProfile from "./pages/app/EditProfile";
@@ -52,61 +55,63 @@ import ResetPassword from "./pages/app/ResetPassword";
 export default function App() {
   return (
     <PageTransition>
-      <Routes>
-        <Route element={<PublicLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/how-it-works" element={<HowItWorksPage />} />
-          <Route path="/transparency" element={<TransparencyPage />} />
-          <Route path="/live" element={<LivePage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/faq" element={<FaqPage />} />
-          <Route path="/shop" element={<ShopCatalogPage />} />
-          <Route path="/verification" element={<VerificationPage />} />
-          <Route path="/impressum" element={<ImpressumPage />} />
-          <Route path="/datenschutz" element={<DatenschutzPage />} />
-          <Route path="/agb" element={<AGBPage />} />
-        </Route>
-
-        {/* Public branded storefront — no login, no shared layout (self-contained). */}
-        <Route path="/store/:slug" element={<StorefrontPage />} />
-
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AppLayout />}>
-            <Route path="/app" element={<Feed />} />
-            <Route path="/app/live" element={<LiveStreams />} />
-            <Route path="/app/live/start" element={<StartStream />} />
-            <Route path="/app/live/:id" element={<StreamViewer />} />
-            <Route path="/app/create-deal" element={<CreateDeal />} />
-            <Route path="/app/shop" element={<Shop />} />
-            <Route path="/app/cart" element={<Cart />} />
-            <Route path="/app/shop/new" element={<CreateProduct />} />
-            <Route path="/app/shop/design" element={<StorefrontEditor />} />
-            <Route path="/app/shop/seller/:id" element={<ShopDetail />} />
-            <Route path="/app/shop/:id" element={<ProductDetail />} />
-            <Route path="/app/profile" element={<Profile />} />
-            <Route path="/app/profile/edit" element={<EditProfile />} />
-            <Route path="/app/search" element={<Search />} />
-            <Route path="/app/chats" element={<ChatList />} />
-            <Route path="/app/chat/:id" element={<Chat />} />
-            <Route path="/app/notifications" element={<Notifications />} />
-            <Route path="/app/deal/:id" element={<ActiveDeal />} />
-            <Route path="/app/deals" element={<DealHistory />} />
-            <Route path="/app/dispute/:id" element={<Dispute />} />
-            <Route path="/app/wallet" element={<Wallet />} />
-            <Route path="/app/wishlist" element={<Wishlist />} />
-            <Route path="/app/user/:id" element={<PublicProfile />} />
-            <Route path="/app/settings" element={<Settings />} />
-            <Route path="/app/admin" element={<Admin />} />
-            <Route path="/app/premium" element={<Premium />} />
+      <Suspense fallback={<div className="min-h-screen bg-background" aria-busy="true" />}>
+        <Routes>
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/how-it-works" element={<HowItWorksPage />} />
+            <Route path="/transparency" element={<TransparencyPage />} />
+            <Route path="/live" element={<LivePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/faq" element={<FaqPage />} />
+            <Route path="/shop" element={<ShopCatalogPage />} />
+            <Route path="/verification" element={<VerificationPage />} />
+            <Route path="/impressum" element={<ImpressumPage />} />
+            <Route path="/datenschutz" element={<DatenschutzPage />} />
+            <Route path="/agb" element={<AGBPage />} />
           </Route>
-        </Route>
 
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          {/* Public branded storefront — no login, no shared layout (self-contained). */}
+          <Route path="/store/:slug" element={<StorefrontPage />} />
+
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/app" element={<Feed />} />
+              <Route path="/app/live" element={<LiveStreams />} />
+              <Route path="/app/live/start" element={<StartStream />} />
+              <Route path="/app/live/:id" element={<StreamViewer />} />
+              <Route path="/app/create-deal" element={<CreateDeal />} />
+              <Route path="/app/shop" element={<Shop />} />
+              <Route path="/app/cart" element={<Cart />} />
+              <Route path="/app/shop/new" element={<CreateProduct />} />
+              <Route path="/app/shop/design" element={<StorefrontEditor />} />
+              <Route path="/app/shop/seller/:id" element={<ShopDetail />} />
+              <Route path="/app/shop/:id" element={<ProductDetail />} />
+              <Route path="/app/profile" element={<Profile />} />
+              <Route path="/app/profile/edit" element={<EditProfile />} />
+              <Route path="/app/search" element={<Search />} />
+              <Route path="/app/chats" element={<ChatList />} />
+              <Route path="/app/chat/:id" element={<Chat />} />
+              <Route path="/app/notifications" element={<Notifications />} />
+              <Route path="/app/deal/:id" element={<ActiveDeal />} />
+              <Route path="/app/deals" element={<DealHistory />} />
+              <Route path="/app/dispute/:id" element={<Dispute />} />
+              <Route path="/app/wallet" element={<Wallet />} />
+              <Route path="/app/wishlist" element={<Wishlist />} />
+              <Route path="/app/user/:id" element={<PublicProfile />} />
+              <Route path="/app/settings" element={<Settings />} />
+              <Route path="/app/admin" element={<Admin />} />
+              <Route path="/app/premium" element={<Premium />} />
+            </Route>
+          </Route>
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </PageTransition>
   );
 }
