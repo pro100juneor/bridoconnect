@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendTransactionalEmail } from "../_shared/email.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2023-10-16",
@@ -159,6 +160,25 @@ serve(async (req) => {
       status: "completed",
       stripe_payment_intent_id: deal.stripe_payment_intent_id,
     });
+
+    // Уведомляем получателя (creator) о разблокировке средств. Email опционален
+    // (no-op без RESEND_API_KEY) — не должен ломать основной поток release.
+    try {
+      const { data: recipient } = await supabase.auth.admin.getUserById(deal.creator_id);
+      const to = recipient?.user?.email;
+      if (to) {
+        await sendTransactionalEmail({
+          to,
+          template: "escrow_released",
+          locale: "uk",
+          vars: { amount: netCents / 100, currency: "EUR", dealId },
+          userId: deal.creator_id,
+          supabase,
+        });
+      }
+    } catch (mailErr) {
+      console.error("escrow_released email error:", mailErr);
+    }
 
     return new Response(JSON.stringify({ ok: true, transferId }), {
       headers: { ...headers, "Content-Type": "application/json" },

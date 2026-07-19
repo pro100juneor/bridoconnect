@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendTransactionalEmail, type Template } from "../_shared/email.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2023-10-16",
@@ -11,6 +12,25 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_URL") || "",
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
 );
+
+// Транзакционное уведомление получателю средств. Никогда не ломает webhook:
+// email опционален (no-op без RESEND_API_KEY), любые ошибки только логируются.
+// Локаль пока дефолтная 'uk' (в profiles нет поля предпочитаемого языка).
+async function notifyUser(
+  userId: string | null,
+  template: Template,
+  vars: Record<string, string | number>
+): Promise<void> {
+  if (!userId) return;
+  try {
+    const { data } = await supabase.auth.admin.getUserById(userId);
+    const to = data?.user?.email;
+    if (!to) return;
+    await sendTransactionalEmail({ to, template, locale: "uk", vars, userId, supabase });
+  } catch (err) {
+    console.error("notifyUser error:", err);
+  }
+}
 
 // Insert transaction (idempotent at PG via UNIQUE constraint).
 async function recordTransaction(row: {
@@ -118,6 +138,12 @@ serve(async (req) => {
                 p_product_id: productId,
               });
               if (decErr) console.error("decrement_stock:", decErr);
+              // Первичная обработка (order вставлен) — уведомляем продавца.
+              await notifyUser(recipientId, "payment_received", {
+                amount,
+                currency: "EUR",
+                dealId: "",
+              });
             }
           }
         }
@@ -188,7 +214,9 @@ serve(async (req) => {
           if (incErr) console.error("increment_stream_raised:", incErr);
         }
 
-        await recordTransaction({
+        // recordTransaction возвращает false на дубле события (UNIQUE) — это наш
+        // маркер первичности для отправки писем (не спамим на ретраях webhook).
+        const firstTime = await recordTransaction({
           event_id: event.id,
           user_id: userId,
           deal_id: dealId,
@@ -212,6 +240,26 @@ serve(async (req) => {
             status: "held_in_escrow",
             stripe_payment_intent_id: paymentIntentId,
           });
+        }
+
+        // Транзакционные письма получателю средств — только при первичной
+        // обработке (firstTime). Спонсору/покупателю не шлём, чтобы не спамить.
+        if (firstTime) {
+          if (dealId && recipientId) {
+            // deal paid → уведомляем получателя (creator).
+            await notifyUser(recipientId, "payment_received", {
+              amount,
+              currency: "EUR",
+              dealId,
+            });
+          } else if (streamId && recipientId) {
+            // stream donation → уведомляем хоста (recipient_id).
+            await notifyUser(recipientId, "payment_received", {
+              amount,
+              currency: "EUR",
+              dealId: "",
+            });
+          }
         }
         break;
       }
