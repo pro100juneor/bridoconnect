@@ -5,10 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/generate-sitemap.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "docker:build": "docker build -t bridoconnect/web:latest .",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "deploy:hostinger": "./scripts/deploy-hostinger.sh"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",
@@ -32,13 +37,16 @@
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-toast": "^1.1.5",
     "@radix-ui/react-tooltip": "^1.1.0",
+    "@sentry/react": "^8.55.0",
     "@supabase/supabase-js": "^2.39.0",
     "@tanstack/react-query": "^5.17.19",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "framer-motion": "^12.40.0",
+    "livekit-client": "^2.20.1",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.383.0",
+    "posthog-js": "^1.194.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.1",

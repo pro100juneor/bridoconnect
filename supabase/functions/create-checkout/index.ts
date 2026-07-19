@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { rateLimit, rateLimitHeaders, clientKey } from "../_shared/rate-limit.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2023-10-16",
@@ -33,6 +34,15 @@ serve(async (req) => {
   const headers = corsFor(req.headers.get("origin"));
   if (req.method === "OPTIONS") return new Response(null, { headers });
 
+  // Rate limit: 30 checkouts / 5 min per IP — покрывает realistic burst
+  const rl = await rateLimit({ key: clientKey(req, "create-checkout"), limit: 30, windowSec: 300 });
+  if (!rl.ok) {
+    return new Response(JSON.stringify({ error: "Too many requests" }), {
+      status: 429,
+      headers: { ...headers, ...rateLimitHeaders(rl), "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") || "",
@@ -49,9 +59,12 @@ serve(async (req) => {
       });
     }
 
-    const { amount, dealId, type, priceId } = await req.json();
+    const { amount, dealId, streamId, type, priceId } = await req.json();
 
-    if (type !== undefined && !["subscription", "deposit", "deal_payment", "deal"].includes(type)) {
+    if (
+      type !== undefined &&
+      !["subscription", "deposit", "deal_payment", "deal", "stream_donation"].includes(type)
+    ) {
       return new Response(JSON.stringify({ error: "invalid type" }), {
         status: 400,
         headers: { ...headers, "Content-Type": "application/json" },
@@ -89,6 +102,54 @@ serve(async (req) => {
       // Deposit/wallet top-ups go to platform's own balance (no destination).
       let connectArgs: Record<string, unknown> = {};
       let dealRow: { id: string; creator_id: string } | null = null;
+      let streamRow: { id: string; host_id: string } | null = null;
+
+      if (streamId) {
+        const { data: stream, error: sErr } = await supabase
+          .from("streams")
+          .select("id, host_id, status")
+          .eq("id", streamId)
+          .maybeSingle();
+        if (sErr || !stream) {
+          return new Response(JSON.stringify({ error: "stream not found" }), {
+            status: 404,
+            headers: { ...headers, "Content-Type": "application/json" },
+          });
+        }
+        if (stream.status !== "live") {
+          return new Response(JSON.stringify({ error: "stream is not live" }), {
+            status: 400,
+            headers: { ...headers, "Content-Type": "application/json" },
+          });
+        }
+        const { data: host, error: hErr } = await supabase
+          .from("profiles")
+          .select("stripe_connect_account_id, stripe_connect_status")
+          .eq("id", stream.host_id)
+          .maybeSingle();
+        if (hErr || !host?.stripe_connect_account_id || host.stripe_connect_status !== "enabled") {
+          return new Response(
+            JSON.stringify({
+              error: "recipient_not_onboarded",
+              message: "Host has not completed Stripe onboarding",
+            }),
+            { status: 409, headers: { ...headers, "Content-Type": "application/json" } }
+          );
+        }
+        streamRow = { id: stream.id, host_id: stream.host_id };
+        connectArgs = {
+          payment_intent_data: {
+            application_fee_amount: feeCents,
+            transfer_data: { destination: host.stripe_connect_account_id },
+            metadata: {
+              stream_id: streamId,
+              recipient_id: stream.host_id,
+              sponsor_id: user.id,
+              platform_fee_cents: String(feeCents),
+            },
+          },
+        };
+      }
 
       if (dealId) {
         const { data: deal, error: dErr } = await supabase
@@ -151,24 +212,39 @@ serve(async (req) => {
             price_data: {
               currency: "eur",
               product_data: {
-                name: dealId ? "Допомога по угоді BridoConnect" : "Поповнення гаманця BridoConnect",
-                description: dealId ? `Deal ID: ${dealId}` : "Баланс рахунку",
+                name: streamId
+                  ? "Донат на ефір BridoConnect"
+                  : dealId
+                    ? "Допомога по угоді BridoConnect"
+                    : "Поповнення гаманця BridoConnect",
+                description: streamId
+                  ? `Stream ID: ${streamId}`
+                  : dealId
+                    ? `Deal ID: ${dealId}`
+                    : "Баланс рахунку",
               },
               unit_amount: unitCents,
             },
             quantity: 1,
           },
         ],
-        success_url: dealId
-          ? `${origin}/app/deal/${dealId}?success=true`
-          : `${origin}/app/wallet?success=true`,
-        cancel_url: dealId ? `${origin}/app/deal/${dealId}` : `${origin}/app/wallet`,
+        success_url: streamId
+          ? `${origin}/app/live/${streamId}?success=true`
+          : dealId
+            ? `${origin}/app/deal/${dealId}?success=true`
+            : `${origin}/app/wallet?success=true`,
+        cancel_url: streamId
+          ? `${origin}/app/live/${streamId}`
+          : dealId
+            ? `${origin}/app/deal/${dealId}`
+            : `${origin}/app/wallet`,
         metadata: {
           dealId: dealId || "",
-          type: type || (dealId ? "deal_payment" : "deposit"),
+          streamId: streamId || "",
+          type: type || (streamId ? "stream_donation" : dealId ? "deal_payment" : "deposit"),
           user_id: user.id,
-          recipient_id: dealRow?.creator_id || "",
-          platform_fee_cents: String(dealId ? feeCents : 0),
+          recipient_id: dealRow?.creator_id || streamRow?.host_id || "",
+          platform_fee_cents: String(dealId || streamId ? feeCents : 0),
         },
         ...connectArgs,
       });

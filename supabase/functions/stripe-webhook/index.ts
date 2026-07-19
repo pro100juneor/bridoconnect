@@ -63,6 +63,7 @@ serve(async (req) => {
         const session = event.data.object as Stripe.Checkout.Session;
         const md = session.metadata || {};
         const dealId = md.dealId || null;
+        const streamId = md.streamId || null;
         const userId = md.user_id || "";
         const recipientId = md.recipient_id || null;
         const type = md.type || (dealId ? "deal_payment" : "deposit");
@@ -88,6 +89,15 @@ serve(async (req) => {
             console.error("apply_stripe_payment:", applyErr);
             throw applyErr;
           }
+        }
+
+        // Stream donation: bump the host's raised total.
+        if (streamId && paymentIntentId) {
+          const { error: incErr } = await supabase.rpc("increment_stream_raised", {
+            p_stream_id: streamId,
+            p_amount: amount,
+          });
+          if (incErr) console.error("increment_stream_raised:", incErr);
         }
 
         await recordTransaction({

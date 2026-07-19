@@ -61,6 +61,13 @@ export const useStripe = () => {
     if (url) window.location.href = url;
   };
 
+  const createStreamDonation = async ({ streamId, amount }: { streamId: string; amount: number }) => {
+    const resp = await authedFetch("create-checkout", { amount, streamId, type: "stream_donation" });
+    if (!resp.ok) throw new Error(await safeJsonError(resp, "Stripe error"));
+    const { url } = await resp.json();
+    if (url) window.location.href = url;
+  };
+
   const createSubscription = async ({ priceId }: { priceId: string }) => {
     const resp = await authedFetch("create-checkout", { type: "subscription", priceId });
     if (!resp.ok) throw new Error(await safeJsonError(resp, "Stripe subscription error"));
@@ -95,6 +102,7 @@ export const useStripe = () => {
 
   return {
     createCheckout,
+    createStreamDonation,
     createSubscription,
     connectOnboard,
     fetchConnectStatus,
