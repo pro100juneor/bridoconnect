@@ -19,18 +19,17 @@ Staging-проєкт Supabase `mlgyuonypcyseryrmcms` (Frankfurt).
 
 ---
 
-## 🟡 Фаза 1 — Платежі (Stripe Connect) — код готовий, гейт на ключі 🔒
+## ✅ Фаза 1 — Платежі (Stripe Connect) — ПЕРЕВІРЕНО ВЖИВУ (test-mode, sandbox)
 
-Потрібно: `STRIPE_SECRET_KEY` (sk*test*…), `VITE_STRIPE_PUBLISHABLE_KEY` (pk*test*…), Connect увімкнено, `STRIPE_WEBHOOK_SECRET`.
+Stripe test sandbox: secret+webhook у Supabase secrets, Connect увімкнено, connected-акаунт активний (transfers active).
 
-1. ⬜ `supabase secrets set STRIPE_SECRET_KEY … STRIPE_WEBHOOK_SECRET …` на staging.
-2. ⬜ Налаштувати Stripe webhook endpoint → `…/functions/v1/stripe-webhook`, взяти signing secret.
-3. ⬜ Прописати `VITE_STRIPE_PUBLISHABLE_KEY` у `.env.local`, ребілд.
-4. ⬜ Сквозний тест (test-mode картками): onboarding отримувача → donate по угоді → escrow → release → refund/dispute.
-5. ⬜ Донат в ефірі та покупка в магазині (destination charge, 5% fee, мультивалюта).
-6. ⬜ KYC-гейт (Sumsub) перед виплатами.
-7. ⬜ Перевести в live-режим (реальна картка, мін. сума).
-   **Готово, коли:** реальна EUR-транзакція проходить sponsor → recipient з комісією та escrow.
+- ✅ Deposit (звичайний charge) — €10 paid → webhook → transaction.
+- ✅ Покупка в магазині — destination charge €28: `application_fee=140` (5% платформі), **transfer до продавця**, order `paid`, товар `sold`/stock 0.
+- ✅ Донат по угоді → escrow → **release**: €50 → held_in_escrow €47.50 → release €47.50, угода `completed`, transfer отримувачу.
+- ⬜ Донат в ефірі (той самий механізм, чекає ключі LiveKit для повного сценарію).
+- ⬜ KYC-гейт (Sumsub) перед виплатами 🔒.
+- ⬜ Live-режим (реальна картка) — коли готові до продакшену.
+  **Доведено:** sponsor → recipient з 5% комісією та escrow працює наскрізь.
 
 ---
 
