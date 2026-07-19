@@ -22,6 +22,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
+  const [activeImage, setActiveImage] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -109,9 +110,9 @@ const ProductDetail = () => {
       </div>
 
       <div className="relative h-56 bg-secondary/60 mx-4 rounded-2xl flex items-center justify-center mb-4 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
-        {product.images[0] ? (
+        {product.images[activeImage] ? (
           <img
-            src={product.images[0]}
+            src={product.images[activeImage]}
             alt={product.title}
             className="absolute inset-0 w-full h-full object-cover"
           />
@@ -123,6 +124,44 @@ const ProductDetail = () => {
           />
         )}
       </div>
+
+      {product.images.length > 1 && (
+        <div className="flex gap-2 px-4 mb-4 overflow-x-auto scrollbar-hide snap-x">
+          {product.images.map((src, i) => (
+            <button
+              key={src}
+              onClick={() => {
+                void tap("light");
+                setActiveImage(i);
+              }}
+              aria-label={`Фото ${i + 1}`}
+              className={`relative shrink-0 w-16 h-16 rounded-xl overflow-hidden snap-start transition-all duration-150 ${
+                i === activeImage ? "ring-2 ring-accent" : "opacity-70"
+              }`}
+            >
+              <img src={src} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {product.videos.length > 0 && (
+        <div className="px-4 mb-4 space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Відео</p>
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide snap-x">
+            {product.videos.map((src) => (
+              <video
+                key={src}
+                src={src}
+                controls
+                playsInline
+                preload="metadata"
+                className="shrink-0 w-64 h-40 rounded-2xl bg-black object-cover snap-start"
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="px-4 space-y-4">
         <div>

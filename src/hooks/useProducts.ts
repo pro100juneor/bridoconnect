@@ -9,6 +9,7 @@ export interface Product {
   currency: string;
   category?: string | null;
   images: string[];
+  videos: string[];
   stock: number;
   status: "active" | "hidden" | "sold";
   created_at: string;
@@ -29,6 +30,7 @@ const SELLER_JOIN = `
 function enrich(row: any): Product {
   return {
     ...row,
+    videos: row.videos ?? [],
     seller_name: row.profiles?.name || "Продавець",
     seller_country: row.profiles?.country ?? null,
     seller_rating: row.profiles?.rating ?? 0,
@@ -81,18 +83,26 @@ export const useProducts = () => {
     return (data as any[]).map(enrich);
   };
 
-  const uploadImages = async (userId: string, files: File[]): Promise<string[]> => {
+  const MAX_IMAGES = 20;
+  const MAX_VIDEOS = 5;
+
+  // Uploads files into `${userId}/${uuid}.${ext}` inside the given public bucket
+  // and returns their public URLs.
+  const uploadToBucket = async (
+    bucket: "product-images" | "product-videos",
+    userId: string,
+    files: File[],
+    fallbackExt: string
+  ): Promise<string[]> => {
     const urls: string[] = [];
     for (const file of files) {
-      const ext = file.name.split(".").pop() || "jpg";
+      const ext = file.name.split(".").pop() || fallbackExt;
       const path = `${userId}/${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("product-images")
-        .upload(path, file, { upsert: true });
+      const { error: uploadError } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
       if (uploadError) throw new Error(uploadError.message);
       const {
         data: { publicUrl },
-      } = supabase.storage.from("product-images").getPublicUrl(path);
+      } = supabase.storage.from(bucket).getPublicUrl(path);
       urls.push(publicUrl);
     }
     return urls;
@@ -103,20 +113,26 @@ export const useProducts = () => {
     description?: string;
     price_cents: number;
     category?: string;
-    files?: File[];
+    images?: File[];
+    videos?: File[];
   }): Promise<{ id?: string; error?: string }> => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { error: "Not authenticated" };
 
+    const imageFiles = payload.images ?? [];
+    const videoFiles = payload.videos ?? [];
+    if (imageFiles.length > MAX_IMAGES) return { error: `Максимум ${MAX_IMAGES} фото` };
+    if (videoFiles.length > MAX_VIDEOS) return { error: `Максимум ${MAX_VIDEOS} відео` };
+
     let images: string[] = [];
-    if (payload.files && payload.files.length > 0) {
-      try {
-        images = await uploadImages(user.id, payload.files);
-      } catch (e) {
-        return { error: e instanceof Error ? e.message : "upload failed" };
-      }
+    let videos: string[] = [];
+    try {
+      if (imageFiles.length > 0) images = await uploadToBucket("product-images", user.id, imageFiles, "jpg");
+      if (videoFiles.length > 0) videos = await uploadToBucket("product-videos", user.id, videoFiles, "mp4");
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : "upload failed" };
     }
 
     const { data, error } = await supabase
@@ -129,6 +145,7 @@ export const useProducts = () => {
         currency: "eur",
         category: payload.category ?? null,
         images,
+        videos,
         stock: 1, // one position = exactly one physical unit
         status: "active",
       } as any)
