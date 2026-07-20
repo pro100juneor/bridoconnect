@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Heart, MapPin, X, ShoppingBag } from "lucide-react";
-import { useRecipientPage, type RecipientPageData, type WishlistItem } from "@/hooks/useRecipientPage";
+import { Heart, MapPin, X, ShoppingBag, BadgeCheck } from "lucide-react";
+import {
+  useRecipientPage,
+  isVisible,
+  type RecipientPageData,
+  type WishlistItem,
+} from "@/hooks/useRecipientPage";
 import { useCurrency } from "@/hooks/useCurrency";
 
 type LoadState = "loading" | "notfound" | "closed" | "ready";
@@ -133,7 +138,9 @@ export default function RecipientPage() {
   }
 
   const { profile, photos, posts, wishlist } = data;
+  const fv = profile.field_visibility;
   const location = [profile.city, profile.country].filter(Boolean).join(", ");
+  const isVerified = profile.verification_status === "verified";
 
   return (
     <div className="min-h-screen bg-background pb-16">
@@ -154,10 +161,19 @@ export default function RecipientPage() {
             )}
           </div>
           <div className="flex-1 min-w-0 pb-1">
-            <h1 className="font-serif text-2xl sm:text-3xl tracking-tight text-foreground truncate">
-              {profile.name}
+            <h1 className="font-serif text-2xl sm:text-3xl tracking-tight text-foreground flex items-center gap-1.5 min-w-0">
+              <span className="truncate">{profile.name}</span>
+              {isVerified && (
+                <span
+                  className="inline-flex items-center shrink-0 text-accent"
+                  title="Верифіковано"
+                  aria-label="Верифіковано"
+                >
+                  <BadgeCheck className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.75} />
+                </span>
+              )}
             </h1>
-            {location && (
+            {isVisible(fv, "location") && location && (
               <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5" strokeWidth={1.75} /> {location}
               </p>
@@ -171,26 +187,28 @@ export default function RecipientPage() {
           </Link>
         </div>
 
-        {profile.bio && (
+        {isVisible(fv, "bio") && profile.bio && (
           <p className="text-sm text-foreground/90 leading-relaxed mb-8 max-w-2xl">{profile.bio}</p>
         )}
 
         {/* Wishlist */}
-        <section className="mb-10">
-          <h2 className="font-serif text-xl text-foreground mb-3">Що потрібно</h2>
-          {wishlist.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {wishlist.map((item) => (
-                <WishlistCard key={item.id} item={item} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground py-6 text-center">Список побажань поки порожній.</p>
-          )}
-        </section>
+        {isVisible(fv, "wishlist") && (
+          <section className="mb-10">
+            <h2 className="font-serif text-xl text-foreground mb-3">Що потрібно</h2>
+            {wishlist.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {wishlist.map((item) => (
+                  <WishlistCard key={item.id} item={item} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground py-6 text-center">Список побажань поки порожній.</p>
+            )}
+          </section>
+        )}
 
         {/* Photo gallery */}
-        {photos.length > 0 && (
+        {isVisible(fv, "photos") && photos.length > 0 && (
           <section className="mb-10">
             <h2 className="font-serif text-xl text-foreground mb-3">Фотографії</h2>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -209,44 +227,46 @@ export default function RecipientPage() {
         )}
 
         {/* Wall */}
-        <section>
-          <h2 className="font-serif text-xl text-foreground mb-3">Стіна</h2>
-          {posts.length > 0 ? (
-            <div className="space-y-4">
-              {posts.map((post) => (
-                <article
-                  key={post.id}
-                  className="relative rounded-2xl border border-border p-4 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8"
-                >
-                  <p className="text-xs text-muted-foreground mb-2">
-                    {new Date(post.created_at).toLocaleDateString("uk", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{post.text}</p>
-                  {post.media.length > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
-                      {post.media.map((m) => (
-                        <button
-                          key={m}
-                          onClick={() => setLightbox(m)}
-                          className="aspect-video rounded-xl overflow-hidden bg-secondary"
-                          aria-label="Відкрити зображення"
-                        >
-                          <img src={m} alt="" className="w-full h-full object-cover" loading="lazy" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground py-6 text-center">Записів поки немає.</p>
-          )}
-        </section>
+        {isVisible(fv, "wall") && (
+          <section>
+            <h2 className="font-serif text-xl text-foreground mb-3">Стіна</h2>
+            {posts.length > 0 ? (
+              <div className="space-y-4">
+                {posts.map((post) => (
+                  <article
+                    key={post.id}
+                    className="relative rounded-2xl border border-border p-4 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8"
+                  >
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {new Date(post.created_at).toLocaleDateString("uk", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{post.text}</p>
+                    {post.media.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+                        {post.media.map((m) => (
+                          <button
+                            key={m}
+                            onClick={() => setLightbox(m)}
+                            className="aspect-video rounded-xl overflow-hidden bg-secondary"
+                            aria-label="Відкрити зображення"
+                          >
+                            <img src={m} alt="" className="w-full h-full object-cover" loading="lazy" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground py-6 text-center">Записів поки немає.</p>
+            )}
+          </section>
+        )}
       </div>
 
       {/* Lightbox */}

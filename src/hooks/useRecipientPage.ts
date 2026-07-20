@@ -5,6 +5,19 @@ import { supabase } from "@/integrations/supabase/client";
 // useProducts / useCurrency).
 const from = (table: string) => (supabase as any).from(table);
 
+// Section -> visible map for the public page. A MISSING key means visible
+// (default-on), so an empty object shows every section.
+export type FieldVisibility = Record<string, boolean>;
+export type VerificationStatus = "unverified" | "pending" | "verified";
+
+// Sections the owner can toggle on their public page.
+export const VISIBILITY_KEYS = ["bio", "photos", "wall", "wishlist", "location"] as const;
+export type VisibilityKey = (typeof VISIBILITY_KEYS)[number];
+
+// Default true when the key is absent — only an explicit `false` hides a section.
+export const isVisible = (fv: FieldVisibility | null | undefined, key: string): boolean =>
+  fv?.[key] !== false;
+
 export interface RecipientProfile {
   id: string;
   name: string;
@@ -15,6 +28,8 @@ export interface RecipientProfile {
   avatar_url: string | null;
   cover_url: string | null;
   public_page_enabled: boolean;
+  field_visibility: FieldVisibility;
+  verification_status: VerificationStatus;
 }
 
 export interface ProfilePhoto {
@@ -60,7 +75,8 @@ export interface RecipientPageData {
   wishlist: WishlistItem[];
 }
 
-const PROFILE_COLS = "id, name, slug, city, country, bio, avatar_url, cover_url, public_page_enabled";
+const PROFILE_COLS =
+  "id, name, slug, city, country, bio, avatar_url, cover_url, public_page_enabled, field_visibility, verification_status";
 
 function normalizeProfile(row: any): RecipientProfile {
   return {
@@ -73,6 +89,8 @@ function normalizeProfile(row: any): RecipientProfile {
     avatar_url: row.avatar_url ?? null,
     cover_url: row.cover_url ?? null,
     public_page_enabled: row.public_page_enabled ?? true,
+    field_visibility: (row.field_visibility as FieldVisibility) ?? {},
+    verification_status: (row.verification_status as VerificationStatus) ?? "unverified",
   };
 }
 
@@ -121,9 +139,9 @@ export const useRecipientPage = () => {
 
     return {
       profile,
-      photos: (photosRes.data as any[] | null)?.map((r) => r as ProfilePhoto) ?? [],
-      posts: (postsRes.data as any[] | null)?.map((r) => r as WallPost) ?? [],
-      wishlist: (wishRes.data as any[] | null)?.map(normalizeWishlist) ?? [],
+      photos: (photosRes.data as unknown[] | null)?.map((r) => r as ProfilePhoto) ?? [],
+      posts: (postsRes.data as unknown[] | null)?.map((r) => r as WallPost) ?? [],
+      wishlist: (wishRes.data as unknown[] | null)?.map(normalizeWishlist) ?? [],
     };
   };
 
@@ -153,9 +171,9 @@ export const useRecipientPage = () => {
 
     return {
       profile,
-      photos: (photosRes.data as any[] | null)?.map((r) => r as ProfilePhoto) ?? [],
-      posts: (postsRes.data as any[] | null)?.map((r) => r as WallPost) ?? [],
-      wishlist: (wishRes.data as any[] | null)?.map(normalizeWishlist) ?? [],
+      photos: (photosRes.data as unknown[] | null)?.map((r) => r as ProfilePhoto) ?? [],
+      posts: (postsRes.data as unknown[] | null)?.map((r) => r as WallPost) ?? [],
+      wishlist: (wishRes.data as unknown[] | null)?.map(normalizeWishlist) ?? [],
     };
   };
 
@@ -186,9 +204,7 @@ export const useRecipientPage = () => {
           .slice(0, 48) || `user-${user.id.slice(0, 8)}`;
     }
 
-    const { error } = await from("profiles")
-      .update({ slug } as any)
-      .eq("id", user.id);
+    const { error } = await from("profiles").update({ slug }).eq("id", user.id);
     if (error) return { error: error.message };
     return { slug };
   };
@@ -198,10 +214,25 @@ export const useRecipientPage = () => {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { error: "Not authenticated" };
-    const { error } = await from("profiles")
-      .update({ public_page_enabled: enabled } as any)
-      .eq("id", user.id);
+    const { error } = await from("profiles").update({ public_page_enabled: enabled }).eq("id", user.id);
     return { error: error?.message };
+  };
+
+  // Merge a partial section->bool patch into profiles.field_visibility: read the
+  // current map, shallow-merge, and write it back.
+  const setFieldVisibility = async (
+    patch: Record<string, boolean>
+  ): Promise<{ error?: string; field_visibility?: FieldVisibility }> => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    const { data: prof } = await from("profiles").select("field_visibility").eq("id", user.id).maybeSingle();
+    const current = ((prof as any)?.field_visibility as FieldVisibility) ?? {};
+    const next = { ...current, ...patch };
+    const { error } = await from("profiles").update({ field_visibility: next }).eq("id", user.id);
+    if (error) return { error: error.message };
+    return { field_visibility: next };
   };
 
   // --- Cover + gallery photos --------------------------------------------------
@@ -223,9 +254,7 @@ export const useRecipientPage = () => {
     if (!user) return { error: "Not authenticated" };
     try {
       const url = await uploadToBucket(user.id, file);
-      const { error } = await from("profiles")
-        .update({ cover_url: url } as any)
-        .eq("id", user.id);
+      const { error } = await from("profiles").update({ cover_url: url }).eq("id", user.id);
       if (error) return { error: error.message };
       return { url };
     } catch (e) {
@@ -241,7 +270,7 @@ export const useRecipientPage = () => {
     try {
       const url = await uploadToBucket(user.id, file);
       const { data, error } = await from("profile_photos")
-        .insert({ user_id: user.id, url } as any)
+        .insert({ user_id: user.id, url })
         .select("*")
         .single();
       if (error || !data) return { error: error?.message || "insert failed" };
@@ -281,7 +310,7 @@ export const useRecipientPage = () => {
     } = await supabase.auth.getUser();
     if (!user) return { error: "Not authenticated" };
     const { data, error } = await from("wall_posts")
-      .insert({ author_id: user.id, text, media } as any)
+      .insert({ author_id: user.id, text, media })
       .select("*")
       .single();
     if (error || !data) return { error: error?.message || "insert failed" };
@@ -300,7 +329,7 @@ export const useRecipientPage = () => {
     } = await supabase.auth.getUser();
     if (!user) return { error: "Not authenticated" };
     const { data, error } = await from("wishlist_items")
-      .insert({ user_id: user.id, product_id: productId } as any)
+      .insert({ user_id: user.id, product_id: productId })
       .select("*, products(id, title, price_cents, currency, images)")
       .single();
     if (error || !data) return { error: error?.message || "insert failed" };
@@ -316,7 +345,7 @@ export const useRecipientPage = () => {
     } = await supabase.auth.getUser();
     if (!user) return { error: "Not authenticated" };
     const { data, error } = await from("wishlist_items")
-      .insert({ user_id: user.id, title, note: note ?? null } as any)
+      .insert({ user_id: user.id, title, note: note ?? null })
       .select("*, products(id, title, price_cents, currency, images)")
       .single();
     if (error || !data) return { error: error?.message || "insert failed" };
@@ -333,6 +362,7 @@ export const useRecipientPage = () => {
     getMine,
     ensureSlug,
     setPageEnabled,
+    setFieldVisibility,
     uploadCover,
     addPhoto,
     deletePhoto,

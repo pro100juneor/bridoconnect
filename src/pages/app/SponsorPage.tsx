@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Lock, ShieldCheck, Send, Edit2, Clock } from "lucide-react";
+import { ArrowLeft, Lock, ShieldCheck, Send, Edit2, Clock, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -155,7 +155,16 @@ const SponsorPage = () => {
             initials || "?"
           )}
         </div>
-        <h3 className="font-semibold text-lg text-foreground">{sponsor.name || "Спонсор"}</h3>
+        <h3 className="font-semibold text-lg text-foreground inline-flex items-center gap-1.5">
+          {sponsor.name || "Спонсор"}
+          {sponsor.verification_status === "verified" && (
+            <BadgeCheck
+              className="w-5 h-5 text-accent shrink-0"
+              strokeWidth={1.75}
+              aria-label="Верифіковано"
+            />
+          )}
+        </h3>
         {!canView && (
           <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
             <Lock className="w-3.5 h-3.5" strokeWidth={1.75} /> Закритий профіль

@@ -1,12 +1,46 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ImagePlus, X, ExternalLink, Trash2, Plus, Search, Send } from "lucide-react";
+import {
+  ArrowLeft,
+  ImagePlus,
+  X,
+  ExternalLink,
+  Trash2,
+  Plus,
+  Search,
+  Send,
+  BadgeCheck,
+  Clock,
+  ShieldOff,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { tap, notify } from "@/lib/native";
 import { toast } from "@/hooks/use-toast";
-import { useRecipientPage, type RecipientPageData } from "@/hooks/useRecipientPage";
+import {
+  useRecipientPage,
+  isVisible,
+  type RecipientPageData,
+  type VisibilityKey,
+} from "@/hooks/useRecipientPage";
 import { useProducts, type Product } from "@/hooks/useProducts";
 import { useCurrency } from "@/hooks/useCurrency";
+
+// Public-page sections the owner can show/hide, in display order.
+const VISIBILITY_ROWS: { key: VisibilityKey; label: string; hint: string }[] = [
+  { key: "bio", label: "Біо", hint: "Текст про себе під іменем" },
+  { key: "photos", label: "Фото", hint: "Галерея фотографій" },
+  { key: "wall", label: "Стіна", hint: "Записи та новини" },
+  { key: "wishlist", label: "Список бажань", hint: "Що потрібно" },
+  { key: "location", label: "Локація", hint: "Місто та країна" },
+];
+
+// Read-only presentation of the verification status set by the moderation flow.
+const VERIFICATION_META: Record<string, { label: string; Icon: typeof BadgeCheck; className: string }> = {
+  verified: { label: "Верифіковано", Icon: BadgeCheck, className: "text-accent" },
+  pending: { label: "На перевірці", Icon: Clock, className: "text-warning" },
+  unverified: { label: "Не верифіковано", Icon: ShieldOff, className: "text-muted-foreground" },
+};
 
 const RecipientPageEditor = () => {
   const navigate = useNavigate();
@@ -14,6 +48,7 @@ const RecipientPageEditor = () => {
     getMine,
     ensureSlug,
     setPageEnabled,
+    setFieldVisibility,
     uploadCover,
     addPhoto,
     deletePhoto,
@@ -201,6 +236,30 @@ const RecipientPageEditor = () => {
     await reload();
   };
 
+  // Persist a single section's visibility, optimistically updating local state so
+  // the switch flips immediately.
+  const toggleVisibility = async (key: VisibilityKey, visible: boolean) => {
+    if (!data) return;
+    void tap("light");
+    setData((prev) =>
+      prev
+        ? {
+            ...prev,
+            profile: {
+              ...prev.profile,
+              field_visibility: { ...prev.profile.field_visibility, [key]: visible },
+            },
+          }
+        : prev
+    );
+    const { error } = await setFieldVisibility({ [key]: visible });
+    if (error) {
+      void notify("error");
+      toast({ title: "Видимість", description: error, variant: "destructive" });
+      await reload();
+    }
+  };
+
   if (loading) {
     return (
       <main className="px-4 pt-4 pb-8 space-y-4">
@@ -253,6 +312,59 @@ const RecipientPageEditor = () => {
               {slug})
             </a>
           )}
+        </div>
+
+        {/* Verification (read-only) */}
+        {(() => {
+          const meta =
+            VERIFICATION_META[profile?.verification_status ?? "unverified"] ?? VERIFICATION_META.unverified;
+          const { Icon } = meta;
+          return (
+            <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Верифікація</p>
+                  <p className="text-xs text-muted-foreground">
+                    Статус встановлює модерація — змінити його вручну не можна.
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium ${meta.className}`}
+                >
+                  <Icon className="w-4 h-4" strokeWidth={1.75} /> {meta.label}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Section visibility */}
+        <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
+          <p className="text-sm font-semibold text-foreground">Видимість</p>
+          <p className="text-xs text-muted-foreground mb-3">
+            Оберіть, які розділи показувати відвідувачам вашої сторінки.
+          </p>
+          <div className="divide-y divide-border">
+            {VISIBILITY_ROWS.map((row) => {
+              const on = isVisible(profile?.field_visibility, row.key);
+              return (
+                <label
+                  key={row.key}
+                  className="flex items-center justify-between gap-3 py-2.5 cursor-pointer"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-sm text-foreground">{row.label}</span>
+                    <span className="block text-xs text-muted-foreground">{row.hint}</span>
+                  </span>
+                  <Switch
+                    checked={on}
+                    onCheckedChange={(v) => toggleVisibility(row.key, v)}
+                    aria-label={`Показувати: ${row.label}`}
+                  />
+                </label>
+              );
+            })}
+          </div>
         </div>
 
         {/* Cover */}
