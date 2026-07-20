@@ -38,8 +38,11 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
     );
 
+    // Store codes lowercase to match the seed (migration 022) and the app's
+    // currency convention — otherwise live rates land on UPPERCASE rows that
+    // nothing reads while checkout/useCurrency read the stale lowercase seed.
     const rows = CURRENCIES.filter((c) => c === "EUR" || typeof rates[c] === "number").map((code) => ({
-      code,
+      code: code.toLowerCase(),
       rate_per_eur: code === "EUR" ? 1 : rates[code],
       symbol: SYMBOLS[code] ?? code,
       updated_at: new Date().toISOString(),
