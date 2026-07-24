@@ -54,6 +54,7 @@ import Dispute from "./pages/app/Dispute";
 import Wishlist from "./pages/app/Wishlist";
 import Premium from "./pages/app/Premium";
 import Search from "./pages/app/Search";
+import PromoteMe from "./pages/app/PromoteMe";
 import ResetPassword from "./pages/app/ResetPassword";
 
 export default function App() {
@@ -102,6 +103,7 @@ export default function App() {
               <Route path="/app/profile/edit" element={<EditProfile />} />
               <Route path="/app/my-page" element={<RecipientPageEditor />} />
               <Route path="/app/search" element={<Search />} />
+              <Route path="/app/promote" element={<PromoteMe />} />
               <Route path="/app/chats" element={<ChatList />} />
               <Route path="/app/chat/:id" element={<Chat />} />
               <Route path="/app/notifications" element={<Notifications />} />

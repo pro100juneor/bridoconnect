@@ -112,6 +112,38 @@ serve(async (req) => {
           }
         }
 
+        // Promotion: activate the paid placement (idempotent — only flips a row
+        // that is not already active). min_visible_until = now()+3min gives the
+        // >=3-minute top-group guarantee; expires_at from tier/durationHours.
+        if (type === "promotion" && md.promotionId) {
+          const hours = Number(md.durationHours) > 0 ? Number(md.durationHours) : 24;
+          const { data: promoRow } = await supabase
+            .from("promotions")
+            .update({
+              status: "active",
+              activated_at: new Date().toISOString(),
+              starts_at: new Date().toISOString(),
+              min_visible_until: new Date(Date.now() + 3 * 60 * 1000).toISOString(),
+              expires_at: new Date(Date.now() + hours * 60 * 60 * 1000).toISOString(),
+            })
+            .eq("id", md.promotionId)
+            .neq("status", "active")
+            .select("id")
+            .maybeSingle();
+          // Record a platform-revenue transaction only on the first activation.
+          if (promoRow) {
+            await recordTransaction({
+              event_id: event.id,
+              user_id: userId,
+              amount,
+              amount_cents: amountCents,
+              type: "promotion",
+              fee_platform_cents: amountCents,
+            });
+          }
+          break;
+        }
+
         // Product purchase: create the order once (idempotent on session id)
         // and decrement stock. Clients never write orders — only this webhook.
         if (productId && recipientId) {

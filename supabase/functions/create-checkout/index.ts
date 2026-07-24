@@ -77,7 +77,8 @@ serve(async (req) => {
       });
     }
 
-    const { amount, dealId, streamId, productId, productIds, currency, type, priceId } = await req.json();
+    const { amount, dealId, streamId, productId, productIds, currency, type, priceId, promotion } =
+      await req.json();
 
     if (
       type !== undefined &&
@@ -89,6 +90,7 @@ serve(async (req) => {
         "stream_donation",
         "product_purchase",
         "cart_purchase",
+        "promotion",
       ].includes(type)
     ) {
       return new Response(JSON.stringify({ error: "invalid type" }), {
@@ -103,7 +105,97 @@ serve(async (req) => {
 
     let session;
 
-    if (type === "subscription" && priceId) {
+    if (type === "promotion") {
+      // Paid promo placement — платформенный доход, БЕЗ Connect destination/fee.
+      // Роль текущего пользователя определяет аудиторию: продвигаемого видит
+      // противоположная роль (recipient продвигается спонсорам, и наоборот).
+      const { data: prof, error: profErr } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (profErr || !prof) {
+        return new Response(JSON.stringify({ error: "profile not found" }), {
+          status: 404,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+      const role = (prof as { role: string }).role;
+      const audience = role === "recipient" ? "sponsor" : "recipient";
+
+      const promo = (promotion || {}) as {
+        tier?: number;
+        headline?: string;
+        body?: string;
+        photoUrl?: string;
+        durationHours?: number;
+      };
+      const tier = [1, 2, 3].includes(Number(promo.tier)) ? Number(promo.tier) : 1;
+      // Прайс по уровню (EUR minor units) + дефолтная длительность.
+      const TIER_PRICE: Record<number, number> = { 1: 500, 2: 1500, 3: 5000 };
+      const TIER_HOURS: Record<number, number> = { 1: 24, 2: 72, 3: 168 };
+      const price = TIER_PRICE[tier];
+      const durationHours =
+        Number.isFinite(Number(promo.durationHours)) && Number(promo.durationHours) > 0
+          ? Math.min(Number(promo.durationHours), 24 * 30)
+          : TIER_HOURS[tier];
+
+      // Pending row (service role) — клиент никогда не пишет promotions напрямую.
+      const { data: promoRow, error: insErr } = await supabase
+        .from("promotions")
+        .insert({
+          user_id: user.id,
+          audience,
+          photo_url: promo.photoUrl || null,
+          headline: promo.headline || null,
+          body: promo.body || null,
+          amount_cents: price,
+          tier,
+          priority: price,
+          status: "pending",
+        })
+        .select("id")
+        .single();
+      if (insErr || !promoRow) {
+        return new Response(JSON.stringify({ error: "promotion create failed" }), {
+          status: 400,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+
+      session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "eur",
+              product_data: {
+                name: `Просування у стрічці BridoConnect (Tier ${tier})`,
+                description: "Платне розміщення у промо-стрічці",
+              },
+              unit_amount: price,
+            },
+            quantity: 1,
+          },
+        ],
+        success_url: `${origin}/app?promo=success`,
+        cancel_url: `${origin}/app`,
+        metadata: {
+          type: "promotion",
+          promotionId: (promoRow as { id: string }).id,
+          user_id: user.id,
+          durationHours: String(durationHours),
+        },
+      });
+
+      // Persist session id for reconciliation (only if not already set).
+      await supabase
+        .from("promotions")
+        .update({ stripe_session_id: session.id })
+        .eq("id", (promoRow as { id: string }).id)
+        .is("stripe_session_id", null);
+    } else if (type === "subscription" && priceId) {
       session = await stripe.checkout.sessions.create({
         mode: "subscription",
         payment_method_types: ["card"],

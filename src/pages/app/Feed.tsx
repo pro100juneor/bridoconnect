@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
   Bell,
   RefreshCw,
+  Sparkles,
+  ChevronRight,
   Utensils,
   Pill,
   Shirt,
@@ -16,6 +18,8 @@ import {
 } from "lucide-react";
 import { useDeals } from "@/hooks/useDeals";
 import { useT } from "@/i18n/useT";
+import { usePromotions, type PromotedProfile } from "@/hooks/usePromotions";
+import PromoCarousel, { promoHref } from "@/components/PromoCarousel";
 
 // DESIGN.md §Banned: no inline emoji as UI icon. Map categories → Lucide.
 const categoryIcon = (cat: string): LucideIcon => {
@@ -124,6 +128,26 @@ const Feed = () => {
   const [activeCategory, setActiveCategory] = useState("Всі");
   const [activeFlag, setActiveFlag] = useState<string | null>(null);
   const { deals: realDeals, loading, refetch } = useDeals({ status: "active" });
+
+  // Paid promo feed — ranked server-side (active_promotions RPC). The >=3-min
+  // top-group guarantee is enforced in the DB (min_visible_until), not here.
+  const { listForViewer } = usePromotions();
+  const [promos, setPromos] = useState<PromotedProfile[]>([]);
+  useEffect(() => {
+    let alive = true;
+    listForViewer()
+      .then((rows) => {
+        if (alive) setPromos(rows);
+      })
+      .catch(() => {
+        /* promo feed is non-critical — silently ignore */
+      });
+    return () => {
+      alive = false;
+    };
+    // listForViewer is a stable hook method; run once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Category translation map — categories stay UA in DB, labels translate via i18n.
   const categoryLabel = (cat: string) => {
@@ -252,6 +276,66 @@ const Feed = () => {
           </div>
         )}
       </div>
+
+      {/* Paid promo feed: header carousel + "Рекомендовані" strip. Shown above the
+          existing deal feed; both are independent. */}
+      {promos.length > 0 && <PromoCarousel items={promos} />}
+
+      <div className="px-4 mb-2 flex items-center justify-between">
+        <button
+          onClick={() => navigate("/app/promote")}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent"
+        >
+          <Sparkles className="w-4 h-4" aria-hidden="true" />
+          Просувати себе
+        </button>
+      </div>
+
+      {promos.length > 0 && (
+        <div className="mb-4">
+          <div className="px-4 mb-2">
+            <h3 className="text-sm font-semibold text-foreground">Рекомендовані</h3>
+          </div>
+          <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide">
+            {promos.map((p) => {
+              const initials = (p.name || "?")
+                .split(" ")
+                .map((s) => s[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase();
+              const img = p.photo_url ?? p.avatar_url ?? null;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => navigate(promoHref(p))}
+                  className="shrink-0 w-40 text-left rounded-2xl border border-border bg-card overflow-hidden transition-all hover:-translate-y-px active:scale-[0.99]"
+                >
+                  <div className="h-24 bg-primary/5 flex items-center justify-center overflow-hidden">
+                    {img ? (
+                      <img src={img} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center text-sm font-bold text-primary">
+                        {initials}
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm font-semibold text-foreground truncate">{p.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {p.headline || p.city || p.country || ""}
+                    </p>
+                    <span className="mt-2 inline-flex items-center gap-0.5 text-xs font-medium text-accent">
+                      Переглянути
+                      <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {loading && (
         // DESIGN.md §Loading: skeleton, no spinner for >500ms ops.
