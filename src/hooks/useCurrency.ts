@@ -25,11 +25,15 @@ const LS_KEY = "brido-currency";
 
 // Process-wide cache — rates rarely change within a session.
 let ratesCache: CurrencyRate[] | null = null;
+// Module-scoped so an explicit choice survives component remounts. Once the user
+// picks a currency this session, a (possibly stale) profile read must not clobber
+// it — fixes a race where navigating right after switching reverted the choice.
+let sessionChoice: string | null = null;
 
 export const useCurrency = () => {
   const { user } = useAuth();
   const [rates, setRates] = useState<CurrencyRate[]>(ratesCache ?? FALLBACK_RATES);
-  const [code, setCode] = useState<string>(() => localStorage.getItem(LS_KEY) || "eur");
+  const [code, setCode] = useState<string>(() => sessionChoice ?? localStorage.getItem(LS_KEY) ?? "eur");
 
   // Load rates once (cached).
   useEffect(() => {
@@ -61,6 +65,11 @@ export const useCurrency = () => {
         .eq("id", user.id)
         .maybeSingle();
       if (!alive) return;
+      // Apply the profile currency only on first arrival on this device (no local
+      // choice yet). Once a choice exists (session var or localStorage), it wins —
+      // a possibly stale profile read must never clobber a fresh user selection,
+      // even across a hard reload.
+      if (sessionChoice || localStorage.getItem(LS_KEY)) return;
       const pref = (data as any)?.preferred_currency;
       if (pref) {
         setCode(pref);
@@ -89,6 +98,7 @@ export const useCurrency = () => {
 
   const setCurrency = useCallback(
     async (next: string) => {
+      sessionChoice = next;
       setCode(next);
       localStorage.setItem(LS_KEY, next);
       if (user) {
