@@ -10,6 +10,8 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
 
 const ALLOWED_ORIGINS = new Set([
   "https://bridoconnect.vercel.app",
+  "capacitor://localhost",
+  "https://localhost",
   "http://localhost:5173",
   "http://localhost:8080",
   "http://127.0.0.1:5173",
@@ -100,8 +102,12 @@ serve(async (req) => {
     }
 
     const reqOrigin = req.headers.get("origin");
-    const origin =
-      reqOrigin && ALLOWED_ORIGINS.has(reqOrigin) ? reqOrigin : "https://bridoconnect.vercel.app";
+    // Stripe redirect target must be a browsable https URL. Native shells send
+    // `capacitor://localhost` / `https://localhost` (fine for CORS, unusable as a
+    // redirect), so fall back to the web app URL for those.
+    const webFallback = Deno.env.get("APP_URL") || "https://bridoconnect.vercel.app";
+    const isBrowsable = !!reqOrigin && /^https?:\/\//.test(reqOrigin) && !/\/\/localhost/.test(reqOrigin);
+    const origin = isBrowsable && ALLOWED_ORIGINS.has(reqOrigin) ? reqOrigin : webFallback;
 
     let session;
 

@@ -4,6 +4,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // CORS lock — was `*`, anyone could mint LiveKit host tokens from any site.
 const ALLOWED_ORIGINS = new Set([
   "https://bridoconnect.vercel.app",
+  "capacitor://localhost",
+  "https://localhost",
   "http://localhost:5173",
   "http://localhost:8080",
   "http://127.0.0.1:5173",

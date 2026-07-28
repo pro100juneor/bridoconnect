@@ -13,6 +13,8 @@ const ALLOWED_ORIGINS = new Set([
   "https://bridoconnect.com",
   "https://www.bridoconnect.com",
   "https://bridoconnect.vercel.app",
+  "capacitor://localhost",
+  "https://localhost",
   "http://localhost:5173",
   "http://localhost:8080",
 ]);

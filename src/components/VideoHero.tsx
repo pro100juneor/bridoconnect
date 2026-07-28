@@ -14,7 +14,7 @@ const LANGS: Array<{ code: string; label: string; flag: string }> = [
   { code: "fr", label: "Français", flag: "🇫🇷" },
   { code: "pt", label: "Português", flag: "🇧🇷" },
   { code: "bn", label: "বাংলা", flag: "🇧🇩" },
-  { code: "ru", label: "Русский", flag: "🇷🇺" },
+  { code: "ru", label: "Русский", flag: "🏳️" },
   { code: "ja", label: "日本語", flag: "🇯🇵" },
   { code: "de", label: "Deutsch", flag: "🇩🇪" },
   { code: "ko", label: "한국어", flag: "🇰🇷" },

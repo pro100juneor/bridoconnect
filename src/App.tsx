@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 import PublicLayout from "./components/public/PublicLayout";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -63,7 +64,14 @@ export default function App() {
       <Suspense fallback={<div className="min-h-screen bg-background" aria-busy="true" />}>
         <Routes>
           <Route element={<PublicLayout />}>
-            <Route path="/" element={<HomePage />} />
+            {/* Native app opens into the product (feed → login if no session),
+                not the marketing landing — otherwise it reads as a one-page site.
+                Web keeps the marketing HomePage; /home reaches it on native too. */}
+            <Route
+              path="/"
+              element={Capacitor.isNativePlatform() ? <Navigate to="/app" replace /> : <HomePage />}
+            />
+            <Route path="/home" element={<HomePage />} />
             <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/transparency" element={<TransparencyPage />} />
             <Route path="/live" element={<LivePage />} />
