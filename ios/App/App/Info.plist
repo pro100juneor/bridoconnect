@@ -12,6 +12,16 @@
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>BridoConnect використовує камеру для проведення прямих ефірів та зйомки фото/відео товарів.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>BridoConnect використовує мікрофон для звуку під час прямих ефірів.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>BridoConnect використовує фотогалерею для додавання фото та відео до товарів і особистих сторінок.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>BridoConnect зберігає зображення до вашої фотогалереї.</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

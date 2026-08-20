@@ -17,6 +17,7 @@ const sections = [
     links: [
       { to: "/about", label: "Про нас" },
       { to: "/verification", label: "Верифікація" },
+      { to: "/support", label: "Підтримка" },
     ],
   },
   {
@@ -37,11 +38,11 @@ const PublicFooter = () => (
         <p className="text-white/60 text-sm mt-2">P2P платформа прямої гуманітарної допомоги.</p>
       </div>
       <div className="grid grid-cols-3 gap-6 mb-8">
-        {sections.map(section => (
+        {sections.map((section) => (
           <div key={section.title}>
             <p className="font-semibold text-sm mb-3">{section.title}</p>
             <ul className="space-y-2">
-              {section.links.map(link => (
+              {section.links.map((link) => (
                 <li key={link.label}>
                   <Link to={link.to} className="text-white/60 text-sm hover:text-white transition-colors">
                     {link.label}
@@ -55,8 +56,12 @@ const PublicFooter = () => (
       <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
         <p className="text-white/40 text-xs">© 2026 BridoConnect GmbH · Deutschland</p>
         <div className="flex gap-4">
-          <Link to="/auth" className="text-white/60 text-xs hover:text-white">Увійти</Link>
-          <Link to="/register" className="text-white text-xs font-semibold">Реєстрація →</Link>
+          <Link to="/auth" className="text-white/60 text-xs hover:text-white">
+            Увійти
+          </Link>
+          <Link to="/register" className="text-white text-xs font-semibold">
+            Реєстрація →
+          </Link>
         </div>
       </div>
     </div>

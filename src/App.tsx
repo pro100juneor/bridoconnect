@@ -17,6 +17,7 @@ import VerificationPage from "./pages/public/VerificationPage";
 import ImpressumPage from "./pages/public/ImpressumPage";
 import DatenschutzPage from "./pages/public/DatenschutzPage";
 import AGBPage from "./pages/public/AGBPage";
+import SupportPage from "./pages/public/SupportPage";
 // Heavy routes are code-split so livekit-client (streams) and the 200-theme
 // storefront engine don't bloat the main bundle.
 const StorefrontPage = lazy(() => import("./pages/public/StorefrontPage"));
@@ -82,6 +83,7 @@ export default function App() {
             <Route path="/impressum" element={<ImpressumPage />} />
             <Route path="/datenschutz" element={<DatenschutzPage />} />
             <Route path="/agb" element={<AGBPage />} />
+            <Route path="/support" element={<SupportPage />} />
           </Route>
 
           {/* Public branded storefront — no login, no shared layout (self-contained). */}
