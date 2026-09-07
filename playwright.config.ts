@@ -17,8 +17,18 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      testIgnore: ["**/iphone-audit.spec.ts", "**/button-explorer.spec.ts"],
+      testIgnore: [
+        "**/iphone-audit.spec.ts",
+        "**/button-explorer.spec.ts",
+        "**/appstore-screenshots.spec.ts",
+      ],
       use: { ...devices["Desktop Chrome"] },
+    },
+    // App Store marketing screenshots at exact 6.9" size (440×956 @3x = 1320×2868).
+    {
+      name: "appstore-shots",
+      testMatch: ["**/appstore-screenshots.spec.ts"],
+      use: { ...devices["iPhone 14"] },
     },
     // Task 65 (audit): iPhone Safari (WebKit) crawl of every screen.
     {
