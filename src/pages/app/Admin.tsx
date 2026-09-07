@@ -1,10 +1,25 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Shield, AlertTriangle, RefreshCw, FileSearch } from "lucide-react";
+import {
+  ArrowLeft,
+  Shield,
+  AlertTriangle,
+  RefreshCw,
+  FileSearch,
+  Users,
+  Package,
+  Radio,
+  BarChart3,
+  Megaphone,
+  BadgeCheck,
+  Ban,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { UserRole } from "@/integrations/supabase/types";
 
 type SanctionsRow = {
   id: string;
@@ -33,45 +48,179 @@ type RefundRow = {
   created_at: string;
 };
 
+type ProfileRow = {
+  id: string;
+  name: string | null;
+  role: UserRole;
+  verified: boolean;
+  created_at: string;
+};
+
+type ProductRow = {
+  id: string;
+  title: string;
+  price_cents: number;
+  currency: string;
+  status: string;
+  seller_id: string;
+};
+
+type StreamRow = {
+  id: string;
+  title: string;
+  status: string;
+  viewer_count: number;
+  host_id: string;
+};
+
+type PromoRow = {
+  id: string;
+  headline: string | null;
+  status: string;
+  tier: string;
+  expires_at: string | null;
+};
+
+type Stats = {
+  users: number;
+  products: number;
+  streams: number;
+  deals: number;
+  orders: number;
+};
+
 const Admin = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
+  const { toast } = useToast();
   const [sanctions, setSanctions] = useState<SanctionsRow[]>([]);
   const [disputes, setDisputes] = useState<DisputeRow[]>([]);
   const [refunds, setRefunds] = useState<RefundRow[]>([]);
+  const [people, setPeople] = useState<ProfileRow[]>([]);
+  const [products, setProducts] = useState<ProductRow[]>([]);
+  const [streams, setStreams] = useState<StreamRow[]>([]);
+  const [promos, setPromos] = useState<PromoRow[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   const isAdmin = profile?.role === "admin";
 
-  useEffect(() => {
-    if (!user || !isAdmin) return;
+  const count = useCallback(async (table: string) => {
+    const { count: c } = await supabase
+      .from(table as "profiles")
+      .select("id", { count: "exact", head: true });
+    return c ?? 0;
+  }, []);
+
+  const load = useCallback(async () => {
     setLoading(true);
-    Promise.all([
+    const [s, d, r, p, pr, st, pm, ...counts] = await Promise.all([
       supabase
         .from("sanctions_screening_log")
         .select("*")
         .order("checked_at", { ascending: false })
-        .limit(50),
+        .limit(20),
       supabase
         .from("disputes")
         .select("*")
         .eq("status", "open")
         .order("created_at", { ascending: false })
-        .limit(50),
+        .limit(20),
       supabase
         .from("transactions")
         .select("id, deal_id, amount, status, processor, created_at")
         .eq("type", "refund")
         .order("created_at", { ascending: false })
-        .limit(50),
-    ]).then(([s, d, r]) => {
-      if (s.data) setSanctions(s.data as SanctionsRow[]);
-      if (d.data) setDisputes(d.data as DisputeRow[]);
-      if (r.data) setRefunds(r.data as RefundRow[]);
-      setLoading(false);
-    });
-  }, [user, isAdmin]);
+        .limit(20),
+      supabase
+        .from("profiles")
+        .select("id, name, role, verified, created_at")
+        .order("created_at", { ascending: false })
+        .limit(200),
+      supabase
+        .from("products")
+        .select("id, title, price_cents, currency, status, seller_id")
+        .order("created_at", { ascending: false })
+        .limit(30),
+      supabase
+        .from("streams")
+        .select("id, title, status, viewer_count, host_id")
+        .in("status", ["live", "scheduled"])
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase
+        .from("promotions")
+        .select("id, headline, status, tier, expires_at")
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(20),
+      count("profiles"),
+      count("products"),
+      count("streams"),
+      count("deals"),
+      count("orders"),
+    ]);
+    if (s.data) setSanctions(s.data as SanctionsRow[]);
+    if (d.data) setDisputes(d.data as DisputeRow[]);
+    if (r.data) setRefunds(r.data as RefundRow[]);
+    if (p.data) setPeople(p.data as ProfileRow[]);
+    if (pr.data) setProducts(pr.data as ProductRow[]);
+    if (st.data) setStreams(st.data as StreamRow[]);
+    if (pm.data) setPromos(pm.data as PromoRow[]);
+    const [users, productsC, streamsC, dealsC, ordersC] = counts as number[];
+    setStats({ users, products: productsC, streams: streamsC, deals: dealsC, orders: ordersC });
+    setLoading(false);
+  }, [count]);
+
+  useEffect(() => {
+    if (!user || !isAdmin) return;
+    load();
+  }, [user, isAdmin, load]);
+
+  const act = async (fn: () => Promise<{ error: { message: string } | null }>, ok: string) => {
+    const { error } = await fn();
+    if (error) toast({ title: "Помилка", description: error.message, variant: "destructive" });
+    else {
+      toast({ title: ok });
+      load();
+    }
+  };
+
+  const toggleVerified = (p: ProfileRow) =>
+    act(
+      () => supabase.from("profiles").update({ verified: !p.verified }).eq("id", p.id),
+      p.verified ? "Верифікацію знято" : "Верифіковано"
+    );
+
+  const cycleRole = (p: ProfileRow) => {
+    const next: UserRole = p.role === "sponsor" ? "recipient" : p.role === "recipient" ? "admin" : "sponsor";
+    return act(() => supabase.from("profiles").update({ role: next }).eq("id", p.id), `Роль: ${next}`);
+  };
+
+  const toggleProduct = (pr: ProductRow) =>
+    act(
+      () =>
+        supabase
+          .from("products")
+          .update({ status: pr.status === "active" ? "archived" : "active" })
+          .eq("id", pr.id),
+      pr.status === "active" ? "Товар приховано" : "Товар відновлено"
+    );
+
+  const endStream = (st: StreamRow) =>
+    act(
+      () =>
+        supabase
+          .from("streams")
+          .update({ status: "ended", ended_at: new Date().toISOString() })
+          .eq("id", st.id),
+      "Ефір завершено"
+    );
+
+  const stopPromo = (pm: PromoRow) =>
+    act(() => supabase.from("promotions").update({ status: "expired" }).eq("id", pm.id), "Промо зупинено");
 
   if (profileLoading) {
     return (
@@ -93,6 +242,10 @@ const Admin = () => {
     );
   }
 
+  const filteredPeople = search
+    ? people.filter((p) => (p.name || "").toLowerCase().includes(search.toLowerCase()))
+    : people.slice(0, 20);
+
   return (
     <main className="pb-8">
       <h1 className="sr-only">Admin dashboard</h1>
@@ -105,9 +258,141 @@ const Admin = () => {
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
         <h2 className="font-serif text-xl text-foreground flex-1">Admin</h2>
+        <button
+          onClick={load}
+          aria-label="Оновити"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center"
+        >
+          <RefreshCw className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
+        </button>
       </div>
 
       <div className="px-4 py-4 space-y-6">
+        <AdminSection title="Статистика" icon={BarChart3} loading={loading}>
+          {stats && (
+            <div className="grid grid-cols-5 gap-2 text-center">
+              <Stat label="Люди" value={stats.users} />
+              <Stat label="Товари" value={stats.products} />
+              <Stat label="Ефіри" value={stats.streams} />
+              <Stat label="Запити" value={stats.deals} />
+              <Stat label="Замовл." value={stats.orders} />
+            </div>
+          )}
+        </AdminSection>
+
+        <AdminSection title="Користувачі" icon={Users} loading={loading}>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Пошук за імʼям…"
+            className="w-full mb-3 px-3 py-2 rounded-xl bg-secondary text-sm text-foreground placeholder:text-muted-foreground outline-none"
+          />
+          {filteredPeople.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Нікого не знайдено.</p>
+          ) : (
+            filteredPeople.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center gap-2 py-2 border-b border-border/40 last:border-0"
+              >
+                <span className="text-xs font-medium text-foreground truncate flex-1">
+                  {p.name || p.id.slice(0, 8)}
+                </span>
+                <button
+                  onClick={() => cycleRole(p)}
+                  className={`text-[10px] px-2 py-1 rounded-full border ${p.role === "admin" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}
+                  title="Змінити роль"
+                >
+                  {p.role}
+                </button>
+                <button
+                  onClick={() => toggleVerified(p)}
+                  aria-label={p.verified ? "Зняти верифікацію" : "Верифікувати"}
+                  className="min-h-[32px] min-w-[32px] flex items-center justify-center"
+                >
+                  <BadgeCheck
+                    className={`w-4 h-4 ${p.verified ? "text-success" : "text-muted-foreground/40"}`}
+                    strokeWidth={1.75}
+                  />
+                </button>
+              </div>
+            ))
+          )}
+        </AdminSection>
+
+        <AdminSection title="Товари (модерація)" icon={Package} loading={loading}>
+          {products.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Жодних товарів.</p>
+          ) : (
+            products.map((pr) => (
+              <div
+                key={pr.id}
+                className="flex items-center gap-2 py-2 border-b border-border/40 last:border-0"
+              >
+                <span
+                  className={`text-xs truncate flex-1 ${pr.status !== "active" ? "line-through text-muted-foreground" : "text-foreground"}`}
+                >
+                  {pr.title}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {(pr.price_cents / 100).toFixed(0)} {pr.currency?.toUpperCase()}
+                </span>
+                <button
+                  onClick={() => toggleProduct(pr)}
+                  aria-label={pr.status === "active" ? "Приховати" : "Відновити"}
+                  className="min-h-[32px] min-w-[32px] flex items-center justify-center"
+                >
+                  <Ban
+                    className={`w-4 h-4 ${pr.status === "active" ? "text-muted-foreground/50" : "text-destructive"}`}
+                    strokeWidth={1.75}
+                  />
+                </button>
+              </div>
+            ))
+          )}
+        </AdminSection>
+
+        <AdminSection title="Ефіри (live)" icon={Radio} loading={loading}>
+          {streams.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Жодних активних ефірів.</p>
+          ) : (
+            streams.map((st) => (
+              <div
+                key={st.id}
+                className="flex items-center gap-2 py-2 border-b border-border/40 last:border-0"
+              >
+                <ToneDot tone={st.status === "live" ? "destructive" : "warning"} />
+                <span className="text-xs truncate flex-1 text-foreground">{st.title}</span>
+                <span className="text-[10px] text-muted-foreground">{st.viewer_count} 👁</span>
+                <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => endStream(st)}>
+                  Завершити
+                </Button>
+              </div>
+            ))
+          )}
+        </AdminSection>
+
+        <AdminSection title="Активні промо" icon={Megaphone} loading={loading}>
+          {promos.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Жодних активних промо.</p>
+          ) : (
+            promos.map((pm) => (
+              <div
+                key={pm.id}
+                className="flex items-center gap-2 py-2 border-b border-border/40 last:border-0"
+              >
+                <span className="text-xs truncate flex-1 text-foreground">
+                  {pm.headline || pm.id.slice(0, 8)}
+                </span>
+                <span className="text-[10px] text-muted-foreground">{pm.tier}</span>
+                <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => stopPromo(pm)}>
+                  Зупинити
+                </Button>
+              </div>
+            ))
+          )}
+        </AdminSection>
+
         <AdminSection title="Sanctions Screening" icon={FileSearch} loading={loading}>
           {sanctions.length === 0 ? (
             <p className="text-xs text-muted-foreground">Жодних перевірок.</p>
@@ -171,6 +456,13 @@ const Admin = () => {
     </main>
   );
 };
+
+const Stat = ({ label, value }: { label: string; value: number }) => (
+  <div className="p-2 rounded-xl bg-secondary">
+    <p className="text-base font-semibold text-foreground">{value}</p>
+    <p className="text-[10px] text-muted-foreground">{label}</p>
+  </div>
+);
 
 const AdminSection = ({
   title,
