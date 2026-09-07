@@ -38,6 +38,7 @@ xcodebuild -scheme App -configuration Release \
   -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
   -authenticationKeyPath "$ASC_KEY_PATH" \
   DEVELOPMENT_TEAM="$TEAM" \
+  ${BUILD_NUM:+CURRENT_PROJECT_VERSION=$BUILD_NUM} \
   archive
 
 echo "==> 3/4 export .ipa (app-store-connect)"
