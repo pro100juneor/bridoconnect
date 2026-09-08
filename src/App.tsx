@@ -127,7 +127,10 @@ export default function App() {
               <Route path="/app/sponsor-privacy" element={<SponsorPrivacy />} />
               <Route path="/app/settings" element={<Settings />} />
               <Route path="/app/admin" element={<Admin />} />
-              <Route path="/app/premium" element={<Premium />} />
+              <Route
+                path="/app/premium"
+                element={Capacitor.isNativePlatform() ? <Navigate to="/app" replace /> : <Premium />}
+              />
             </Route>
           </Route>
 

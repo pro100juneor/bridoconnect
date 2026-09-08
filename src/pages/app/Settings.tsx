@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { tap } from "@/lib/native";
 import {
@@ -13,7 +13,18 @@ import {
   Smartphone,
   Mail,
   Lock,
+  Trash2,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePreferences } from "@/hooks/usePreferences";
@@ -36,6 +47,41 @@ const Settings = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
+  };
+
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ confirm: "DELETE" }),
+      });
+      const body = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        toast({
+          title: "Не вдалося видалити акаунт",
+          description: body.message || body.error || "Спробуйте пізніше",
+          variant: "destructive",
+        });
+        return;
+      }
+      await signOut();
+      toast({ title: "Акаунт видалено", description: "Дякуємо, що були з нами." });
+      navigate("/auth");
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+    }
   };
 
   const handleToggle = async (key: keyof typeof prefs, value: boolean) => {
@@ -197,7 +243,48 @@ const Settings = () => {
           <LogOut className="w-5 h-5" strokeWidth={1.75} />
           <span className="text-sm font-medium">Вийти з акаунту</span>
         </button>
+
+        <button
+          data-testid="delete-account"
+          onClick={() => {
+            void tap("medium");
+            setDeleteOpen(true);
+          }}
+          className="w-full flex items-center gap-3 px-4 py-3 min-h-[44px] border border-destructive/40 rounded-2xl text-destructive transition-transform duration-150 hover:-translate-y-px"
+        >
+          <Trash2 className="w-5 h-5" strokeWidth={1.75} />
+          <span className="text-sm font-medium">Видалити акаунт назавжди</span>
+        </button>
+        <p className="text-[10px] text-muted-foreground px-1 leading-relaxed">
+          Профіль, товари та особисті дані буде видалено безповоротно. Фінансові записи знеособлюються згідно
+          з вимогами обліку.
+        </p>
       </div>
+
+      <Dialog open={deleteOpen} onOpenChange={(v) => !deleting && setDeleteOpen(v)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Видалити акаунт?</DialogTitle>
+            <DialogDescription>
+              Дія незворотна: профіль, оголошення і всі особисті дані буде стерто. Якщо у вас є активні угоди,
+              спершу завершіть їх.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" disabled={deleting} onClick={() => setDeleteOpen(false)}>
+              Скасувати
+            </Button>
+            <Button
+              data-testid="confirm-delete-account"
+              variant="destructive"
+              disabled={deleting}
+              onClick={() => void handleDeleteAccount()}
+            >
+              {deleting ? "Видаляємо…" : "Так, видалити"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

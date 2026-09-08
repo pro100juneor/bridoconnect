@@ -44,5 +44,5 @@ test-results/
 supabase/.temp/
 public/audio/
 .env.staging
-.env.production
 .env.*.local
+.env.prod-db-pass

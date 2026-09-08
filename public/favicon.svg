@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e40af"/>
+      <stop offset="0.55" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#3b82f6"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.65">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="heart" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe14d"/>
+      <stop offset="1" stop-color="#ffc700"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="22" flood-color="#0c2464" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <rect width="1024" height="1024" fill="url(#glow)"/>
+
+  <!-- серце: дві половини, що з'єднуються — символ прямої допомоги людина→людина -->
+  <g filter="url(#soft)">
+    <path fill="url(#heart)" d="M512 812
+      C 448 748 302 632 245 545
+      C 196 470 200 372 268 318
+      C 330 269 424 278 478 340
+      L 512 380 L 546 340
+      C 600 278 694 269 756 318
+      C 824 372 828 470 779 545
+      C 722 632 576 748 512 812 Z"/>
+    <!-- лінія-з'єднання: два вузли мережі всередині серця -->
+    <g stroke="#1e40af" stroke-width="34" stroke-linecap="round" fill="none">
+      <path d="M 400 500 L 624 500"/>
+    </g>
+    <circle cx="400" cy="500" r="52" fill="#1e40af"/>
+    <circle cx="624" cy="500" r="52" fill="#1e40af"/>
+    <circle cx="400" cy="500" r="24" fill="#ffe14d"/>
+    <circle cx="624" cy="500" r="24" fill="#ffe14d"/>
+  </g>
+</svg>

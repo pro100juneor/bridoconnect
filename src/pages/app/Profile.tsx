@@ -22,7 +22,7 @@ import { useStripe, type ConnectStatus } from "@/hooks/useStripe";
 import { usePaypal } from "@/hooks/usePaypal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { tap } from "@/lib/native";
+import { tap, isNative } from "@/lib/native";
 import { useT } from "@/i18n/useT";
 
 const Profile = () => {
@@ -231,7 +231,10 @@ const Profile = () => {
           { icon: Star, label: "Обрані виконавці", color: "text-warning", path: "/app/wishlist" },
           { icon: CreditCard, label: "Гаманець", color: "text-primary", path: "/app/wallet" },
           { icon: Award, label: "Верифікація", color: "text-success", path: "/verification" },
-          { icon: Crown, label: "Premium підписка", color: "text-warning", path: "/app/premium" },
+          // Premium ховаємо на iOS: цифрова підписка поза In-App Purchase — guideline 3.1.1
+          ...(isNative
+            ? []
+            : [{ icon: Crown, label: "Premium підписка", color: "text-warning", path: "/app/premium" }]),
           { icon: BarChart3, label: "Налаштування", color: "text-primary", path: "/app/settings" },
         ].map((item) => (
           <button
