@@ -18,10 +18,13 @@ const ImpressumPage = () => {
         <section>
           <h2 className="font-semibold text-base mb-2">Angaben gemäß § 5 TMG</h2>
           <p>
-            Firma „Luftarbeiter"<br />
-            Inh. Oleksii Kusov<br />
+            Firma „Luftarbeiter"
+            <br />
+            Inh. Oleksii Kusov
+            <br />
             Mosenstraße 3<br />
-            08209 Auerbach<br />
+            08209 Auerbach
+            <br />
             Deutschland
           </p>
         </section>
@@ -29,7 +32,8 @@ const ImpressumPage = () => {
         <section>
           <h2 className="font-semibold text-base mb-2">Steuernummer &amp; USt-IdNr.</h2>
           <p>
-            Steuernummer: 223/242/09623<br />
+            Steuernummer: 223/242/09623
+            <br />
             USt-IdNr.: DE359345814
           </p>
         </section>
@@ -37,18 +41,29 @@ const ImpressumPage = () => {
         <section>
           <h2 className="font-semibold text-base mb-2">Kontakt</h2>
           <p>
-            E-Mail: <a href="mailto:info@brido.de" className="text-accent underline">info@brido.de</a><br />
-            Web: <a href="https://brido.de" className="text-accent underline">brido.de</a>
+            E-Mail:{" "}
+            <a href="mailto:pro100juneor@gmail.com" className="text-accent underline">
+              pro100juneor@gmail.com
+            </a>
+            <br />
+            Web:{" "}
+            <a href="https://bridoconnect.vercel.app" className="text-accent underline">
+              bridoconnect.vercel.app
+            </a>
           </p>
         </section>
 
         <section>
           <h2 className="font-semibold text-base mb-2">Bankverbindung</h2>
           <p>
-            IBAN: DE55 8704 0000 0434 8629 00<br />
-            Commerzbank AG<br />
-            Postfach 1464<br />
-            39004 Magdeburg<br />
+            IBAN: DE55 8704 0000 0434 8629 00
+            <br />
+            Commerzbank AG
+            <br />
+            Postfach 1464
+            <br />
+            39004 Magdeburg
+            <br />
             USt-IdNr.: DE 114 103 514
           </p>
         </section>
@@ -56,7 +71,8 @@ const ImpressumPage = () => {
         <section>
           <h2 className="font-semibold text-base mb-2">Verantwortlich für den Inhalt (§ 55 Abs. 2 RStV)</h2>
           <p>
-            Oleksii Kusov<br />
+            Oleksii Kusov
+            <br />
             Mosenstraße 3<br />
             08209 Auerbach
           </p>
@@ -66,10 +82,17 @@ const ImpressumPage = () => {
           <h2 className="font-semibold text-base mb-2">Streitschlichtung</h2>
           <p className="text-muted-foreground">
             Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{" "}
-            <a href="https://ec.europa.eu/consumers/odr/" className="text-accent underline" target="_blank" rel="noreferrer">
+            <a
+              href="https://ec.europa.eu/consumers/odr/"
+              className="text-accent underline"
+              target="_blank"
+              rel="noreferrer"
+            >
               ec.europa.eu/consumers/odr
-            </a>.<br />
-            Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
+            </a>
+            .<br />
+            Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer
+            Verbraucherschlichtungsstelle teilzunehmen.
           </p>
         </section>
       </div>

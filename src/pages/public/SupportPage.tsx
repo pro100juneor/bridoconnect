@@ -27,13 +27,13 @@ const SupportPage = () => {
           <div>
             <h2 className="font-semibold text-base mb-1">E-mail підтримки</h2>
             <p>
-              <a href="mailto:support@brido.de" className="text-accent underline">
-                support@brido.de
+              <a href="mailto:pro100juneor@gmail.com" className="text-accent underline">
+                pro100juneor@gmail.com
               </a>
               <br />
               Загальні питання:{" "}
-              <a href="mailto:info@brido.de" className="text-accent underline">
-                info@brido.de
+              <a href="mailto:pro100juneor@gmail.com" className="text-accent underline">
+                pro100juneor@gmail.com
               </a>
             </p>
           </div>

@@ -10,7 +10,7 @@ const sections = [
   {
     title: "2. Datenerfassung auf dieser Website",
     content:
-      "Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Firma „Luftarbeiter“, Inh. Oleksii Kusov, Mosenstraße 3, 08209 Auerbach. Sie erreichen uns unter info@brido.de.",
+      "Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Firma „Luftarbeiter“, Inh. Oleksii Kusov, Mosenstraße 3, 08209 Auerbach. Sie erreichen uns unter pro100juneor@gmail.com.",
   },
   {
     title: "3. Wie erfassen wir Ihre Daten?",
@@ -35,7 +35,7 @@ const sections = [
   {
     title: "7. Ihre Rechte",
     content:
-      "Sie haben jederzeit das Recht auf Auskunft über Ihre gespeicherten personenbezogenen Daten, deren Herkunft und Empfänger sowie den Zweck der Datenverarbeitung. Sie haben außerdem ein Recht auf Berichtigung oder Löschung dieser Daten. Kontakt: info@brido.de",
+      "Sie haben jederzeit das Recht auf Auskunft über Ihre gespeicherten personenbezogenen Daten, deren Herkunft und Empfänger sowie den Zweck der Datenverarbeitung. Sie haben außerdem ein Recht auf Berichtigung oder Löschung dieser Daten. Kontakt: pro100juneor@gmail.com",
   },
 ];
 
