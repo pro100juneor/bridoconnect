@@ -39,6 +39,7 @@ export interface SponsorProfile {
   avatar_url: string | null;
   reveal: SponsorReveal;
   canView: boolean;
+  verification_status: "unverified" | "pending" | "verified";
 }
 
 export const useSponsorAccess = () => {
@@ -131,7 +132,7 @@ export const useSponsorAccess = () => {
       const allowed = await canView(ownerId);
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, name, avatar_url, sponsor_reveal")
+        .select("id, name, avatar_url, sponsor_reveal, verification_status")
         .eq("id", ownerId)
         .maybeSingle();
       if (error || !data) return null;
@@ -140,10 +141,19 @@ export const useSponsorAccess = () => {
         name: string | null;
         avatar_url: string | null;
         sponsor_reveal: SponsorReveal | null;
+        verification_status: SponsorProfile["verification_status"] | null;
       };
+      const verification_status = row.verification_status ?? "unverified";
       if (!allowed) {
         // Minimal stub — name + avatar only, no revealed questionnaire.
-        return { id: row.id, name: row.name, avatar_url: row.avatar_url, reveal: {}, canView: false };
+        return {
+          id: row.id,
+          name: row.name,
+          avatar_url: row.avatar_url,
+          reveal: {},
+          canView: false,
+          verification_status,
+        };
       }
       return {
         id: row.id,
@@ -151,6 +161,7 @@ export const useSponsorAccess = () => {
         avatar_url: row.avatar_url,
         reveal: row.sponsor_reveal || {},
         canView: true,
+        verification_status,
       };
     },
     [canView]

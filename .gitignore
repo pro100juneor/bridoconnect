@@ -43,3 +43,6 @@ secrets/
 test-results/
 supabase/.temp/
 public/audio/
+.env.staging
+.env.production
+.env.*.local

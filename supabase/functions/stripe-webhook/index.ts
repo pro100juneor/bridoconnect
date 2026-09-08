@@ -296,6 +296,39 @@ serve(async (req) => {
         break;
       }
 
+      case "identity.verification_session.verified": {
+        // Stripe Identity: документ + selfie пройшли перевірку. Сирі дані
+        // лишаються у Stripe — у нас тільки вердикт (SECURE_KYC_STORAGE.md).
+        const vs = event.data.object as { id: string; metadata?: Record<string, string> };
+        const userId = vs.metadata?.user_id;
+        if (!userId) break;
+        await supabase
+          .from("profiles")
+          .update({
+            verification_status: "verified",
+            verified: true,
+            verified_at: new Date().toISOString(),
+            identity_verification_id: vs.id,
+          })
+          .eq("id", userId);
+        await notifyUser(userId, "kyc_approved", {});
+        break;
+      }
+
+      case "identity.verification_session.requires_input": {
+        // Перевірка не пройшла (нечітке фото, невідповідність selfie тощо) —
+        // повертаємо в unverified, щоб користувач міг спробувати ще раз.
+        const vs = event.data.object as { id: string; metadata?: Record<string, string> };
+        const userId = vs.metadata?.user_id;
+        if (!userId) break;
+        await supabase
+          .from("profiles")
+          .update({ verification_status: "unverified" })
+          .eq("id", userId)
+          .eq("identity_verification_id", vs.id);
+        break;
+      }
+
       case "account.updated": {
         const acct = event.data.object as Stripe.Account;
         const status =
