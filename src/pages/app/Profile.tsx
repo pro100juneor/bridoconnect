@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Settings,
@@ -38,10 +38,18 @@ const Profile = () => {
   const [connectLoading, setConnectLoading] = useState(false);
   const [paypalStatus, setPaypalStatus] = useState<string | null>(null);
 
+  // useStripe recreates fetchConnectStatus on every render; keep the latest in a
+  // ref so the effect depends only on the role and doesn't refetch in a loop.
+  const fetchConnectStatusRef = useRef(fetchConnectStatus);
+  useEffect(() => {
+    fetchConnectStatusRef.current = fetchConnectStatus;
+  });
+
   useEffect(() => {
     if (profile?.role !== "recipient") return;
     setConnectLoading(true);
-    fetchConnectStatus()
+    fetchConnectStatusRef
+      .current()
       .then(setConnect)
       .catch(() => setConnect(null))
       .finally(() => setConnectLoading(false));

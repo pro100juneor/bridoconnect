@@ -61,11 +61,11 @@ export const useDisputes = (dealId?: string) => {
       .single();
 
     if (!error && data) {
-      setDisputes(prev => [data as Dispute, ...prev]);
+      setDisputes((prev) => [data as Dispute, ...prev]);
       return { data: data as Dispute, error: null };
     }
     // Якщо таблиці ще нема (міграція 007 не застосована) — graceful fallback
-    return { data: null, error: error as any };
+    return { data: null, error: error ? new Error(error.message) : null };
   };
 
   return { disputes, loading, openDispute, refetch: fetchDisputes };

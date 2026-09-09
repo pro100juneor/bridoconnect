@@ -15,6 +15,23 @@ export interface FavoriteTarget {
   target_deals_count?: number;
 }
 
+interface FavoriteProfileJoin {
+  name: string | null;
+  avatar_url: string | null;
+  country: string | null;
+  city: string | null;
+  rating: number | null;
+  verified: boolean | null;
+  deals_count: number | null;
+}
+
+interface FavoriteRow {
+  id: string;
+  target_id: string;
+  created_at: string;
+  profiles: FavoriteProfileJoin | null;
+}
+
 export const useFavorites = () => {
   const { user } = useAuth();
   const [favorites, setFavorites] = useState<FavoriteTarget[]>([]);
@@ -34,13 +51,13 @@ export const useFavorites = () => {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      const enriched = data.map((f: any) => ({
+      const enriched = data.map((f: FavoriteRow) => ({
         id: f.id,
         target_id: f.target_id,
         created_at: f.created_at,
         target_name: f.profiles?.name || "Користувач",
-        target_avatar: f.profiles?.avatar_url || null,
-        target_country: f.profiles?.country || null,
+        target_avatar: f.profiles?.avatar_url || undefined,
+        target_country: f.profiles?.country || undefined,
         target_city: f.profiles?.city || "",
         target_rating: f.profiles?.rating || 0,
         target_verified: f.profiles?.verified || false,
@@ -73,11 +90,11 @@ export const useFavorites = () => {
       .delete()
       .eq("user_id", user.id)
       .eq("target_id", targetId);
-    if (!error) setFavorites(prev => prev.filter(f => f.target_id !== targetId));
+    if (!error) setFavorites((prev) => prev.filter((f) => f.target_id !== targetId));
     return { error };
   };
 
-  const isFavorite = (targetId: string) => favorites.some(f => f.target_id === targetId);
+  const isFavorite = (targetId: string) => favorites.some((f) => f.target_id === targetId);
 
   const toggleFavorite = async (targetId: string) => {
     if (isFavorite(targetId)) {
@@ -86,5 +103,13 @@ export const useFavorites = () => {
     return addFavorite(targetId);
   };
 
-  return { favorites, loading, addFavorite, removeFavorite, isFavorite, toggleFavorite, refetch: fetchFavorites };
+  return {
+    favorites,
+    loading,
+    addFavorite,
+    removeFavorite,
+    isFavorite,
+    toggleFavorite,
+    refetch: fetchFavorites,
+  };
 };

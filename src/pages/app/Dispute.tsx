@@ -9,6 +9,12 @@ import { useDisputes } from "@/hooks/useDisputes";
 import { toast } from "@/hooks/use-toast";
 import { tap, notify } from "@/lib/native";
 
+interface DisputeDeal {
+  title: string;
+  amount: number;
+  profiles?: { name?: string | null } | null;
+}
+
 const reasons = [
   "Кошти не отримані",
   "Послуга не надана",
@@ -31,7 +37,7 @@ const Dispute = () => {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [disputeId, setDisputeId] = useState<string | null>(null);
-  const [deal, setDeal] = useState<any>(null);
+  const [deal, setDeal] = useState<DisputeDeal | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -83,10 +89,12 @@ const Dispute = () => {
         >
           <CheckCircle className="w-8 h-8 text-success" strokeWidth={1.75} />
         </motion.div>
-        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-2 animate-fade-in">Спір відкрито</h1>
+        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-2 animate-fade-in">
+          Спір відкрито
+        </h1>
         <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-          Ваше звернення прийнято. Команда Trust & Safety розгляне його протягом 48 годин.
-          Кошти заморожені до вирішення спору.
+          Ваше звернення прийнято. Команда Trust & Safety розгляне його протягом 48 годин. Кошти заморожені до
+          вирішення спору.
         </p>
         <div className="relative w-full p-4 rounded-2xl bg-secondary border border-border mb-6 text-left overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
           <p className="text-xs text-muted-foreground mb-1">Номер спору</p>
@@ -153,7 +161,10 @@ const Dispute = () => {
               return (
                 <button
                   key={r}
-                  onClick={() => { void tap("light"); setReason(r); }}
+                  onClick={() => {
+                    void tap("light");
+                    setReason(r);
+                  }}
                   className={`w-full text-left p-4 rounded-2xl border min-h-[44px] flex items-center gap-3 transition-all duration-150 hover:-translate-y-px ${
                     selected
                       ? "border-destructive bg-destructive/5 text-foreground font-medium"
@@ -161,9 +172,17 @@ const Dispute = () => {
                   }`}
                 >
                   {selected ? (
-                    <CircleDot className="w-5 h-5 text-destructive shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                    <CircleDot
+                      className="w-5 h-5 text-destructive shrink-0"
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
                   ) : (
-                    <Circle className="w-5 h-5 text-muted-foreground shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                    <Circle
+                      className="w-5 h-5 text-muted-foreground shrink-0"
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
                   )}
                   <span className="text-sm">{r}</span>
                 </button>
@@ -172,7 +191,10 @@ const Dispute = () => {
             <Button
               className="w-full mt-4 bg-destructive hover:bg-destructive/90 text-white min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
               disabled={!reason}
-              onClick={() => { void tap("light"); setStep(2); }}
+              onClick={() => {
+                void tap("light");
+                setStep(2);
+              }}
             >
               Далі →
             </Button>
@@ -202,7 +224,10 @@ const Dispute = () => {
               <Button
                 variant="outline"
                 className="flex-1 transition-transform duration-150 hover:-translate-y-px"
-                onClick={() => { void tap("light"); setStep(1); }}
+                onClick={() => {
+                  void tap("light");
+                  setStep(1);
+                }}
                 disabled={submitting}
               >
                 Назад

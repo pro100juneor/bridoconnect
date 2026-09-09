@@ -4,6 +4,7 @@ import { ArrowLeft, Star, MessageCircle, Heart, CheckCircle, Shield } from "luci
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import type { Deal, Profile } from "@/integrations/supabase/types";
 import { useReviews } from "@/hooks/useReviews";
 import { toast } from "@/hooks/use-toast";
 import { tap, notify } from "@/lib/native";
@@ -38,8 +39,8 @@ const PublicProfile = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const { reviews } = useReviews(id);
-  const [profile, setProfile] = useState<any>(null);
-  const [deals, setDeals] = useState<any[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFav, setIsFav] = useState(false);
   const [trust, setTrust] = useState<number | null>(null);
@@ -138,7 +139,7 @@ const PublicProfile = () => {
   const flag = profile.country === "Україна" ? "🇺🇦" : "🏳️";
   const avgRating =
     reviews.length > 0
-      ? (reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length).toFixed(1)
+      ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
       : (profile.rating || 0).toFixed(1);
 
   return (
@@ -227,7 +228,7 @@ const PublicProfile = () => {
         <div className="px-4 mb-6">
           <h4 className="font-semibold text-sm text-foreground mb-3">Активні запити</h4>
           <div className="space-y-2">
-            {deals.map((deal: any) => (
+            {deals.map((deal) => (
               <div
                 key={deal.id}
                 onClick={() => {
@@ -278,7 +279,7 @@ const PublicProfile = () => {
         <div className="px-4">
           <h4 className="font-semibold text-sm text-foreground mb-3">Відгуки ({reviews.length})</h4>
           <div className="space-y-3">
-            {reviews.slice(0, 5).map((r: any) => (
+            {reviews.slice(0, 5).map((r) => (
               <div
                 key={r.id}
                 className="relative p-3 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8"

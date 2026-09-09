@@ -65,7 +65,7 @@ const SponsorPrivacy = () => {
     if (error) {
       toast({
         title: "Помилка",
-        description: (error as any)?.message || "Не вдалося зберегти",
+        description: (typeof error === "string" ? error : error?.message) || "Не вдалося зберегти",
         variant: "destructive",
       });
       return;
@@ -82,7 +82,7 @@ const SponsorPrivacy = () => {
     if (error) {
       toast({
         title: "Помилка",
-        description: (error as any)?.message || "Не вдалося оновити",
+        description: (typeof error === "string" ? error : error?.message) || "Не вдалося оновити",
         variant: "destructive",
       });
       return;

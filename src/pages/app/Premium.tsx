@@ -23,7 +23,7 @@ const plans: Plan[] = [
     name: "Місячна",
     price: "€4.99",
     period: "/ місяць",
-    priceId: (import.meta as any).env?.VITE_STRIPE_PRICE_MONTHLY || "price_monthly",
+    priceId: import.meta.env.VITE_STRIPE_PRICE_MONTHLY || "price_monthly",
     features: ["Без комісії", "Пріоритет у стрічці", "Значок верифікації", "Розширена аналітика"],
     popular: false,
   },
@@ -33,7 +33,7 @@ const plans: Plan[] = [
     price: "€39.99",
     period: "/ рік",
     badge: "Економія 33%",
-    priceId: (import.meta as any).env?.VITE_STRIPE_PRICE_YEARLY || "price_yearly",
+    priceId: import.meta.env.VITE_STRIPE_PRICE_YEARLY || "price_yearly",
     features: [
       "Без комісії",
       "Пріоритет у стрічці",
@@ -66,13 +66,13 @@ const Premium = () => {
       setCelebrate(true);
       setTimeout(() => setCelebrate(false), 2500);
       await createSubscription({ priceId: plan.priceId });
-    } catch (e: any) {
+    } catch (e) {
       void notify("error");
       setCelebrate(false);
       toast({
         title: "Stripe не підключено",
         description:
-          e?.message ||
+          (e instanceof Error ? e.message : "") ||
           "Підписку буде активовано після налаштування Stripe у адмін-панелі.",
         variant: "destructive",
       });
@@ -83,10 +83,7 @@ const Premium = () => {
   return (
     <main className="pb-8 relative">
       <Confetti trigger={celebrate} />
-      <section
-        className="px-4 pt-6 pb-8 text-white text-center"
-        style={{ background: "hsl(222 47% 22%)" }}
-      >
+      <section className="px-4 pt-6 pb-8 text-white text-center" style={{ background: "hsl(222 47% 22%)" }}>
         <Crown className="w-12 h-12 mx-auto mb-3 text-warning" strokeWidth={1.75} />
         <h1 className="font-serif text-4xl tracking-tight mb-2 animate-fade-in">BridoConnect Premium</h1>
         <p className="text-white/70 text-sm leading-relaxed">Максимум довіри. Мінімум комісій.</p>
@@ -102,15 +99,20 @@ const Premium = () => {
                 perk.hero ? "col-span-2" : ""
               }`}
             >
-              <perk.icon className={`${perk.hero ? "w-7 h-7" : "w-5 h-5"} text-accent mb-2`} strokeWidth={1.75} />
-              <p className={`font-semibold text-foreground ${perk.hero ? "text-base" : "text-sm"}`}>{perk.title}</p>
+              <perk.icon
+                className={`${perk.hero ? "w-7 h-7" : "w-5 h-5"} text-accent mb-2`}
+                strokeWidth={1.75}
+              />
+              <p className={`font-semibold text-foreground ${perk.hero ? "text-base" : "text-sm"}`}>
+                {perk.title}
+              </p>
               <p className="text-xs text-muted-foreground leading-relaxed">{perk.desc}</p>
             </article>
           ))}
         </div>
 
         <div className="space-y-3 mb-6">
-          {plans.map(plan => (
+          {plans.map((plan) => (
             <article
               key={plan.id}
               className={`relative p-4 rounded-2xl border-2 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 ${
@@ -135,7 +137,7 @@ const Premium = () => {
                 {plan.popular && <Crown className="w-5 h-5 text-warning" strokeWidth={1.75} />}
               </div>
               <div className="space-y-1.5 mb-4">
-                {plan.features.map(f => (
+                {plan.features.map((f) => (
                   <div key={f} className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-success" strokeWidth={1.75} />
                     <span className="text-xs text-foreground">{f}</span>

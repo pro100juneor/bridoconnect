@@ -21,12 +21,23 @@ const Chat = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Відкритий чат = прочитано: оновлюємо позначку при вході й нових повідомленнях
+  useEffect(() => {
+    if (!id || !user) return;
+    void supabase
+      .from("chat_reads")
+      .upsert({ user_id: user.id, deal_id: id, last_read_at: new Date().toISOString() });
+  }, [id, user, messages.length]);
+
   useEffect(() => {
     if (!id) return;
-    supabase.from("deals").select("title, creator_id, sponsor_id, profiles!creator_id(name)")
-      .eq("id", id).single()
+    supabase
+      .from("deals")
+      .select("title, creator_id, sponsor_id, profiles!creator_id(name)")
+      .eq("id", id)
+      .single()
       .then(({ data }) => {
-        if (data) setPartnerName((data.profiles as any)?.name || "Партнер");
+        if (data) setPartnerName(data.profiles?.name || "Партнер");
       });
   }, [id]);
 
@@ -38,7 +49,12 @@ const Chat = () => {
     await sendMessage(text, user.id);
   };
 
-  const initials = partnerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  const initials = partnerName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
   const msgEnter = reduced
     ? { initial: false }
     : {
@@ -66,15 +82,15 @@ const Chat = () => {
           <p className="text-xs text-success">онлайн</p>
         </div>
         <button
-          onClick={() => { void tap("light"); navigate(`/app/deal/${id}`); }}
+          onClick={() => {
+            void tap("light");
+            navigate(`/app/deal/${id}`);
+          }}
           className="text-xs bg-accent text-white px-3 py-1.5 rounded-2xl font-medium min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
         >
           Угода
         </button>
-        <button
-          aria-label="Меню"
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center"
-        >
+        <button aria-label="Меню" className="min-h-[44px] min-w-[44px] flex items-center justify-center">
           <MoreVertical className="w-5 h-5 text-muted-foreground" strokeWidth={1.75} />
         </button>
       </div>
@@ -95,7 +111,7 @@ const Chat = () => {
           </div>
         )}
         <AnimatePresence initial={false}>
-          {messages.map(msg => {
+          {messages.map((msg) => {
             const isMe = msg.sender_id === user?.id;
             return (
               <motion.div
@@ -103,14 +119,19 @@ const Chat = () => {
                 {...msgEnter}
                 className={`flex ${isMe ? "justify-end" : "justify-start"}`}
               >
-                <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
-                  isMe
-                    ? "bg-primary text-white rounded-tr-sm"
-                    : "bg-background text-foreground rounded-tl-sm shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)]"
-                }`}>
+                <div
+                  className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                    isMe
+                      ? "bg-primary text-white rounded-tr-sm"
+                      : "bg-background text-foreground rounded-tl-sm shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)]"
+                  }`}
+                >
                   <p className="text-sm">{msg.text}</p>
                   <p className={`text-[10px] mt-1 ${isMe ? "text-white/60" : "text-muted-foreground"}`}>
-                    {new Date(msg.created_at).toLocaleTimeString("uk", { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(msg.created_at).toLocaleTimeString("uk", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
                 </div>
               </motion.div>
@@ -121,12 +142,23 @@ const Chat = () => {
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             {/* Speech-bubble SVG, DESIGN.md §States */}
             <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                className="w-8 h-8 text-muted-foreground"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
               </svg>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed text-center">
-              Почніть розмову — напишіть перше<br />повідомлення.
+              Почніть розмову — напишіть перше
+              <br />
+              повідомлення.
             </p>
           </div>
         )}
@@ -142,8 +174,8 @@ const Chat = () => {
         </button>
         <input
           value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
           placeholder="Повідомлення…"
           className="flex-1 bg-secondary rounded-xl px-4 py-2 text-sm outline-none text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent/30"
         />

@@ -107,7 +107,15 @@ serve(async (req) => {
 
     const profileId = Deno.env.get("WISE_PROFILE_ID") || "";
     const sourceCcy = "EUR";
-    const targetCcy = "USD"; // TODO map recipient.country → target currency
+    // Валюта выплаты берётся из самого Wise-recipient-аккаунта (создан с локальной валютой).
+    let targetCcy = "USD";
+    const acctResp = await wiseFetch("GET", `/v1/accounts/${recipient.wise_recipient_id}`);
+    if (acctResp.ok) {
+      const acct = await acctResp.json();
+      if (typeof acct?.currency === "string" && /^[A-Z]{3}$/.test(acct.currency)) {
+        targetCcy = acct.currency;
+      }
+    }
     const netCents = (deal.amount_cents || 0) - (deal.platform_fee_cents || 0);
     const netEur = netCents / 100;
 

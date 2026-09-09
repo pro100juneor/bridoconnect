@@ -49,7 +49,7 @@ export const usePreferences = () => {
         }
       }
     } else if (data) {
-      setPrefs({ ...DEFAULT_PREFS, ...(data as any) });
+      setPrefs({ ...DEFAULT_PREFS, ...(data as Partial<UserPreferences>) });
     }
     setLoading(false);
   }, [user]);

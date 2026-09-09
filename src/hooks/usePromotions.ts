@@ -1,10 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 
 // The Supabase client is created without a Database generic, so `.from()` / `.rpc()`
-// on the new `promotions` table need `as any` casts (same pattern as
-// useShopProfile / useRecipientPage / useCurrency). One shared `from` helper keeps
-// per-line `as any` to a minimum.
-const from = (table: string) => (supabase as any).from(table);
+// accept any table/function name (same pattern as useShopProfile / useRecipientPage /
+// useCurrency). One shared `from` helper keeps the untyped access in one place.
+const from = (table: string) => supabase.from(table);
 
 async function safeJsonError(resp: Response, fallback: string): Promise<string> {
   const ct = resp.headers.get("content-type") || "";
@@ -57,7 +56,38 @@ export interface PromotedProfile extends Promotion {
   role: string | null;
 }
 
-function normalizePromotion(row: any): Promotion {
+// Raw DB row shape for `promotions` (numbers may arrive as strings from the API).
+interface PromotionRow {
+  id: string;
+  user_id: string;
+  audience: PromotionAudience;
+  photo_url?: string | null;
+  headline?: string | null;
+  body?: string | null;
+  amount_cents?: number | string | null;
+  tier?: number | string | null;
+  status: PromotionStatus;
+  priority?: number | string | null;
+  stripe_session_id?: string | null;
+  activated_at?: string | null;
+  starts_at?: string | null;
+  expires_at?: string | null;
+  min_visible_until?: string | null;
+  created_at: string;
+}
+
+// Joined display fields from `profiles` for a promoted user.
+interface PromotedProfileRow {
+  id: string;
+  name?: string | null;
+  avatar_url?: string | null;
+  country?: string | null;
+  city?: string | null;
+  slug?: string | null;
+  role?: string | null;
+}
+
+function normalizePromotion(row: PromotionRow): Promotion {
   return {
     id: row.id,
     user_id: row.user_id,
@@ -88,7 +118,7 @@ export const usePromotions = () => {
     } = await supabase.auth.getUser();
     if (!user) return null;
     const { data } = await from("profiles").select("role").eq("id", user.id).maybeSingle();
-    const role = (data as any)?.role;
+    const role = (data as { role?: string | null } | null)?.role;
     // admin (or anything unexpected) falls back to seeing the recipient feed.
     const audience: PromotionAudience = role === "recipient" ? "recipient" : "sponsor";
     return { userId: user.id, role: audience };
@@ -100,21 +130,23 @@ export const usePromotions = () => {
   const listForViewer = async (): Promise<PromotedProfile[]> => {
     const me = await getMyRole();
     if (!me) return [];
-    const { data, error } = await (supabase as any).rpc("active_promotions", {
+    const { data, error } = await supabase.rpc("active_promotions", {
       p_audience: me.role,
     });
     if (error || !data) return [];
-    const promos = (data as any[]).map(normalizePromotion);
+    const promos = (data as PromotionRow[]).map(normalizePromotion);
     if (promos.length === 0) return [];
 
     const ids = Array.from(new Set(promos.map((p) => p.user_id)));
     const { data: profs } = await from("profiles")
       .select("id, name, avatar_url, country, city, slug, role")
       .in("id", ids);
-    const map = new Map<string, any>((profs || []).map((p: any) => [p.id, p]));
+    const map = new Map<string, PromotedProfileRow>(
+      ((profs ?? []) as PromotedProfileRow[]).map((p) => [p.id, p])
+    );
 
     return promos.map((p) => {
-      const prof = map.get(p.user_id) || {};
+      const prof: Partial<PromotedProfileRow> = map.get(p.user_id) ?? {};
       return {
         ...p,
         name: prof.name ?? "Користувач",
@@ -138,7 +170,7 @@ export const usePromotions = () => {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error || !data) return [];
-    return (data as any[]).map(normalizePromotion);
+    return (data as PromotionRow[]).map(normalizePromotion);
   };
 
   // Start a paid promotion: create-checkout inserts the pending row + returns a

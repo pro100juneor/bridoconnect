@@ -32,17 +32,23 @@ const EXECUTORS = [
   { email: "exec3@brido.local", name: "Test Recipient 3", city: "DEMO", country: "Україна", verified: false, bio: "DEMO seed — not a real person." },
 ];
 
+// Аккаунты, которых ждут отдельные спеки (route-smoke, admin-audit).
+const EXTRA_USERS = [
+  { email: "seller@brido.local",  name: "Test Seller", role: "recipient", city: "DEMO", country: "Україна", verified: true, bio: "DEMO seed — not a real person." },
+  { email: "oleksii@brido.local", name: "Oleksii",     role: "admin",     city: "DEMO", country: "Україна", verified: true, password: "Oleksii" },
+];
+
 const DEALS = [
   { creator: 0, title: "Допомога з орендою",  description: "Тимчасове житло на місяць.", category: "Житло",  amount: 320, raised: 200, status: "active", urgent: false },
   { creator: 1, title: "Продукти на тиждень", description: "Сім'я з 3 дітей.",            category: "Їжа",    amount: 150, raised:  50, status: "active", urgent: true  },
   { creator: 0, title: "Зимовий одяг",        description: "Куртки + взуття.",            category: "Одяг",   amount: 200, raised:   0, status: "active", urgent: false },
 ];
 
-async function ensureUser({ email, name, role, city, country, bio, verified }) {
+async function ensureUser({ email, name, role, city, country, bio, verified, password }) {
   // Try create; if already exists, fetch.
   const { data, error } = await sb.auth.admin.createUser({
     email,
-    password: "password123",
+    password: password ?? "password123",
     email_confirm: true,
     user_metadata: { name, role },
   });
@@ -90,6 +96,12 @@ async function main() {
     const id = await ensureUser({ ...e, role: "recipient" });
     executorIds.push(id);
     console.log(`  ${e.email} -> ${id}`);
+  }
+
+  console.log("Seeding extra spec users...");
+  for (const u of EXTRA_USERS) {
+    const id = await ensureUser(u);
+    console.log(`  ${u.email} -> ${id}`);
   }
 
   // Deals: clear previous DEMO deals from these executors, then insert fresh ones.

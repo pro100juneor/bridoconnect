@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
-import { Bell, MessageCircle, CheckCircle, DollarSign, Star } from "lucide-react";
+import { Bell, MessageCircle, CheckCircle, DollarSign, Star, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import type { Notification } from "@/integrations/supabase/types";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { tap } from "@/lib/native";
 
-const TYPE_ICON: Record<string, any> = {
+const TYPE_ICON: Record<string, LucideIcon> = {
   deal_accepted: CheckCircle,
   deal_completed: CheckCircle,
   new_message: MessageCircle,
@@ -29,7 +30,7 @@ const Notifications = () => {
   const navigate = useNavigate();
   const reduced = useReducedMotion();
   const { user } = useAuth();
-  const [notifs, setNotifs] = useState<any[]>([]);
+  const [notifs, setNotifs] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refetch = useCallback(async () => {
@@ -50,37 +51,43 @@ const Notifications = () => {
     void refetch();
     const channel = supabase
       .channel(`notifs_${user.id}`)
-      .on("postgres_changes", {
-        event: "INSERT", schema: "public", table: "notifications",
-        filter: `user_id=eq.${user.id}`
-      }, (payload) => {
-        setNotifs(prev => [payload.new as any, ...prev]);
-      })
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          setNotifs((prev) => [payload.new as Notification, ...prev]);
+        }
+      )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, refetch]);
 
   const markAllRead = async () => {
     if (!user) return;
     void tap("light");
-    await supabase.from("notifications")
-      .update({ read: true })
-      .eq("user_id", user.id).eq("read", false);
-    setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+    await supabase.from("notifications").update({ read: true }).eq("user_id", user.id).eq("read", false);
+    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
   const markRead = async (id: string) => {
     await supabase.from("notifications").update({ read: true }).eq("id", id);
-    setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   };
 
-  const onRowTap = (n: any) => {
+  const onRowTap = (n: Notification) => {
     void tap("light");
     void markRead(n.id);
     if (n.deal_id) navigate(`/app/deal/${n.deal_id}`);
   };
 
-  const unreadCount = notifs.filter(n => !n.read).length;
+  const unreadCount = notifs.filter((n) => !n.read).length;
 
   return (
     <div className="pb-8">
@@ -116,7 +123,16 @@ const Notifications = () => {
         <div className="text-center py-16 px-6">
           <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
             {/* SVG envelope with z-z sleep indicator per DESIGN.md §States */}
-            <svg viewBox="0 0 48 48" className="w-10 h-10 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              viewBox="0 0 48 48"
+              className="w-10 h-10 text-muted-foreground"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <rect x="6" y="14" width="28" height="22" rx="3" />
               <path d="M6 17l14 10 14-10" />
               <path d="M34 12h8M36 18h6M37 24h5" />
@@ -124,14 +140,16 @@ const Notifications = () => {
           </div>
           <p className="font-semibold text-foreground mb-2">Сповіщень немає</p>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Тут з'являться сповіщення про угоди,<br />повідомлення та донати.
+            Тут з'являться сповіщення про угоди,
+            <br />
+            повідомлення та донати.
           </p>
         </div>
       )}
 
       <PullToRefresh onRefresh={refetch}>
         <div className="px-4 mt-2 space-y-2">
-          {notifs.map((n: any, idx: number) => {
+          {notifs.map((n, idx) => {
             const Icon = TYPE_ICON[n.type] || Bell;
             const colorClass = TYPE_COLOR[n.type] || "text-muted-foreground bg-secondary";
             return (
@@ -145,19 +163,30 @@ const Notifications = () => {
                   !n.read ? "bg-accent/5" : "hover:bg-secondary/50"
                 }`}
               >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${colorClass}`}>
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${colorClass}`}
+                >
                   <Icon className="w-5 h-5" strokeWidth={1.75} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium ${!n.read ? "text-foreground" : "text-muted-foreground"}`}>
+                  <p
+                    className={`text-sm font-medium ${!n.read ? "text-foreground" : "text-muted-foreground"}`}
+                  >
                     {n.title}
                   </p>
                   {n.body && <p className="text-xs text-muted-foreground mt-0.5 truncate">{n.body}</p>}
                   <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(n.created_at).toLocaleDateString("uk", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    {new Date(n.created_at).toLocaleDateString("uk", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
                 </div>
-                {!n.read && <div className="w-2 h-2 rounded-full bg-accent shrink-0 mt-2" aria-label="Непрочитано" />}
+                {!n.read && (
+                  <div className="w-2 h-2 rounded-full bg-accent shrink-0 mt-2" aria-label="Непрочитано" />
+                )}
               </motion.div>
             );
           })}

@@ -19,7 +19,10 @@ export const useReviews = (userId?: string) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) { setLoading(false); return; }
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     supabase
       .from("reviews")
       .select("*, reviewer:profiles!reviewer_id(name, avatar_url)")
@@ -45,7 +48,7 @@ export const useReviews = (userId?: string) => {
     if (!user) return { error: "Not authenticated" };
     const { data, error } = await supabase
       .from("reviews")
-      .insert([{ deal_id: dealId, reviewer_id: user.id, reviewee_id: revieweeId, rating, text }] as any)
+      .insert([{ deal_id: dealId, reviewer_id: user.id, reviewee_id: revieweeId, rating, text }])
       .select()
       .single();
 
@@ -56,8 +59,9 @@ export const useReviews = (userId?: string) => {
         .select("rating")
         .eq("reviewee_id", revieweeId);
       if (allReviews) {
-        const avg = allReviews.reduce((s: number, r: any) => s + r.rating, 0) / allReviews.length;
-        await supabase.from("profiles").update({ rating: avg } as any).eq("id", revieweeId);
+        const rows = allReviews as { rating: number }[];
+        const avg = rows.reduce((s, r) => s + r.rating, 0) / rows.length;
+        await supabase.from("profiles").update({ rating: avg }).eq("id", revieweeId);
       }
     }
     return { data, error };

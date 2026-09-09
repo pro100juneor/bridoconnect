@@ -34,12 +34,7 @@ const ShopDetail = () => {
       const [{ data: profile }, list, { data: shop }] = await Promise.all([
         supabase.from("profiles").select("name, country, city, rating, verified").eq("id", id).maybeSingle(),
         productsBySeller(id),
-        (supabase as any)
-          .from("shop_profiles")
-          .select("slug")
-          .eq("seller_id", id)
-          .eq("published", true)
-          .maybeSingle(),
+        supabase.from("shop_profiles").select("slug").eq("seller_id", id).eq("published", true).maybeSingle(),
       ]);
       if (!alive) return;
       setSeller((profile as SellerInfo) || null);

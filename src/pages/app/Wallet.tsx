@@ -3,7 +3,6 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Plus,
-  CreditCard,
   TrendingUp,
   X,
   RefreshCw,
@@ -53,12 +52,13 @@ const Wallet = () => {
       void notify("success");
       await createCheckout({ amount: n });
       // Stripe checkout робить редирект всередині createCheckout
-    } catch (e: any) {
+    } catch (e) {
       void notify("error");
       toast({
         title: "Stripe не підключено",
         description:
-          e?.message || "Платежі буде активовано після підключення Stripe. Зверніться до адміністратора.",
+          (e instanceof Error && e.message) ||
+          "Платежі буде активовано після підключення Stripe. Зверніться до адміністратора.",
         variant: "destructive",
       });
       setDepositing(false);
@@ -82,7 +82,7 @@ const Wallet = () => {
           <p className="text-4xl font-bold">€{balance.toFixed(2)}</p>
           <p className="text-white/40 text-xs mt-1">≈ ${(balance * 1.09).toFixed(0)} USD</p>
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <Button
             variant="secondary"
             size="sm"
@@ -100,20 +100,6 @@ const Wallet = () => {
           >
             <ArrowUpRight className="w-4 h-4" />
             <span className="text-xs">Відправити</span>
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() =>
-              toast({
-                title: "Незабаром",
-                description: "Функцію прив'язки карток додамо після підключення Stripe",
-              })
-            }
-            className="flex flex-col gap-1 h-14 bg-white/10 hover:bg-white/20 text-white border-0"
-          >
-            <CreditCard className="w-4 h-4" />
-            <span className="text-xs">Картка</span>
           </Button>
         </div>
       </div>

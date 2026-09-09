@@ -27,7 +27,32 @@ const SELLER_JOIN = `
   profiles!seller_id(name, country, rating, verified, stripe_connect_status)
 `;
 
-function enrich(row: any): Product {
+interface SellerJoin {
+  name: string | null;
+  country: string | null;
+  rating: number | null;
+  verified: boolean | null;
+  stripe_connect_status: string | null;
+}
+
+interface ProductRow {
+  id: string;
+  seller_id: string;
+  title: string;
+  description: string | null;
+  price_cents: number;
+  currency: string;
+  category: string | null;
+  images: string[];
+  videos: string[] | null;
+  stock: number;
+  status: Product["status"];
+  created_at: string;
+  updated_at: string;
+  profiles: SellerJoin | null;
+}
+
+function enrich(row: ProductRow): Product {
   return {
     ...row,
     videos: row.videos ?? [],
@@ -49,7 +74,7 @@ export const useProducts = () => {
     if (category && category !== "Всі") query = query.eq("category", category);
     const { data, error } = await query;
     if (error || !data) return [];
-    return (data as any[]).map(enrich);
+    return (data as ProductRow[]).map(enrich);
   };
 
   const getProduct = async (id: string): Promise<Product | null> => {
@@ -66,7 +91,7 @@ export const useProducts = () => {
       .eq("status", "active")
       .order("created_at", { ascending: false });
     if (error || !data) return [];
-    return (data as any[]).map(enrich);
+    return (data as ProductRow[]).map(enrich);
   };
 
   const myProducts = async (): Promise<Product[]> => {
@@ -80,7 +105,7 @@ export const useProducts = () => {
       .eq("seller_id", user.id)
       .order("created_at", { ascending: false });
     if (error || !data) return [];
-    return (data as any[]).map(enrich);
+    return (data as ProductRow[]).map(enrich);
   };
 
   const MAX_IMAGES = 20;
@@ -148,7 +173,7 @@ export const useProducts = () => {
         videos,
         stock: 1, // one position = exactly one physical unit
         status: "active",
-      } as any)
+      })
       .select("id")
       .single();
 

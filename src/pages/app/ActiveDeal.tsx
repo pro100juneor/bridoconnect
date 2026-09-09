@@ -12,6 +12,33 @@ import { toast } from "@/hooks/use-toast";
 import ReviewModal from "@/components/ReviewModal";
 import { Confetti } from "@/components/Confetti";
 import { tap, notify } from "@/lib/native";
+import type { Deal } from "@/integrations/supabase/types";
+
+interface DealCreatorProfile {
+  name?: string | null;
+  country?: string | null;
+  city?: string | null;
+  rating?: number | null;
+  verified?: boolean | null;
+  stripe_connect_status?: string | null;
+  paypal_status?: string | null;
+}
+
+interface DealRow extends Deal {
+  escrow_released_at?: string | null;
+  refunded_at?: string | null;
+  profiles?: DealCreatorProfile | null;
+}
+
+interface DealView extends DealRow {
+  creator_name: string;
+  creator_flag: string;
+  creator_city: string;
+  creator_rating: number;
+  creator_verified: boolean;
+  creator_connect_status: string;
+  creator_paypal_status: string;
+}
 
 const ActiveDeal = () => {
   const navigate = useNavigate();
@@ -22,7 +49,7 @@ const ActiveDeal = () => {
   const { createOrder: createPaypalOrder } = usePaypal();
   const { createPaymentSession: createAdyenSession } = useAdyen();
 
-  const [deal, setDeal] = useState<any>(null);
+  const [deal, setDeal] = useState<DealView | null>(null);
   const [dealLoading, setDealLoading] = useState(true);
   const [showReview, setShowReview] = useState(false);
   const [amount, setAmount] = useState("");
@@ -43,8 +70,8 @@ const ActiveDeal = () => {
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
-          const d: any = data;
-          const p = d.profiles || {};
+          const d: DealRow = data;
+          const p: DealCreatorProfile = d.profiles || {};
           setDeal({
             ...d,
             creator_name: p.name || "Користувач",
@@ -127,11 +154,11 @@ const ActiveDeal = () => {
       } else {
         await createCheckout({ amount: n, dealId: id });
       }
-    } catch (e: any) {
+    } catch (e) {
       void notify("error");
       toast({
         title: "Помилка платежу",
-        description: e?.message || "Спробуйте ще раз.",
+        description: e instanceof Error && e.message ? e.message : "Спробуйте ще раз.",
         variant: "destructive",
       });
       setPaying(false);
@@ -150,14 +177,14 @@ const ActiveDeal = () => {
         title: "Запит на повернення",
         description: "Refund ініційовано, processor підтвердить через webhook.",
       });
-      setDeal((prev: any) =>
+      setDeal((prev) =>
         prev ? { ...prev, status: "cancelled", refunded_at: new Date().toISOString() } : prev
       );
-    } catch (e: any) {
+    } catch (e) {
       void notify("error");
       toast({
         title: "Не вдалося повернути",
-        description: e?.message || "Спробуйте пізніше.",
+        description: e instanceof Error && e.message ? e.message : "Спробуйте пізніше.",
         variant: "destructive",
       });
     } finally {
@@ -173,16 +200,16 @@ const ActiveDeal = () => {
       await releaseEscrow(id);
       void notify("success");
       toast({ title: "Готово", description: "Кошти переведено отримувачу." });
-      setDeal((prev: any) =>
+      setDeal((prev) =>
         prev ? { ...prev, status: "completed", escrow_released_at: new Date().toISOString() } : prev
       );
       setShowConfetti(true);
       setShowReview(true);
-    } catch (e: any) {
+    } catch (e) {
       void notify("error");
       toast({
         title: "Не вдалося завершити",
-        description: e?.message || "Спробуйте ще раз.",
+        description: e instanceof Error && e.message ? e.message : "Спробуйте ще раз.",
         variant: "destructive",
       });
     } finally {

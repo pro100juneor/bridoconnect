@@ -65,6 +65,15 @@ test.describe("Release escrow", () => {
     await page.getByTestId("login-password").fill(SPONSOR_PASSWORD);
     await page.getByTestId("login-submit").click();
     await page.waitForURL("**/app", { timeout: 15_000 });
+
+    // Cookie-баннер (web-only) перехватывает клики по нижней части экрана.
+    try {
+      const cookieBtn = page.getByRole("button", { name: /Тільки необхідні|Прийняти все/ }).first();
+      if (await cookieBtn.count()) await cookieBtn.click({ timeout: 2000 });
+    } catch {
+      /* banner already dismissed */
+    }
+
     await page.goto(`/app/deal/${dealId}`);
 
     // 4. Click release.

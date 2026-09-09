@@ -91,7 +91,10 @@ async function assertRouteClean(page: import("@playwright/test").Page, route: st
   page.on("response", onResponse);
 
   const resp = await page.goto(route, { waitUntil: "domcontentloaded", timeout: 25_000 });
-  await page.waitForTimeout(900);
+  // Дать странице дозагрузиться: незавершённые fetch, оборванные следующим
+  // goto, дают ложные "Failed to fetch" в консоли.
+  await page.waitForLoadState("networkidle", { timeout: 8_000 }).catch(() => {});
+  await page.waitForTimeout(400);
   const rendered = await page.evaluate(() => !!document.querySelector("#root")?.children?.length);
 
   page.off("console", onConsole);
@@ -121,6 +124,9 @@ test.describe("route smoke — app (authenticated)", () => {
     await page.getByTestId("login-submit").click();
     await page.waitForURL("**/app", { timeout: 20_000 });
     await dismissCookies(page);
+    // Дождаться запросов фида: мгновенный goto следующего маршрута обрывает
+    // их и даёт ложные "Failed to fetch" в консоли уже на целевой странице.
+    await page.waitForLoadState("networkidle", { timeout: 8_000 }).catch(() => {});
   });
 
   for (const route of APP_ROUTES) {

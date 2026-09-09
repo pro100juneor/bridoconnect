@@ -38,77 +38,6 @@ const categoryIcon = (cat: string): LucideIcon => {
 const categories = ["Всі", "Гроші", "Товари", "Завдання", "Ліки", "Житло", "Їжа"];
 const flags = ["🇺🇦", "🏳️"];
 
-const MOCK_DEALS: any[] = [
-  {
-    id: "m1",
-    creator_id: "u1",
-    title: "Допомога з відновленням житла",
-    description: "Мама двох дітей. Будинок зруйновано обстрілом. Потрібна допомога для відновлення житла.",
-    category: "Житло",
-    amount: 3200,
-    raised: 2080,
-    currency: "EUR",
-    status: "active",
-    urgent: true,
-    creator_name: "Оксана К.",
-    creator_flag: "🇺🇦",
-    creator_city: "Харків",
-    creator_rating: 4.8,
-    creator_deals: 12,
-  },
-  {
-    id: "m2",
-    creator_id: "u2",
-    title: "Ліки для онкохворої дитини",
-    description: "Дочці 7 років, потрібен курс лікування. Страховка не покриває весь курс.",
-    category: "Ліки",
-    amount: 1800,
-    raised: 1240,
-    currency: "EUR",
-    status: "active",
-    urgent: true,
-    creator_name: "Ахмад Р.",
-    creator_flag: "🏳️",
-    creator_city: "Берлін",
-    creator_rating: 4.5,
-    creator_deals: 7,
-  },
-  {
-    id: "m3",
-    creator_id: "u3",
-    title: "Продуктовий кошик на місяць",
-    description: "Сім'я з 4 дітей, чоловік на фронті. Потрібна допомога з продуктами.",
-    category: "Їжа",
-    amount: 400,
-    raised: 280,
-    currency: "EUR",
-    status: "active",
-    urgent: false,
-    creator_name: "Марія Л.",
-    creator_flag: "🇺🇦",
-    creator_city: "Київ",
-    creator_rating: 4.9,
-    creator_deals: 23,
-  },
-  {
-    id: "m4",
-    creator_id: "u4",
-    title: "Оренда квартири для біженців",
-    description: "Сім'я з Маріуполя шукає тимчасове житло у Варшаві.",
-    category: "Житло",
-    amount: 800,
-    raised: 350,
-    currency: "EUR",
-    status: "active",
-    urgent: false,
-    creator_name: "Надія С.",
-    creator_flag: "🇺🇦",
-    creator_city: "Варшава",
-    creator_rating: 4.7,
-    creator_deals: 5,
-  },
-];
-
 const categoryEmoji = (cat: string) => {
   const map: Record<string, string> = {
     Їжа: "🍞",
@@ -163,13 +92,11 @@ const Feed = () => {
     return t(keys[cat] || "", cat);
   };
 
-  // Real deals only — mock fallback was surfacing fake Харків/Берлін
-  // names to live users when the DB happened to be empty.
   const source = realDeals;
 
-  // Фільтрація клієнтом (щоб працювало і для mock, і для реальних)
+  // Фільтрація на клієнті — категорії й прапор
   const displayDeals = useMemo(() => {
-    return source.filter((d: any) => {
+    return source.filter((d) => {
       if (activeCategory !== "Всі") {
         const catMap: Record<string, string[]> = {
           Гроші: ["Гроші"],
@@ -386,7 +313,7 @@ const Feed = () => {
       )}
 
       <div className="px-4 space-y-4">
-        {displayDeals.map((deal: any, idx: number) => {
+        {displayDeals.map((deal, idx) => {
           const pct = deal.amount > 0 ? Math.round((deal.raised / deal.amount) * 100) : 0;
           const initials = (deal.creator_name || "?")
             .split(" ")

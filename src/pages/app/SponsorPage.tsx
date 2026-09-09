@@ -83,7 +83,7 @@ const SponsorPage = () => {
     if (error) {
       toast({
         title: "Помилка",
-        description: (error as any)?.message || "Не вдалося надіслати запит",
+        description: (typeof error === "string" ? error : error?.message) || "Не вдалося надіслати запит",
         variant: "destructive",
       });
       return;

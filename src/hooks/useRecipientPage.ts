@@ -1,9 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// The Supabase client is created without a Database generic, so `.from()` on the
-// new recipient-page tables needs `as any` casts (same pattern as useShopProfile /
-// useProducts / useCurrency).
-const from = (table: string) => (supabase as any).from(table);
+// The Supabase client is created without a Database generic, so `.from()` accepts
+// any table name (same pattern as useShopProfile / useProducts / useCurrency).
+// One shared helper keeps the untyped access in one place.
+const from = (table: string) => supabase.from(table);
 
 // Section -> visible map for the public page. A MISSING key means visible
 // (default-on), so an empty object shows every section.
@@ -78,7 +78,22 @@ export interface RecipientPageData {
 const PROFILE_COLS =
   "id, name, slug, city, country, bio, avatar_url, cover_url, public_page_enabled, field_visibility, verification_status";
 
-function normalizeProfile(row: any): RecipientProfile {
+// Raw `profiles` row as returned by PROFILE_COLS selects.
+interface RecipientProfileRow {
+  id: string;
+  name?: string | null;
+  slug?: string | null;
+  city?: string | null;
+  country?: string | null;
+  bio?: string | null;
+  avatar_url?: string | null;
+  cover_url?: string | null;
+  public_page_enabled?: boolean | null;
+  field_visibility?: FieldVisibility | null;
+  verification_status?: VerificationStatus | null;
+}
+
+function normalizeProfile(row: RecipientProfileRow): RecipientProfile {
   return {
     id: row.id,
     name: row.name ?? "Користувач",
@@ -89,12 +104,30 @@ function normalizeProfile(row: any): RecipientProfile {
     avatar_url: row.avatar_url ?? null,
     cover_url: row.cover_url ?? null,
     public_page_enabled: row.public_page_enabled ?? true,
-    field_visibility: (row.field_visibility as FieldVisibility) ?? {},
-    verification_status: (row.verification_status as VerificationStatus) ?? "unverified",
+    field_visibility: row.field_visibility ?? {},
+    verification_status: row.verification_status ?? "unverified",
   };
 }
 
-function normalizeWishlist(row: any): WishlistItem {
+// Raw `wishlist_items` row with the joined `products` record.
+interface WishlistRow {
+  id: string;
+  user_id: string;
+  product_id?: string | null;
+  title?: string | null;
+  note?: string | null;
+  priority?: number | null;
+  created_at: string;
+  products?: {
+    id: string;
+    title: string;
+    price_cents: number;
+    currency: string;
+    images?: string[] | null;
+  } | null;
+}
+
+function normalizeWishlist(row: WishlistRow): WishlistItem {
   const p = row.products;
   return {
     id: row.id,
@@ -141,7 +174,7 @@ export const useRecipientPage = () => {
       profile,
       photos: (photosRes.data as unknown[] | null)?.map((r) => r as ProfilePhoto) ?? [],
       posts: (postsRes.data as unknown[] | null)?.map((r) => r as WallPost) ?? [],
-      wishlist: (wishRes.data as unknown[] | null)?.map(normalizeWishlist) ?? [],
+      wishlist: (wishRes.data as WishlistRow[] | null)?.map(normalizeWishlist) ?? [],
     };
   };
 
@@ -173,7 +206,7 @@ export const useRecipientPage = () => {
       profile,
       photos: (photosRes.data as unknown[] | null)?.map((r) => r as ProfilePhoto) ?? [],
       posts: (postsRes.data as unknown[] | null)?.map((r) => r as WallPost) ?? [],
-      wishlist: (wishRes.data as unknown[] | null)?.map(normalizeWishlist) ?? [],
+      wishlist: (wishRes.data as WishlistRow[] | null)?.map(normalizeWishlist) ?? [],
     };
   };
 
@@ -185,12 +218,13 @@ export const useRecipientPage = () => {
     if (!user) return { error: "Not authenticated" };
 
     const { data: prof } = await from("profiles").select("slug, name").eq("id", user.id).maybeSingle();
-    const existing = (prof as any)?.slug as string | null | undefined;
+    const profRow = prof as { slug?: string | null; name?: string | null } | null;
+    const existing = profRow?.slug;
     if (existing) return { slug: existing };
 
-    const baseName = (prof as any)?.name || "user";
+    const baseName = profRow?.name || "user";
     let slug: string;
-    const { data: rpcSlug, error: rpcError } = await (supabase as any).rpc("generate_profile_slug", {
+    const { data: rpcSlug, error: rpcError } = await supabase.rpc("generate_profile_slug", {
       p_base: baseName,
     });
     if (!rpcError && rpcSlug) {
@@ -228,7 +262,7 @@ export const useRecipientPage = () => {
     } = await supabase.auth.getUser();
     if (!user) return { error: "Not authenticated" };
     const { data: prof } = await from("profiles").select("field_visibility").eq("id", user.id).maybeSingle();
-    const current = ((prof as any)?.field_visibility as FieldVisibility) ?? {};
+    const current = (prof as { field_visibility?: FieldVisibility | null } | null)?.field_visibility ?? {};
     const next = { ...current, ...patch };
     const { error } = await from("profiles").update({ field_visibility: next }).eq("id", user.id);
     if (error) return { error: error.message };

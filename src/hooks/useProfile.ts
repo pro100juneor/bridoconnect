@@ -9,7 +9,10 @@ export const useProfile = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     supabase
       .from("profiles")
       .select("*")
@@ -25,7 +28,7 @@ export const useProfile = () => {
     if (!user) return { error: "Not authenticated" };
     const { data, error } = await supabase
       .from("profiles")
-      .update(updates as any)
+      .update(updates)
       .eq("id", user.id)
       .select()
       .single();
@@ -44,7 +47,9 @@ export const useProfile = () => {
 
     if (uploadError) return { error: uploadError.message };
 
-    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("avatars").getPublicUrl(path);
     const result = await updateProfile({ avatar_url: publicUrl });
     return result;
   };

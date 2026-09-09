@@ -14,6 +14,7 @@ import {
   Mail,
   Lock,
   Trash2,
+  type LucideIcon,
 } from "lucide-react";
 import {
   Dialog,
@@ -98,7 +99,7 @@ const Settings = () => {
   const sections: Array<{
     title: string;
     items: Array<{
-      icon?: any;
+      icon?: LucideIcon;
       label: string;
       value?: string;
       toggle?: boolean;

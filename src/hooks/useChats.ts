@@ -15,6 +15,22 @@ export interface ChatPreview {
   unread_count: number;
 }
 
+interface ChatProfileJoin {
+  name: string | null;
+  avatar_url: string | null;
+  country: string | null;
+}
+
+interface ChatDealRow {
+  id: string;
+  title: string;
+  status: string;
+  creator_id: string;
+  sponsor_id: string | null;
+  creator: ChatProfileJoin | null;
+  sponsor: ChatProfileJoin | null;
+}
+
 export const useChats = () => {
   const { user } = useAuth();
   const [chats, setChats] = useState<ChatPreview[]>([]);
@@ -31,11 +47,13 @@ export const useChats = () => {
     // Підтягую деали, де юзер — creator АБО sponsor
     const { data: deals, error } = await supabase
       .from("deals")
-      .select(`
+      .select(
+        `
         id, title, status, creator_id, sponsor_id,
         creator:profiles!creator_id(name, avatar_url, country),
         sponsor:profiles!sponsor_id(name, avatar_url, country)
-      `)
+      `
+      )
       .or(`creator_id.eq.${user.id},sponsor_id.eq.${user.id}`)
       .order("updated_at", { ascending: false });
 
@@ -45,9 +63,18 @@ export const useChats = () => {
       return;
     }
 
-    // Для кожного деалу — останнє повідомлення
+    // Позначки прочитаного (chat_reads): deal_id → last_read_at
+    const { data: reads } = await supabase
+      .from("chat_reads")
+      .select("deal_id, last_read_at")
+      .eq("user_id", user.id);
+    const readMap = new Map<string, string>(
+      (reads ?? []).map((r: { deal_id: string; last_read_at: string }) => [r.deal_id, r.last_read_at])
+    );
+
+    // Для кожного деалу — останнє повідомлення + кількість непрочитаних
     const previews: ChatPreview[] = await Promise.all(
-      deals.map(async (d: any) => {
+      deals.map(async (d: ChatDealRow) => {
         const isCreator = d.creator_id === user.id;
         const other = isCreator ? d.sponsor : d.creator;
         const otherId = isCreator ? d.sponsor_id : d.creator_id;
@@ -60,6 +87,19 @@ export const useChats = () => {
           .limit(1)
           .maybeSingle();
 
+        let unread = 0;
+        if (lastMsg && lastMsg.sender_id !== user.id) {
+          const lastRead = readMap.get(d.id);
+          let q = supabase
+            .from("messages")
+            .select("id", { count: "exact", head: true })
+            .eq("deal_id", d.id)
+            .neq("sender_id", user.id);
+          if (lastRead) q = q.gt("created_at", lastRead);
+          const { count } = await q;
+          unread = count ?? 0;
+        }
+
         return {
           deal_id: d.id,
           deal_title: d.title,
@@ -70,13 +110,13 @@ export const useChats = () => {
           other_flag: other?.country === "Україна" ? "🇺🇦" : "🏳️",
           last_message: lastMsg?.text || null,
           last_message_at: lastMsg?.created_at || null,
-          unread_count: 0, // TODO: треба поле `read_by` або окрему таблицю read_receipts
+          unread_count: unread,
         };
       })
     );
 
     // тільки ті, де є хтось з іншого боку (щоб чат мав сенс)
-    const valid = previews.filter(p => p.other_id);
+    const valid = previews.filter((p) => p.other_id);
     setChats(valid);
     setLoading(false);
   }, [user]);

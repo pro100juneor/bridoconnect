@@ -7,21 +7,36 @@ import type {
   ShopBlocksConfig,
 } from "@/storefront/types";
 
-// The Supabase client is created without a Database generic, so `.from()` on the
-// new `shop_profiles` table needs `as any` casts (same pattern as useProducts /
-// useCurrency).
-const table = () => (supabase as any).from("shop_profiles");
+// The Supabase client is created without a Database generic, so `.from()` accepts
+// any table name (same pattern as useProducts / useCurrency). One shared helper
+// keeps the untyped access in one place.
+const table = () => supabase.from("shop_profiles");
 
-function normalize(row: any): ShopProfile {
+// Raw `shop_profiles` row (numbers may arrive as strings from the API).
+interface ShopProfileRow {
+  seller_id: string;
+  slug: string;
+  theme_id?: number | string | null;
+  logo_url?: string | null;
+  brand?: ShopBrand | null;
+  contacts?: ShopContacts | null;
+  messengers?: ShopMessengers | null;
+  blocks?: ShopBlocksConfig | null;
+  published?: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
+function normalize(row: ShopProfileRow): ShopProfile {
   return {
     seller_id: row.seller_id,
     slug: row.slug,
     theme_id: Number(row.theme_id) || 1,
     logo_url: row.logo_url ?? null,
-    brand: (row.brand ?? {}) as ShopBrand,
-    contacts: (row.contacts ?? {}) as ShopContacts,
-    messengers: (row.messengers ?? {}) as ShopMessengers,
-    blocks: (row.blocks ?? {}) as ShopBlocksConfig,
+    brand: row.brand ?? ({} as ShopBrand),
+    contacts: row.contacts ?? ({} as ShopContacts),
+    messengers: row.messengers ?? ({} as ShopMessengers),
+    blocks: row.blocks ?? ({} as ShopBlocksConfig),
     published: row.published ?? true,
     created_at: row.created_at,
     updated_at: row.updated_at,
@@ -67,7 +82,7 @@ export const useShopProfile = () => {
 
     if (existing) {
       const { data, error } = await table()
-        .update({ ...patch } as any)
+        .update({ ...patch })
         .eq("seller_id", user.id)
         .select("*")
         .single();
@@ -77,10 +92,10 @@ export const useShopProfile = () => {
 
     // First-time: derive a base name and a unique slug.
     const { data: prof } = await supabase.from("profiles").select("name").eq("id", user.id).maybeSingle();
-    const baseName = patch.brand?.name || (prof as any)?.name || "shop";
+    const baseName = patch.brand?.name || (prof as { name?: string | null } | null)?.name || "shop";
 
     let slug: string;
-    const { data: rpcSlug, error: rpcError } = await (supabase as any).rpc("generate_shop_slug", {
+    const { data: rpcSlug, error: rpcError } = await supabase.rpc("generate_shop_slug", {
       p_base: baseName,
     });
     if (!rpcError && rpcSlug) {
@@ -107,10 +122,7 @@ export const useShopProfile = () => {
       published: patch.published ?? true,
     };
 
-    const { data, error } = await table()
-      .insert(insertRow as any)
-      .select("*")
-      .single();
+    const { data, error } = await table().insert(insertRow).select("*").single();
     if (error || !data) return { error: error?.message || "insert failed" };
     return { data: normalize(data) };
   };

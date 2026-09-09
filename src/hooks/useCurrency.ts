@@ -40,9 +40,10 @@ export const useCurrency = () => {
     if (ratesCache) return;
     let alive = true;
     (async () => {
-      const { data } = await supabase.from("currency_rates" as any).select("code, rate_per_eur, symbol");
-      if (!alive || !data || (data as any[]).length === 0) return;
-      ratesCache = (data as any[]).map((r) => ({
+      const { data } = await supabase.from("currency_rates").select("code, rate_per_eur, symbol");
+      const rows = (data ?? []) as { code: string; rate_per_eur: number | string; symbol: string }[];
+      if (!alive || rows.length === 0) return;
+      ratesCache = rows.map((r) => ({
         code: r.code,
         rate_per_eur: Number(r.rate_per_eur),
         symbol: r.symbol,
@@ -70,7 +71,7 @@ export const useCurrency = () => {
       // a possibly stale profile read must never clobber a fresh user selection,
       // even across a hard reload.
       if (sessionChoice || localStorage.getItem(LS_KEY)) return;
-      const pref = (data as any)?.preferred_currency;
+      const pref = (data as { preferred_currency?: string | null } | null)?.preferred_currency;
       if (pref) {
         setCode(pref);
         localStorage.setItem(LS_KEY, pref);
@@ -102,10 +103,7 @@ export const useCurrency = () => {
       setCode(next);
       localStorage.setItem(LS_KEY, next);
       if (user) {
-        await supabase
-          .from("profiles")
-          .update({ preferred_currency: next } as any)
-          .eq("id", user.id);
+        await supabase.from("profiles").update({ preferred_currency: next }).eq("id", user.id);
       }
     },
     [user]

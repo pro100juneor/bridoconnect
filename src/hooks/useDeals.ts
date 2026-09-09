@@ -11,6 +11,17 @@ interface DealWithProfile extends Deal {
   creator_verified?: boolean;
 }
 
+interface DealCreatorJoin {
+  name: string | null;
+  country: string | null;
+  city: string | null;
+  rating: number | null;
+  deals_count: number | null;
+  verified: boolean | null;
+}
+
+type DealRow = Deal & { profiles: DealCreatorJoin | null };
+
 interface DealsFilter {
   status?: string;
   creator_id?: string;
@@ -22,28 +33,32 @@ interface DealsFilter {
 export const useDeals = (filters?: DealsFilter) => {
   const [deals, setDeals] = useState<DealWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  // Примітивні залежності: новий об'єкт filters на кожному рендері не викликає перезапит
+  const { status, creator_id, sponsor_id, category, limit } = filters ?? {};
 
   const fetchDeals = useCallback(async () => {
     setLoading(true);
     let query = supabase
       .from("deals")
-      .select(`
+      .select(
+        `
         *,
         profiles!creator_id(
           name, country, city, rating, deals_count, verified
         )
-      `)
+      `
+      )
       .order("created_at", { ascending: false });
 
-    if (filters?.status) query = query.eq("status", filters.status);
-    if (filters?.creator_id) query = query.eq("creator_id", filters.creator_id);
-    if (filters?.sponsor_id) query = query.eq("sponsor_id", filters.sponsor_id);
-    if (filters?.category) query = query.eq("category", filters.category);
-    if (filters?.limit) query = query.limit(filters.limit);
+    if (status) query = query.eq("status", status);
+    if (creator_id) query = query.eq("creator_id", creator_id);
+    if (sponsor_id) query = query.eq("sponsor_id", sponsor_id);
+    if (category) query = query.eq("category", category);
+    if (limit) query = query.limit(limit);
 
     const { data, error } = await query;
     if (!error && data) {
-      const enriched = data.map((d: any) => ({
+      const enriched = data.map((d: DealRow) => ({
         ...d,
         creator_name: d.profiles?.name || "Користувач",
         creator_flag: d.profiles?.country === "Україна" ? "🇺🇦" : "🏳️",
@@ -55,34 +70,31 @@ export const useDeals = (filters?: DealsFilter) => {
       setDeals(enriched);
     }
     setLoading(false);
-  }, [filters?.status, filters?.creator_id, filters?.category]);
+  }, [status, creator_id, sponsor_id, category, limit]);
 
-  useEffect(() => { fetchDeals(); }, [fetchDeals]);
+  useEffect(() => {
+    fetchDeals();
+  }, [fetchDeals]);
 
   const createDeal = async (deal: Omit<Deal, "id" | "created_at" | "updated_at" | "raised">) => {
     const { data, error } = await supabase
       .from("deals")
-      .insert([{ ...deal as any, raised: 0 }])
+      .insert([{ ...deal, raised: 0 }])
       .select()
       .single();
-    if (!error && data) setDeals(prev => [data as unknown as DealWithProfile, ...prev]);
+    if (!error && data) setDeals((prev) => [data as unknown as DealWithProfile, ...prev]);
     return { data, error };
   };
 
   const updateDeal = async (id: string, updates: Partial<Deal>) => {
-    const { data, error } = await supabase
-      .from("deals")
-      .update(updates as any)
-      .eq("id", id)
-      .select()
-      .single();
-    if (!error && data) setDeals(prev => prev.map(d => d.id === id ? { ...d, ...data } : d));
+    const { data, error } = await supabase.from("deals").update(updates).eq("id", id).select().single();
+    if (!error && data) setDeals((prev) => prev.map((d) => (d.id === id ? { ...d, ...data } : d)));
     return { data, error };
   };
 
   const deleteDeal = async (id: string) => {
     const { error } = await supabase.from("deals").delete().eq("id", id);
-    if (!error) setDeals(prev => prev.filter(d => d.id !== id));
+    if (!error) setDeals((prev) => prev.filter((d) => d.id !== id));
     return { error };
   };
 
