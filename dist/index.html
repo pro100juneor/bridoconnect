@@ -2,12 +2,113 @@
 <html lang="uk">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>BridoConnect — Допомога від людини людині</title>
-    <script type="module" crossorigin src="/assets/index-CsFyEkfQ.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-Bn-f4sbK.css">
+    <meta name="description" content="P2P гуманітарна платформа. Допомагай напряму верифікованим людям. Без анонімних фондів. Без посередників. Ти бачиш результат." />
+    <meta name="keywords" content="гуманітарна допомога, P2P, волонтери, Україна, благодійність, BridoConnect" />
+    <meta name="author" content="BridoConnect GmbH" />
+
+    <!-- Canonical + robots -->
+    <link rel="canonical" href="https://bridoconnect.com/" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="BridoConnect" />
+    <meta property="og:title" content="BridoConnect — Допомога від людини людині" />
+    <meta property="og:description" content="P2P платформа прямої гуманітарної допомоги. Верифіковані люди. Прозорі угоди. Ескроу-захист. Ти бачиш результат." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://bridoconnect.com/" />
+    <meta property="og:locale" content="uk_UA" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:locale:alternate" content="de_DE" />
+    <meta property="og:locale:alternate" content="ru_RU" />
+    <meta property="og:locale:alternate" content="pl_PL" />
+    <meta property="og:image" content="https://bridoconnect.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="BridoConnect — P2P гуманітарна платформа" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@bridoconnect" />
+    <meta name="twitter:title" content="BridoConnect — Допомога від людини людині" />
+    <meta name="twitter:description" content="P2P платформа прямої допомоги. Верифіковані люди. Ескроу-захист." />
+    <meta name="twitter:image" content="https://bridoconnect.com/og-image.png" />
+
+    <!-- Alternate languages -->
+    <link rel="alternate" hreflang="uk" href="https://bridoconnect.com/?lang=uk" />
+    <link rel="alternate" hreflang="en" href="https://bridoconnect.com/?lang=en" />
+    <link rel="alternate" hreflang="de" href="https://bridoconnect.com/?lang=de" />
+    <link rel="alternate" hreflang="ru" href="https://bridoconnect.com/?lang=ru" />
+    <link rel="alternate" hreflang="pl" href="https://bridoconnect.com/?lang=pl" />
+    <link rel="alternate" hreflang="x-default" href="https://bridoconnect.com/" />
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#c0392b" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="BridoConnect" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Structured data — Organization + WebSite -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://bridoconnect.com/#org",
+            "name": "BridoConnect",
+            "legalName": "Luftarbeiter GmbH",
+            "url": "https://bridoconnect.com/",
+            "logo": "https://bridoconnect.com/logo-512.png",
+            "sameAs": [
+              "https://twitter.com/bridoconnect",
+              "https://www.facebook.com/bridoconnect",
+              "https://www.instagram.com/bridoconnect"
+            ],
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "DE",
+              "addressLocality": "Auerbach"
+            },
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "contactType": "customer support",
+              "email": "support@bridoconnect.com",
+              "availableLanguage": ["uk", "en", "de", "ru", "pl"]
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://bridoconnect.com/#website",
+            "url": "https://bridoconnect.com/",
+            "name": "BridoConnect",
+            "publisher": { "@id": "https://bridoconnect.com/#org" },
+            "inLanguage": ["uk", "en", "de", "ru", "pl"],
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://bridoconnect.com/app/search?q={search_term}",
+              "query-input": "required name=search_term"
+            }
+          }
+        ]
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/index-Czkwl14b.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/react-vendor-8wS0yjSO.js">
+    <link rel="modulepreload" crossorigin href="/assets/supabase-D6dZ9dNO.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-D2_fsH0t.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-wN6E5hfJ.css">
   </head>
   <body>
     <div id="root"></div>
