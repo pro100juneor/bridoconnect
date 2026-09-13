@@ -62,7 +62,7 @@ serve(async (req) => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, paypal_merchant_id, paypal_status, country")
+      .select("role, paypal_status, country")
       .eq("id", user.id)
       .maybeSingle();
     if (profile?.role !== "recipient") {

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
+import { findProfileByAccount } from "../_shared/payment-accounts.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendTransactionalEmail, type Template } from "../_shared/email.ts";
 
@@ -337,14 +338,17 @@ serve(async (req) => {
             : acct.requirements?.disabled_reason
               ? "restricted"
               : "pending";
-        await supabase
-          .from("profiles")
-          .update({
-            stripe_connect_status: status,
-            stripe_connect_country: acct.country || null,
-            stripe_connect_updated_at: new Date().toISOString(),
-          })
-          .eq("stripe_connect_account_id", acct.id);
+        const profileId = await findProfileByAccount(supabase, "stripe_connect_account_id", acct.id);
+        if (profileId) {
+          await supabase
+            .from("profiles")
+            .update({
+              stripe_connect_status: status,
+              stripe_connect_country: acct.country || null,
+              stripe_connect_updated_at: new Date().toISOString(),
+            })
+            .eq("id", profileId);
+        }
         break;
       }
 

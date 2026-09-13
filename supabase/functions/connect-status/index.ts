@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
+import { getPaymentAccounts } from "../_shared/payment-accounts.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -48,11 +49,12 @@ serve(async (req) => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("stripe_connect_account_id, stripe_connect_status")
+      .select("stripe_connect_status")
       .eq("id", user.id)
       .maybeSingle();
+    const pay = await getPaymentAccounts(supabase, user.id);
 
-    if (!profile?.stripe_connect_account_id) {
+    if (!pay.stripe_connect_account_id) {
       return new Response(
         JSON.stringify({
           has_account: false,
@@ -65,7 +67,7 @@ serve(async (req) => {
       );
     }
 
-    const acct = await stripe.accounts.retrieve(profile.stripe_connect_account_id);
+    const acct = await stripe.accounts.retrieve(pay.stripe_connect_account_id);
     const computed =
       acct.charges_enabled && acct.payouts_enabled
         ? "enabled"
@@ -74,7 +76,7 @@ serve(async (req) => {
           : "pending";
 
     // Sync DB if drifted (webhook may not have arrived yet).
-    if (computed !== profile.stripe_connect_status) {
+    if (computed !== profile?.stripe_connect_status) {
       await supabase
         .from("profiles")
         .update({

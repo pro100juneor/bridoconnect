@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getPaymentAccounts } from "../_shared/payment-accounts.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Adyen Checkout API — создаёт payment session для APAC локальных методов.
@@ -88,12 +89,16 @@ serve(async (req) => {
       });
     }
 
-    const { data: recipient } = await supabase
+    const { data: recipientProf } = await supabase
       .from("profiles")
-      .select("adyen_account_holder_code, adyen_status")
+      .select("adyen_status")
       .eq("id", deal.creator_id)
       .maybeSingle();
-    if (!recipient?.adyen_account_holder_code || recipient.adyen_status !== "active") {
+    const recipient = {
+      ...(await getPaymentAccounts(supabase, deal.creator_id)),
+      adyen_status: recipientProf?.adyen_status ?? null,
+    };
+    if (!recipient.adyen_account_holder_code || recipient.adyen_status !== "active") {
       return new Response(
         JSON.stringify({
           error: "recipient_not_onboarded",

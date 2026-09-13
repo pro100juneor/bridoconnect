@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
+import { getStripeConnect } from "../_shared/payment-accounts.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { rateLimit, rateLimitHeaders, clientKey } from "../_shared/rate-limit.ts";
 
@@ -246,12 +247,8 @@ serve(async (req) => {
       }
       const sellerId = products[0].seller_id;
 
-      const { data: seller, error: sErr } = await supabase
-        .from("profiles")
-        .select("stripe_connect_account_id, stripe_connect_status")
-        .eq("id", sellerId)
-        .maybeSingle();
-      if (sErr || !seller?.stripe_connect_account_id || seller.stripe_connect_status !== "enabled") {
+      const seller = await getStripeConnect(supabase, sellerId);
+      if (!seller.stripe_connect_account_id || seller.stripe_connect_status !== "enabled") {
         return new Response(
           JSON.stringify({
             error: "recipient_not_onboarded",
@@ -328,12 +325,8 @@ serve(async (req) => {
         });
       }
 
-      const { data: seller, error: sErr } = await supabase
-        .from("profiles")
-        .select("stripe_connect_account_id, stripe_connect_status")
-        .eq("id", product.seller_id)
-        .maybeSingle();
-      if (sErr || !seller?.stripe_connect_account_id || seller.stripe_connect_status !== "enabled") {
+      const seller = await getStripeConnect(supabase, product.seller_id);
+      if (!seller.stripe_connect_account_id || seller.stripe_connect_status !== "enabled") {
         return new Response(
           JSON.stringify({
             error: "recipient_not_onboarded",
@@ -420,12 +413,8 @@ serve(async (req) => {
             headers: { ...headers, "Content-Type": "application/json" },
           });
         }
-        const { data: host, error: hErr } = await supabase
-          .from("profiles")
-          .select("stripe_connect_account_id, stripe_connect_status")
-          .eq("id", stream.host_id)
-          .maybeSingle();
-        if (hErr || !host?.stripe_connect_account_id || host.stripe_connect_status !== "enabled") {
+        const host = await getStripeConnect(supabase, stream.host_id);
+        if (!host.stripe_connect_account_id || host.stripe_connect_status !== "enabled") {
           return new Response(
             JSON.stringify({
               error: "recipient_not_onboarded",
@@ -467,12 +456,8 @@ serve(async (req) => {
             headers: { ...headers, "Content-Type": "application/json" },
           });
         }
-        const { data: recipient, error: rErr } = await supabase
-          .from("profiles")
-          .select("stripe_connect_account_id, stripe_connect_status")
-          .eq("id", deal.creator_id)
-          .maybeSingle();
-        if (rErr || !recipient?.stripe_connect_account_id || recipient.stripe_connect_status !== "enabled") {
+        const recipient = await getStripeConnect(supabase, deal.creator_id);
+        if (!recipient.stripe_connect_account_id || recipient.stripe_connect_status !== "enabled") {
           return new Response(
             JSON.stringify({
               error: "recipient_not_onboarded",

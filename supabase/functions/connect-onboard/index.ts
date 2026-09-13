@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
+import { getPaymentAccounts, upsertPaymentAccounts } from "../_shared/payment-accounts.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -50,7 +51,7 @@ serve(async (req) => {
 
     const { data: profile, error: pErr } = await supabase
       .from("profiles")
-      .select("stripe_connect_account_id, role, country")
+      .select("role, country")
       .eq("id", user.id)
       .maybeSingle();
     if (pErr || !profile) {
@@ -66,7 +67,8 @@ serve(async (req) => {
       });
     }
 
-    let accountId = profile.stripe_connect_account_id;
+    const pay = await getPaymentAccounts(supabase, user.id);
+    let accountId = pay.stripe_connect_account_id;
 
     if (!accountId) {
       // Map profile.country (text) to ISO2; fall back to body or DE.
@@ -83,10 +85,10 @@ serve(async (req) => {
         metadata: { user_id: user.id },
       });
       accountId = account.id;
+      await upsertPaymentAccounts(supabase, user.id, { stripe_connect_account_id: accountId });
       await supabase
         .from("profiles")
         .update({
-          stripe_connect_account_id: accountId,
           stripe_connect_status: "pending",
           stripe_connect_country: iso,
           stripe_connect_updated_at: new Date().toISOString(),

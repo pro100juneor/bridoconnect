@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getPaymentAccounts } from "../_shared/payment-accounts.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Wise Platform API — payout to local bank accounts in 50+ currencies / 80+ countries.
@@ -90,12 +91,8 @@ serve(async (req) => {
       });
     }
 
-    const { data: recipient } = await supabase
-      .from("profiles")
-      .select("wise_recipient_id, country")
-      .eq("id", deal.creator_id)
-      .maybeSingle();
-    if (!recipient?.wise_recipient_id) {
+    const recipient = await getPaymentAccounts(supabase, deal.creator_id);
+    if (!recipient.wise_recipient_id) {
       return new Response(
         JSON.stringify({
           error: "recipient_not_onboarded",

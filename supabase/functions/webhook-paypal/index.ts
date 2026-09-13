@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { findProfileByAccount, upsertPaymentAccounts } from "../_shared/payment-accounts.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // PayPal webhook handler.
@@ -211,20 +212,15 @@ serve(async (req) => {
         if (!r.merchant_id || !r.tracking_id) break;
         // P1-9 fix: tracking_id is attacker-controllable structurally; verify
         // that no other profile already claims this merchant_id.
-        const { data: collision } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("paypal_merchant_id", r.merchant_id)
-          .neq("id", r.tracking_id)
-          .maybeSingle();
-        if (collision) {
-          console.warn("paypal merchant_id collision:", r.merchant_id, "other:", collision.id);
+        const claimedBy = await findProfileByAccount(supabase, "paypal_merchant_id", r.merchant_id);
+        if (claimedBy && claimedBy !== r.tracking_id) {
+          console.warn("paypal merchant_id collision:", r.merchant_id, "other:", claimedBy);
           break;
         }
+        await upsertPaymentAccounts(supabase, r.tracking_id, { paypal_merchant_id: r.merchant_id });
         await supabase
           .from("profiles")
           .update({
-            paypal_merchant_id: r.merchant_id,
             paypal_status: "active",
             paypal_updated_at: new Date().toISOString(),
           })

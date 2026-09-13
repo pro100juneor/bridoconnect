@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getPaymentAccounts } from "../_shared/payment-accounts.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const PAYPAL_BASE =
@@ -91,12 +92,16 @@ serve(async (req) => {
       });
     }
 
-    const { data: recipient } = await supabase
+    const { data: recipientProf } = await supabase
       .from("profiles")
-      .select("paypal_merchant_id, paypal_status")
+      .select("paypal_status")
       .eq("id", deal.creator_id)
       .maybeSingle();
-    if (!recipient?.paypal_merchant_id || recipient.paypal_status !== "active") {
+    const recipient = {
+      ...(await getPaymentAccounts(supabase, deal.creator_id)),
+      paypal_status: recipientProf?.paypal_status ?? null,
+    };
+    if (!recipient.paypal_merchant_id || recipient.paypal_status !== "active") {
       return new Response(
         JSON.stringify({
           error: "recipient_not_onboarded",

@@ -72,9 +72,13 @@ async function ensureUser({ email, name, role, city, country, bio, verified, pas
   // Seed verified recipients as fully Connect-onboarded so donate flow isn't blocked
   // by the UI gate. Tests use page.route to mock the actual Stripe call.
   if (role === "recipient" && verified) {
-    patch.stripe_connect_account_id = `acct_test_${userId.slice(0, 8)}`;
     patch.stripe_connect_status = "enabled";
     patch.stripe_connect_country = "DE";
+    const { error: aErr } = await sb.from("profile_payment_accounts").upsert({
+      profile_id: userId,
+      stripe_connect_account_id: `acct_test_${userId.slice(0, 8)}`,
+    });
+    if (aErr) throw aErr;
   }
   const { error: pErr } = await sb.from("profiles").update(patch).eq("id", userId);
   if (pErr) throw pErr;
