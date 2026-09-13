@@ -135,10 +135,29 @@ serve(async (req) => {
       });
     }
 
+    // Атомарный claim рефанда: условный update закрывает гонку с release-escrow
+    // и параллельными refund'ами. При ошибке процессора claim откатывается.
+    const { data: claimed } = await supabase
+      .from("deals")
+      .update({ refunded_at: new Date().toISOString() })
+      .eq("id", dealId)
+      .is("refunded_at", null)
+      .is("escrow_released_at", null)
+      .select("id");
+    if (!claimed?.length) {
+      return new Response(JSON.stringify({ error: "refund already in progress or escrow released" }), {
+        status: 409,
+        headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
+    const rollbackClaim = () =>
+      supabase.from("deals").update({ refunded_at: null }).eq("id", dealId);
+
     // Refund window: 14 days from updated_at (last payment event) unless admin.
     if (!isAdmin) {
       const ageDays = (Date.now() - new Date(deal.updated_at).getTime()) / (1000 * 60 * 60 * 24);
       if (ageDays > REFUND_WINDOW_DAYS) {
+        await rollbackClaim();
         return new Response(JSON.stringify({ error: `refund window expired (${REFUND_WINDOW_DAYS}d)` }), {
           status: 409,
           headers: { ...headers, "Content-Type": "application/json" },
@@ -150,15 +169,25 @@ serve(async (req) => {
     const processor = deal.payment_processor || "stripe";
 
     if (processor === "stripe") {
-      if (!deal.stripe_payment_intent_id) throw new Error("no PI on deal");
-      const refund = await stripe.refunds.create({
-        payment_intent: deal.stripe_payment_intent_id,
-        reason: "requested_by_customer",
-        metadata: { deal_id: dealId, initiated_by: user.id, refund_reason: reason || "" },
-      });
+      if (!deal.stripe_payment_intent_id) { await rollbackClaim(); throw new Error("no PI on deal"); }
+      let refund;
+      try {
+        refund = await stripe.refunds.create({
+          payment_intent: deal.stripe_payment_intent_id,
+          reason: "requested_by_customer",
+          // Destination charge: без reverse_transfer возврат уходил бы из баланса
+          // платформы, а transfer оставался у получателя.
+          reverse_transfer: true,
+          refund_application_fee: true,
+          metadata: { deal_id: dealId, initiated_by: user.id, refund_reason: reason || "" },
+        });
+      } catch (e) {
+        await rollbackClaim();
+        throw e;
+      }
       refundId = refund.id;
     } else if (processor === "paypal") {
-      if (!deal.paypal_capture_id) throw new Error("no PayPal capture");
+      if (!deal.paypal_capture_id) { await rollbackClaim(); throw new Error("no PayPal capture"); }
       const token = await paypalToken();
       const resp = await fetch(`${PAYPAL_BASE}/v2/payments/captures/${deal.paypal_capture_id}/refund`, {
         method: "POST",
@@ -167,10 +196,10 @@ serve(async (req) => {
           note_to_payer: reason || "Refund issued by sponsor",
         }),
       });
-      if (!resp.ok) throw new Error(`paypal refund: ${resp.status} ${await resp.text()}`);
+      if (!resp.ok) { await rollbackClaim(); throw new Error(`paypal refund: ${resp.status} ${await resp.text()}`); }
       refundId = (await resp.json()).id;
     } else if (processor === "adyen") {
-      if (!deal.adyen_psp_reference) throw new Error("no Adyen PSP");
+      if (!deal.adyen_psp_reference) { await rollbackClaim(); throw new Error("no Adyen PSP"); }
       const resp = await fetch(`${ADYEN_BASE}/v71/payments/${deal.adyen_psp_reference}/refunds`, {
         method: "POST",
         headers: {
@@ -183,10 +212,10 @@ serve(async (req) => {
           reference: `refund-${dealId}`,
         }),
       });
-      if (!resp.ok) throw new Error(`adyen refund: ${resp.status} ${await resp.text()}`);
+      if (!resp.ok) { await rollbackClaim(); throw new Error(`adyen refund: ${resp.status} ${await resp.text()}`); }
       refundId = (await resp.json()).pspReference;
     } else if (processor === "dlocal") {
-      if (!deal.dlocal_payment_id) throw new Error("no dlocal payment");
+      if (!deal.dlocal_payment_id) { await rollbackClaim(); throw new Error("no dlocal payment"); }
       const ts = new Date().toISOString();
       const login = Deno.env.get("DLOCAL_LOGIN") || "";
       const transKey = Deno.env.get("DLOCAL_TRANS_KEY") || "";
@@ -206,10 +235,11 @@ serve(async (req) => {
         },
         body,
       });
-      if (!resp.ok) throw new Error(`dlocal refund: ${resp.status} ${await resp.text()}`);
+      if (!resp.ok) { await rollbackClaim(); throw new Error(`dlocal refund: ${resp.status} ${await resp.text()}`); }
       refundId = (await resp.json()).id;
     } else if (processor === "crypto") {
       // BTCPay invoice refunds — manual via dashboard (no API for instant on-chain refund).
+      await rollbackClaim();
       return new Response(
         JSON.stringify({
           error: "crypto refunds require manual processing via BTCPay dashboard",
@@ -217,6 +247,7 @@ serve(async (req) => {
         { status: 501, headers: { ...headers, "Content-Type": "application/json" } }
       );
     } else {
+      await rollbackClaim();
       throw new Error(`unknown processor: ${processor}`);
     }
 

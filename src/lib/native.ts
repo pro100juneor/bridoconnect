@@ -47,7 +47,8 @@ export async function share(opts: { title?: string; text?: string; url?: string 
       return false;
     }
   }
-  if (typeof navigator !== "undefined" && "share" in navigator) {
+  if (typeof navigator === "undefined") return false;
+  if (typeof navigator.share === "function") {
     try {
       await navigator.share(opts);
       return true;
@@ -55,12 +56,15 @@ export async function share(opts: { title?: string; text?: string; url?: string 
       return false;
     }
   }
-  try {
-    await navigator.clipboard.writeText(opts.url ?? opts.text ?? "");
-    return true;
-  } catch {
-    return false;
+  if (navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(opts.url ?? opts.text ?? "");
+      return true;
+    } catch {
+      return false;
+    }
   }
+  return false;
 }
 
 // Status bar tinting — call from a top-level effect when route changes

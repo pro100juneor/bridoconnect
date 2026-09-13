@@ -21,14 +21,21 @@ interface ChatProfileJoin {
   country: string | null;
 }
 
+// supabase-js типізує embedded join без FK-метаданих як масив,
+// хоча в рантаймі для to-one зв'язку приходить об'єкт — приймаємо обидві форми.
+type JoinResult<T> = T | T[] | null;
+
+const firstJoin = <T,>(value: JoinResult<T>): T | null =>
+  Array.isArray(value) ? (value[0] ?? null) : value;
+
 interface ChatDealRow {
   id: string;
   title: string;
   status: string;
   creator_id: string;
   sponsor_id: string | null;
-  creator: ChatProfileJoin | null;
-  sponsor: ChatProfileJoin | null;
+  creator: JoinResult<ChatProfileJoin>;
+  sponsor: JoinResult<ChatProfileJoin>;
 }
 
 export const useChats = () => {
@@ -76,7 +83,7 @@ export const useChats = () => {
     const previews: ChatPreview[] = await Promise.all(
       deals.map(async (d: ChatDealRow) => {
         const isCreator = d.creator_id === user.id;
-        const other = isCreator ? d.sponsor : d.creator;
+        const other = firstJoin(isCreator ? d.sponsor : d.creator);
         const otherId = isCreator ? d.sponsor_id : d.creator_id;
 
         const { data: lastMsg } = await supabase

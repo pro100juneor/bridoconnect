@@ -17,7 +17,7 @@ Disallow: /register
 Disallow: /reset-password
 
 # Sitemap
-Sitemap: https://bridoconnect.com/sitemap.xml
+Sitemap: https://bridoconnect.vercel.app/sitemap.xml
 
 # AI crawlers (allow — просветительский контент)
 User-agent: GPTBot

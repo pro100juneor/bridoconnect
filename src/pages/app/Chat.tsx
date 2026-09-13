@@ -7,6 +7,15 @@ import { useMessages } from "@/hooks/useMessages";
 import { supabase } from "@/integrations/supabase/client";
 import { tap } from "@/lib/native";
 
+// supabase-js типізує embedded join як масив без FK-метаданих,
+// у рантаймі для to-one приходить об'єкт — нормалізуємо обидві форми.
+interface ChatPartnerJoin {
+  name: string | null;
+}
+
+const firstJoin = (value: ChatPartnerJoin | ChatPartnerJoin[] | null): ChatPartnerJoin | null =>
+  Array.isArray(value) ? (value[0] ?? null) : value;
+
 const Chat = () => {
   const navigate = useNavigate();
   const reduced = useReducedMotion();
@@ -37,7 +46,7 @@ const Chat = () => {
       .eq("id", id)
       .single()
       .then(({ data }) => {
-        if (data) setPartnerName(data.profiles?.name || "Партнер");
+        if (data) setPartnerName(firstJoin(data.profiles)?.name || "Партнер");
       });
   }, [id]);
 

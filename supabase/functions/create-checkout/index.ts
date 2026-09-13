@@ -142,10 +142,8 @@ serve(async (req) => {
       const TIER_PRICE: Record<number, number> = { 1: 500, 2: 1500, 3: 5000 };
       const TIER_HOURS: Record<number, number> = { 1: 24, 2: 72, 3: 168 };
       const price = TIER_PRICE[tier];
-      const durationHours =
-        Number.isFinite(Number(promo.durationHours)) && Number(promo.durationHours) > 0
-          ? Math.min(Number(promo.durationHours), 24 * 30)
-          : TIER_HOURS[tier];
+      // Аудит 13.09: durationHours из клиента позволял купить Tier 1 на 30 дней.
+      const durationHours = TIER_HOURS[tier];
 
       // Pending row (service role) — клиент никогда не пишет promotions напрямую.
       const { data: promoRow, error: insErr } = await supabase

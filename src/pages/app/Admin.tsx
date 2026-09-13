@@ -179,7 +179,8 @@ const Admin = () => {
     load();
   }, [user, isAdmin, load]);
 
-  const act = async (fn: () => Promise<{ error: { message: string } | null }>, ok: string) => {
+  // PromiseLike, а не Promise: postgrest-білдер — thenable без catch/finally
+  const act = async (fn: () => PromiseLike<{ error: { message: string } | null }>, ok: string) => {
     const { error } = await fn();
     if (error) toast({ title: "Помилка", description: error.message, variant: "destructive" });
     else {

@@ -142,11 +142,22 @@ export function wrapEmail(subject: string, body: string): string {
 </body></html>`;
 }
 
+// Переменные приходят и из пользовательского ввода — экранируем, чтобы в
+// письмо нельзя было вставить произвольный HTML/ссылки (аудит 13.09).
+function escapeHtml(v: string): string {
+  return v
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 export function renderTemplate(t: Template, locale: string, vars: Record<string, string | number>) {
   const subject = SUBJECTS[t]?.[locale] ?? SUBJECTS[t]?.en ?? "BridoConnect";
   // Minimal HTML — деталь в variables. Верстка одинаковая, содержание меняется.
   const body = TEMPLATE_BODIES[t]?.[locale] ?? TEMPLATE_BODIES[t]?.en ?? "";
-  const rendered = body.replace(/\{\{(\w+)\}\}/g, (_, k) => String(vars[k] ?? ""));
+  const rendered = body.replace(/\{\{(\w+)\}\}/g, (_, k) => escapeHtml(String(vars[k] ?? "")));
   const html = wrapEmail(subject, rendered);
   return { subject, html };
 }

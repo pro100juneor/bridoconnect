@@ -10,6 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "lint": "eslint src --max-warnings=0",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "docker:build": "docker build -t bridoconnect/web:latest .",
     "docker:up": "docker compose up -d --build",
     "docker:down": "docker compose down",

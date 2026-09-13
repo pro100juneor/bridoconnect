@@ -9,11 +9,21 @@ import { useDisputes } from "@/hooks/useDisputes";
 import { toast } from "@/hooks/use-toast";
 import { tap, notify } from "@/lib/native";
 
+interface DisputeProfileJoin {
+  name?: string | null;
+}
+
+// supabase-js типізує embedded join як масив без FK-метаданих,
+// у рантаймі для to-one приходить об'єкт — нормалізуємо обидві форми.
 interface DisputeDeal {
   title: string;
   amount: number;
-  profiles?: { name?: string | null } | null;
+  profiles?: DisputeProfileJoin | DisputeProfileJoin[] | null;
 }
+
+const firstJoin = (
+  value: DisputeProfileJoin | DisputeProfileJoin[] | null | undefined
+): DisputeProfileJoin | null => (Array.isArray(value) ? (value[0] ?? null) : (value ?? null));
 
 const reasons = [
   "Кошти не отримані",
@@ -147,7 +157,7 @@ const Dispute = () => {
             <p className="text-sm font-semibold text-foreground">Угода #{(id || "").slice(0, 8)}</p>
             <p className="text-xs text-muted-foreground">
               {deal
-                ? `${deal.profiles?.name || "Користувач"} · €${deal.amount} · ${deal.title}`
+                ? `${firstJoin(deal.profiles)?.name || "Користувач"} · €${deal.amount} · ${deal.title}`
                 : "Завантаження…"}
             </p>
           </div>

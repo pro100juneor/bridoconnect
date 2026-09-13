@@ -80,9 +80,12 @@ export function rateLimitHeaders(result: RateLimitResult): Record<string, string
 
 // Идентификатор клиента для rate-limit ключа
 export function clientKey(req: Request, prefix: string): string {
+  // Последний элемент XFF добавлен доверенным прокси; первый — клиентский и
+  // подделывается (аудит 13.09).
+  const xff = req.headers.get("x-forwarded-for")?.split(",").map((s) => s.trim()).filter(Boolean);
   const ip =
+    xff?.[xff.length - 1] ??
     req.headers.get("cf-connecting-ip") ??
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     req.headers.get("x-real-ip") ??
     "unknown";
   return `${prefix}:${ip}`;

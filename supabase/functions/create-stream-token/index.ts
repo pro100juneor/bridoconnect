@@ -88,6 +88,7 @@ serve(async (req) => {
         headers: { ...headers, "Content-Type": "application/json" },
       });
     }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") || "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
@@ -98,6 +99,23 @@ serve(async (req) => {
       data: { user },
     } = await supabase.auth.getUser(authHeader?.replace("Bearer ", "") || "");
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+    // Аудит 13.09: is_host приходил из тела запроса без проверки — любой мог
+    // получить publish-токен в чужую комнату. Хостом может быть только host_id.
+    let hostAllowed = false;
+    if (is_host) {
+      const { data: room } = await supabase
+        .from("streams")
+        .select("host_id")
+        .eq("room_name", room_name)
+        .maybeSingle();
+      hostAllowed = !!room && room.host_id === user.id;
+      if (!hostAllowed) {
+        return new Response(JSON.stringify({ error: "only the stream host may publish" }), {
+          status: 403,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
     const participantName = (profile as { name?: string } | null)?.name || user.email || user.id;
@@ -106,7 +124,7 @@ serve(async (req) => {
     const apiSecret = Deno.env.get("LIVEKIT_API_SECRET") || "";
     const wsUrl = Deno.env.get("LIVEKIT_WS_URL") || "";
 
-    const token = await createLiveKitToken(room_name, participantName, Boolean(is_host), apiKey, apiSecret);
+    const token = await createLiveKitToken(room_name, participantName, hostAllowed, apiKey, apiSecret);
 
     return new Response(
       JSON.stringify({ token, ws_url: wsUrl, room_name, participant_name: participantName }),

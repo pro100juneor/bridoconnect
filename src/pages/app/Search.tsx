@@ -154,10 +154,10 @@ const Search = () => {
                   onClick={(e) => {
                     e.stopPropagation();
                     void tap("medium");
-                    navigate(`/app/chat/${r.id}`);
+                    navigate(`/app/user/${r.id}`);
                   }}
                 >
-                  Зв'язатись
+                  Профіль
                 </button>
               </div>
               {r.tags && (

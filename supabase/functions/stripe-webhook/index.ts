@@ -97,22 +97,6 @@ serve(async (req) => {
             ? session.payment_intent
             : (session.payment_intent?.id ?? null);
 
-        // P0-4 fix: apply_stripe_payment is atomic + idempotent via PI marker.
-        // Even if recordTransaction (below) already returned false (duplicate
-        // event), the RPC still no-ops safely because the PI is already on the deal.
-        if (dealId && paymentIntentId) {
-          const { error: applyErr } = await supabase.rpc("apply_stripe_payment", {
-            p_deal_id: dealId,
-            p_amount: amount,
-            p_payment_intent_id: paymentIntentId,
-            p_sponsor_id: userId || null,
-          });
-          if (applyErr) {
-            console.error("apply_stripe_payment:", applyErr);
-            throw applyErr;
-          }
-        }
-
         // Promotion: activate the paid placement (idempotent — only flips a row
         // that is not already active). min_visible_until = now()+3min gives the
         // >=3-minute top-group guarantee; expires_at from tier/durationHours.
@@ -238,17 +222,10 @@ serve(async (req) => {
           }
         }
 
-        // Stream donation: bump the host's raised total.
-        if (streamId && paymentIntentId) {
-          const { error: incErr } = await supabase.rpc("increment_stream_raised", {
-            p_stream_id: streamId,
-            p_amount: amount,
-          });
-          if (incErr) console.error("increment_stream_raised:", incErr);
-        }
-
-        // recordTransaction возвращает false на дубле события (UNIQUE) — это наш
-        // маркер первичности для отправки писем (не спамим на ретраях webhook).
+        // Аудит 13.09 (H1/M5): дедуп по event.id ДО денежных RPC. Ретрай
+        // события (Stripe шлёт повторно до 3 суток) больше не может второй раз
+        // инкрементнуть raised: apply/increment выполняются только при первичной
+        // записи события. recordTransaction возвращает false на дубле (UNIQUE).
         const firstTime = await recordTransaction({
           event_id: event.id,
           user_id: userId,
@@ -259,6 +236,31 @@ serve(async (req) => {
           payment_intent_id: paymentIntentId,
           fee_platform_cents: feeCents,
         });
+
+        // apply_stripe_payment atomically bumps raised + PI marker + sponsor.
+        if (firstTime && dealId && paymentIntentId) {
+          const { error: applyErr } = await supabase.rpc("apply_stripe_payment", {
+            p_deal_id: dealId,
+            p_amount: amount,
+            p_payment_intent_id: paymentIntentId,
+            p_sponsor_id: userId || null,
+          });
+          if (applyErr) {
+            console.error("apply_stripe_payment:", applyErr);
+            // Откатываем маркер события, чтобы Stripe-ретрай переработал его.
+            await supabase.from("transactions").delete().eq("stripe_event_id", event.id);
+            throw applyErr;
+          }
+        }
+
+        // Stream donation: bump the host's raised total.
+        if (firstTime && streamId && paymentIntentId) {
+          const { error: incErr } = await supabase.rpc("increment_stream_raised", {
+            p_stream_id: streamId,
+            p_amount: amount,
+          });
+          if (incErr) console.error("increment_stream_raised:", incErr);
+        }
 
         // Recipient-side mirror entry — separate event_id, separate idempotency.
         if (dealId && recipientId) {

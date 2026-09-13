@@ -25,7 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_URL } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePreferences } from "@/hooks/usePreferences";
@@ -59,7 +59,7 @@ const Settings = () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`, {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/delete-account`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

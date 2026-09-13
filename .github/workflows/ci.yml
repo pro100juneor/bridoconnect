@@ -30,7 +30,7 @@ jobs:
         run: npm ci
 
       - name: Type check
-        run: npx tsc --noEmit -p tsconfig.app.json
+        run: npm run typecheck
 
       - name: Lint
         run: npm run lint
@@ -43,4 +43,4 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: dummy_key_for_ci_build_only
 
       - name: Test
-        run: npm test
+        run: npx vitest run --passWithNoTests

@@ -91,6 +91,31 @@ serve(async (req) => {
       });
     }
 
+    // Аудит 13.09: выплата возможна только после подтверждения релиза эскроу,
+    // и ровно один раз (claim через уникальный event id в transactions).
+    if (!deal.escrow_released_at) {
+      return new Response(JSON.stringify({ error: "escrow not released yet" }), {
+        status: 409,
+        headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
+    const { error: claimErr } = await supabase.from("transactions").insert({
+      processor: "wise",
+      stripe_event_id: `wise-payout::${dealId}`,
+      user_id: deal.creator_id,
+      deal_id: dealId,
+      amount: ((deal.amount_cents || 0) - (deal.platform_fee_cents || 0)) / 100,
+      amount_cents: (deal.amount_cents || 0) - (deal.platform_fee_cents || 0),
+      type: "wise_payout",
+      status: "initiated",
+    });
+    if (claimErr) {
+      return new Response(JSON.stringify({ error: "payout already initiated", detail: claimErr.code }), {
+        status: 409,
+        headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
+
     const recipient = await getPaymentAccounts(supabase, deal.creator_id);
     if (!recipient.wise_recipient_id) {
       return new Response(

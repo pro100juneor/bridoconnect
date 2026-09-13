@@ -1,10 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL =
-  import.meta.env.VITE_SUPABASE_URL ?? "https://wtevirwkshidxskqpvtu.supabase.co";
-const SUPABASE_ANON_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0ZXZpcndrc2hpZHhza3FwdnR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2MjI4NDIsImV4cCI6MjA5MjE5ODg0Mn0.hUMGqu0Z1XjZsFfW0VbkYHnr49cVwYMfA1gME-T06mk";
+// Fail-fast: без fallback на прод — сборка без env не должна молча ходить в прод.
+export const SUPABASE_URL: string = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY: string = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error("VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY не заданы — проверь .env");
+}
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {

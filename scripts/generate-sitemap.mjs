@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const BASE = process.env.VITE_APP_URL || "https://bridoconnect.com";
+const BASE = process.env.VITE_APP_URL || "https://bridoconnect.vercel.app";
 
 // Только публичные маршруты (без /app/*, /auth и параметризованных)
 const ROUTES = [
@@ -23,7 +23,7 @@ const ROUTES = [
   { path: "/agb", priority: 0.3, changefreq: "yearly" },
 ];
 
-const LOCALES = ["uk", "en", "de", "ru", "pl"]; // hreflang alternates
+const LOCALES = ["uk", "en", "de"]; // hreflang alternates (только языки, реально существующие в i18n)
 
 const now = new Date().toISOString().slice(0, 10);
 

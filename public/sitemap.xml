@@ -2,135 +2,113 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://bridoconnect.com/</loc>
-    <lastmod>2026-09-08</lastmod>
+    <loc>https://bridoconnect.vercel.app/</loc>
+    <lastmod>2026-09-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.com/?lang=uk" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.com/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.com/?lang=de" />
-    <xhtml:link rel="alternate" hreflang="ru" href="https://bridoconnect.com/?lang=ru" />
-    <xhtml:link rel="alternate" hreflang="pl" href="https://bridoconnect.com/?lang=pl" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.com/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.vercel.app/?lang=uk" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.vercel.app/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.vercel.app/?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.vercel.app/" />
   </url>
   <url>
-    <loc>https://bridoconnect.com/how-it-works</loc>
-    <lastmod>2026-09-08</lastmod>
+    <loc>https://bridoconnect.vercel.app/how-it-works</loc>
+    <lastmod>2026-09-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.com/how-it-works?lang=uk" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.com/how-it-works?lang=en" />
-    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.com/how-it-works?lang=de" />
-    <xhtml:link rel="alternate" hreflang="ru" href="https://bridoconnect.com/how-it-works?lang=ru" />
-    <xhtml:link rel="alternate" hreflang="pl" href="https://bridoconnect.com/how-it-works?lang=pl" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.com/how-it-works" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.vercel.app/how-it-works?lang=uk" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.vercel.app/how-it-works?lang=en" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.vercel.app/how-it-works?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.vercel.app/how-it-works" />
   </url>
   <url>
-    <loc>https://bridoconnect.com/transparency</loc>
-    <lastmod>2026-09-08</lastmod>
+    <loc>https://bridoconnect.vercel.app/transparency</loc>
+    <lastmod>2026-09-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.com/transparency?lang=uk" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.com/transparency?lang=en" />
-    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.com/transparency?lang=de" />
-    <xhtml:link rel="alternate" hreflang="ru" href="https://bridoconnect.com/transparency?lang=ru" />
-    <xhtml:link rel="alternate" hreflang="pl" href="https://bridoconnect.com/transparency?lang=pl" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.com/transparency" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.vercel.app/transparency?lang=uk" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.vercel.app/transparency?lang=en" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.vercel.app/transparency?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.vercel.app/transparency" />
   </url>
   <url>
-    <loc>https://bridoconnect.com/about</loc>
-    <lastmod>2026-09-08</lastmod>
+    <loc>https://bridoconnect.vercel.app/about</loc>
+    <lastmod>2026-09-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.com/about?lang=uk" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.com/about?lang=en" />
-    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.com/about?lang=de" />
-    <xhtml:link rel="alternate" hreflang="ru" href="https://bridoconnect.com/about?lang=ru" />
-    <xhtml:link rel="alternate" hreflang="pl" href="https://bridoconnect.com/about?lang=pl" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.com/about" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.vercel.app/about?lang=uk" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.vercel.app/about?lang=en" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.vercel.app/about?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.vercel.app/about" />
   </url>
   <url>
-    <loc>https://bridoconnect.com/faq</loc>
-    <lastmod>2026-09-08</lastmod>
+    <loc>https://bridoconnect.vercel.app/faq</loc>
+    <lastmod>2026-09-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.com/faq?lang=uk" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.com/faq?lang=en" />
-    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.com/faq?lang=de" />
-    <xhtml:link rel="alternate" hreflang="ru" href="https://bridoconnect.com/faq?lang=ru" />
-    <xhtml:link rel="alternate" hreflang="pl" href="https://bridoconnect.com/faq?lang=pl" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.com/faq" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.vercel.app/faq?lang=uk" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.vercel.app/faq?lang=en" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.vercel.app/faq?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.vercel.app/faq" />
   </url>
   <url>
-    <loc>https://bridoconnect.com/shop</loc>
-    <lastmod>2026-09-08</lastmod>
+    <loc>https://bridoconnect.vercel.app/shop</loc>
+    <lastmod>2026-09-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.com/shop?lang=uk" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.com/shop?lang=en" />
-    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.com/shop?lang=de" />
-    <xhtml:link rel="alternate" hreflang="ru" href="https://bridoconnect.com/shop?lang=ru" />
-    <xhtml:link rel="alternate" hreflang="pl" href="https://bridoconnect.com/shop?lang=pl" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.com/shop" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.vercel.app/shop?lang=uk" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.vercel.app/shop?lang=en" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.vercel.app/shop?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.vercel.app/shop" />
   </url>
   <url>
-    <loc>https://bridoconnect.com/verification</loc>
-    <lastmod>2026-09-08</lastmod>
+    <loc>https://bridoconnect.vercel.app/verification</loc>
+    <lastmod>2026-09-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.com/verification?lang=uk" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.com/verification?lang=en" />
-    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.com/verification?lang=de" />
-    <xhtml:link rel="alternate" hreflang="ru" href="https://bridoconnect.com/verification?lang=ru" />
-    <xhtml:link rel="alternate" hreflang="pl" href="https://bridoconnect.com/verification?lang=pl" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.com/verification" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.vercel.app/verification?lang=uk" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.vercel.app/verification?lang=en" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.vercel.app/verification?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.vercel.app/verification" />
   </url>
   <url>
-    <loc>https://bridoconnect.com/live</loc>
-    <lastmod>2026-09-08</lastmod>
+    <loc>https://bridoconnect.vercel.app/live</loc>
+    <lastmod>2026-09-13</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.com/live?lang=uk" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.com/live?lang=en" />
-    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.com/live?lang=de" />
-    <xhtml:link rel="alternate" hreflang="ru" href="https://bridoconnect.com/live?lang=ru" />
-    <xhtml:link rel="alternate" hreflang="pl" href="https://bridoconnect.com/live?lang=pl" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.com/live" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.vercel.app/live?lang=uk" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.vercel.app/live?lang=en" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.vercel.app/live?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.vercel.app/live" />
   </url>
   <url>
-    <loc>https://bridoconnect.com/impressum</loc>
-    <lastmod>2026-09-08</lastmod>
+    <loc>https://bridoconnect.vercel.app/impressum</loc>
+    <lastmod>2026-09-13</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.com/impressum?lang=uk" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.com/impressum?lang=en" />
-    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.com/impressum?lang=de" />
-    <xhtml:link rel="alternate" hreflang="ru" href="https://bridoconnect.com/impressum?lang=ru" />
-    <xhtml:link rel="alternate" hreflang="pl" href="https://bridoconnect.com/impressum?lang=pl" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.com/impressum" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.vercel.app/impressum?lang=uk" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.vercel.app/impressum?lang=en" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.vercel.app/impressum?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.vercel.app/impressum" />
   </url>
   <url>
-    <loc>https://bridoconnect.com/datenschutz</loc>
-    <lastmod>2026-09-08</lastmod>
+    <loc>https://bridoconnect.vercel.app/datenschutz</loc>
+    <lastmod>2026-09-13</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.com/datenschutz?lang=uk" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.com/datenschutz?lang=en" />
-    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.com/datenschutz?lang=de" />
-    <xhtml:link rel="alternate" hreflang="ru" href="https://bridoconnect.com/datenschutz?lang=ru" />
-    <xhtml:link rel="alternate" hreflang="pl" href="https://bridoconnect.com/datenschutz?lang=pl" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.com/datenschutz" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.vercel.app/datenschutz?lang=uk" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.vercel.app/datenschutz?lang=en" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.vercel.app/datenschutz?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.vercel.app/datenschutz" />
   </url>
   <url>
-    <loc>https://bridoconnect.com/agb</loc>
-    <lastmod>2026-09-08</lastmod>
+    <loc>https://bridoconnect.vercel.app/agb</loc>
+    <lastmod>2026-09-13</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.com/agb?lang=uk" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.com/agb?lang=en" />
-    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.com/agb?lang=de" />
-    <xhtml:link rel="alternate" hreflang="ru" href="https://bridoconnect.com/agb?lang=ru" />
-    <xhtml:link rel="alternate" hreflang="pl" href="https://bridoconnect.com/agb?lang=pl" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.com/agb" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://bridoconnect.vercel.app/agb?lang=uk" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://bridoconnect.vercel.app/agb?lang=en" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://bridoconnect.vercel.app/agb?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://bridoconnect.vercel.app/agb" />
   </url>
 </urlset>

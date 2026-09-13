@@ -1,11 +1,14 @@
 import type { Config } from "tailwindcss";
+import animate from "tailwindcss-animate";
 export default {
   darkMode: ["class"],
-  content: ["./index.html", "./src/**/*.{ts,tsx}"],
+  content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
     extend: {
       colors: {
         border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: { DEFAULT: "hsl(var(--primary))", foreground: "hsl(var(--primary-foreground))" },
@@ -13,12 +16,17 @@ export default {
         accent: { DEFAULT: "hsl(var(--accent))", foreground: "hsl(var(--accent-foreground))" },
         muted: { DEFAULT: "hsl(var(--muted))", foreground: "hsl(var(--muted-foreground))" },
         card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
+        popover: { DEFAULT: "hsl(var(--popover))", foreground: "hsl(var(--popover-foreground))" },
         destructive: { DEFAULT: "hsl(var(--destructive))", foreground: "hsl(var(--destructive-foreground))" },
-        success: "hsl(142 76% 36%)",
-        warning: "hsl(38 92% 50%)",
+        success: { DEFAULT: "hsl(var(--success))", foreground: "hsl(var(--success-foreground))" },
+        warning: { DEFAULT: "hsl(var(--warning))", foreground: "hsl(var(--warning-foreground))" },
       },
       borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
-      fontFamily: { serif: ['"DM Serif Display"', "serif"], sans: ['"DM Sans"', "system-ui", "sans-serif"] },
+      fontFamily: {
+        serif: ['"DM Serif Display"', "serif"],
+        sans: ['"DM Sans"', "system-ui", "sans-serif"],
+        mono: ["monospace"],
+      },
       animation: {
         "fade-in": "fade-in 0.4s ease-out",
         "fade-in-slow": "fade-in 1.2s ease-out",
@@ -51,10 +59,13 @@ export default {
         },
         confetti: {
           "0%": { transform: "translateY(-20px) translateX(0) rotate(0deg)", opacity: "1" },
-          "100%": { transform: "translateY(110vh) translateX(var(--drift, 0px)) rotate(720deg)", opacity: "0" },
+          "100%": {
+            transform: "translateY(110vh) translateX(var(--drift, 0px)) rotate(720deg)",
+            opacity: "0",
+          },
         },
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [animate],
 } satisfies Config;

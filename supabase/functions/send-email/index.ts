@@ -59,7 +59,6 @@ serve(async (req) => {
     const {
       data: { user },
     } = await supabase.auth.getUser(authHeader?.replace("Bearer ", "") || "");
-    // Публичный триггер — password_reset — не требует user; остальные требуют
     const body = (await req.json()) as Payload;
     if (!body.to || !body.template) {
       return new Response(JSON.stringify({ error: "to + template required" }), {
@@ -67,7 +66,11 @@ serve(async (req) => {
         headers: { ...headers, "Content-Type": "application/json" },
       });
     }
-    if (body.template !== "password_reset" && !user) {
+    // Аудит 13.09: анонимная ветка password_reset позволяла слать фирменные
+    // письма с произвольным содержимым на любой адрес. Теперь: только
+    // авторизованный пользователь и только на собственный email. Служебные
+    // письма функции шлют напрямую через sendTransactionalEmail (_shared).
+    if (!user || !user.email || body.to.toLowerCase() !== user.email.toLowerCase()) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...headers, "Content-Type": "application/json" },
