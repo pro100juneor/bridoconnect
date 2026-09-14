@@ -3,21 +3,24 @@ import { Heart, MessageCircle, Search, CheckCircle2, Star } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "@/hooks/use-toast";
 import { PullToRefresh } from "@/components/PullToRefresh";
+import { useT } from "@/i18n/useT";
 import { tap, notify } from "@/lib/native";
 
 const Wishlist = () => {
   const navigate = useNavigate();
   const { favorites, loading, removeFavorite } = useFavorites();
+  const { t } = useT();
 
   const handleRemove = async (targetId: string) => {
     void tap("medium");
     const { error } = await removeFavorite(targetId);
     if (!error) {
       void notify("success");
-      toast({ title: "Видалено з обраних" });
+      toast({ title: t("wishlist.removed", "Видалено з обраних") });
     } else {
       void notify("error");
-      toast({ title: "Помилка", description: error.message, variant: "destructive" });
+      // error.message приходит с бэкенда — не переводим
+      toast({ title: t("wishlist.error", "Помилка"), description: error.message, variant: "destructive" });
     }
   };
 
@@ -27,11 +30,11 @@ const Wishlist = () => {
   return (
     <div className="pb-8">
       <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-3 flex items-center justify-between">
-        <h1 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">Обрані</h1>
+        <h1 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">{t("wishlist.title", "Обрані")}</h1>
         <button
           onClick={() => { void tap("light"); navigate("/app/search"); }}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground"
-          aria-label="Пошук"
+          aria-label={t("wishlist.searchAria", "Пошук")}
         >
           <Search className="w-5 h-5" strokeWidth={1.75} />
         </button>
@@ -53,15 +56,15 @@ const Wishlist = () => {
               <path d="M24 40C16 33 6 27 6 17a8 8 0 0 1 14-5l4 4 4-4a8 8 0 0 1 14 5c0 10-10 16-18 23z" />
             </svg>
           </div>
-          <p className="font-semibold text-foreground mb-2">Список порожній</p>
+          <p className="font-semibold text-foreground mb-2">{t("wishlist.emptyTitle", "Список порожній")}</p>
           <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-            Додавайте людей в обрані щоб швидко знаходити<br />їх і допомагати.
+            {t("wishlist.emptyLine1", "Додавайте людей в обрані щоб швидко знаходити")}<br />{t("wishlist.emptyLine2", "їх і допомагати.")}
           </p>
           <button
             onClick={() => { void tap("light"); navigate("/app/search"); }}
             className="text-sm text-accent font-semibold min-h-[44px] px-3"
           >
-            Знайти людей →
+            {t("wishlist.findPeople", "Знайти людей →")}
           </button>
         </div>
       )}
@@ -109,21 +112,21 @@ const Wishlist = () => {
                     <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
                       {flag} {person.target_city} ·
                       <Star className="w-3 h-3 fill-warning text-warning" strokeWidth={1.75} />
-                      {(person.target_rating || 0).toFixed(1)} · {person.target_deals_count || 0} угод
+                      {(person.target_rating || 0).toFixed(1)} · {t("wishlist.deals", "{n} угод", { n: person.target_deals_count || 0 })}
                     </p>
                   </button>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => { void tap("light"); navigate(`/app/user/${person.target_id}`); }}
                       className="min-h-[44px] min-w-[44px] bg-secondary rounded-2xl flex items-center justify-center transition-transform duration-150 hover:-translate-y-px"
-                      aria-label="Написати"
+                      aria-label={t("wishlist.messageAria", "Написати")}
                     >
                       <MessageCircle className="w-4 h-4 text-foreground" strokeWidth={1.75} />
                     </button>
                     <button
                       onClick={() => handleRemove(person.target_id)}
                       className="min-h-[44px] min-w-[44px] bg-accent/10 rounded-2xl flex items-center justify-center transition-transform duration-150 hover:-translate-y-px"
-                      aria-label="Видалити з обраних"
+                      aria-label={t("wishlist.removeAria", "Видалити з обраних")}
                     >
                       <Heart className="w-4 h-4 text-accent fill-accent" strokeWidth={1.75} />
                     </button>

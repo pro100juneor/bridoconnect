@@ -5,55 +5,90 @@ import { useStripe } from "@/hooks/useStripe";
 import { toast } from "@/hooks/use-toast";
 import { Confetti } from "@/components/Confetti";
 import { tap, notify } from "@/lib/native";
+import { useT } from "@/i18n/useT";
+import { useCurrency } from "@/hooks/useCurrency";
+
+/** Пара «ключ словаря + украинский оригинал» — текст константы переводится в рендере. */
+interface Phrase {
+  key: string;
+  fallback: string;
+}
 
 interface Plan {
   id: string;
-  name: string;
-  price: string;
-  period: string;
+  name: Phrase;
+  /** Цена в EUR: подписку Stripe списывает строго в евро (create-checkout). */
+  priceEur: number;
+  period: Phrase;
   priceId: string;
-  features: string[];
+  features: Phrase[];
   popular: boolean;
-  badge?: string;
+  badge?: Phrase;
 }
+
+const FEATURE_NO_FEE: Phrase = { key: "premium.feature.noFee", fallback: "Без комісії" };
+const FEATURE_PRIORITY: Phrase = { key: "premium.feature.priority", fallback: "Пріоритет у стрічці" };
+const FEATURE_VERIFIED: Phrase = { key: "premium.feature.verified", fallback: "Значок верифікації" };
+const FEATURE_ANALYTICS: Phrase = { key: "premium.feature.analytics", fallback: "Розширена аналітика" };
 
 const plans: Plan[] = [
   {
     id: "monthly",
-    name: "Місячна",
-    price: "€4.99",
-    period: "/ місяць",
+    name: { key: "premium.plan.monthly.name", fallback: "Місячна" },
+    priceEur: 4.99,
+    period: { key: "premium.plan.monthly.period", fallback: "/ місяць" },
     priceId: import.meta.env.VITE_STRIPE_PRICE_MONTHLY || "price_monthly",
-    features: ["Без комісії", "Пріоритет у стрічці", "Значок верифікації", "Розширена аналітика"],
+    features: [FEATURE_NO_FEE, FEATURE_PRIORITY, FEATURE_VERIFIED, FEATURE_ANALYTICS],
     popular: false,
   },
   {
     id: "yearly",
-    name: "Річна",
-    price: "€39.99",
-    period: "/ рік",
-    badge: "Економія 33%",
+    name: { key: "premium.plan.yearly.name", fallback: "Річна" },
+    priceEur: 39.99,
+    period: { key: "premium.plan.yearly.period", fallback: "/ рік" },
+    badge: { key: "premium.plan.yearly.badge", fallback: "Економія 33%" },
     priceId: import.meta.env.VITE_STRIPE_PRICE_YEARLY || "price_yearly",
     features: [
-      "Без комісії",
-      "Пріоритет у стрічці",
-      "Значок верифікації",
-      "Розширена аналітика",
-      "Підтримка 24/7",
-      "Ексклюзивний доступ",
+      FEATURE_NO_FEE,
+      FEATURE_PRIORITY,
+      FEATURE_VERIFIED,
+      FEATURE_ANALYTICS,
+      { key: "premium.feature.support", fallback: "Підтримка 24/7" },
+      { key: "premium.feature.exclusive", fallback: "Ексклюзивний доступ" },
     ],
     popular: true,
   },
 ];
 
 const perks = [
-  { icon: Zap, title: "Без комісії", desc: "100% коштів йде одержувачу", hero: true },
-  { icon: TrendingUp, title: "Пріоритет", desc: "Ваші запити вгорі стрічки" },
-  { icon: Shield, title: "Верифікація", desc: "Золотий значок довіри" },
-  { icon: Star, title: "Аналітика", desc: "Детальна статистика угод" },
+  {
+    icon: Zap,
+    title: { key: "premium.perk.noFee.title", fallback: "Без комісії" },
+    desc: { key: "premium.perk.noFee.desc", fallback: "100% коштів йде одержувачу" },
+    hero: true,
+  },
+  {
+    icon: TrendingUp,
+    title: { key: "premium.perk.priority.title", fallback: "Пріоритет" },
+    desc: { key: "premium.perk.priority.desc", fallback: "Ваші запити вгорі стрічки" },
+  },
+  {
+    icon: Shield,
+    title: { key: "premium.perk.verified.title", fallback: "Верифікація" },
+    desc: { key: "premium.perk.verified.desc", fallback: "Золотий значок довіри" },
+  },
+  {
+    icon: Star,
+    title: { key: "premium.perk.analytics.title", fallback: "Аналітика" },
+    desc: { key: "premium.perk.analytics.desc", fallback: "Детальна статистика угод" },
+  },
 ];
 
 const Premium = () => {
+  const { t } = useT();
+  // Цена подписки списывается в EUR, поэтому показываем её именно в EUR (formatIn),
+  // а не в валюте отображения — иначе пользователь увидит не ту сумму, что спишут.
+  const { formatIn } = useCurrency();
   const { createSubscription } = useStripe();
   const [loading, setLoading] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
@@ -70,10 +105,10 @@ const Premium = () => {
       void notify("error");
       setCelebrate(false);
       toast({
-        title: "Stripe не підключено",
+        title: t("premium.errorTitle", "Stripe не підключено"),
         description:
           (e instanceof Error ? e.message : "") ||
-          "Підписку буде активовано після налаштування Stripe у адмін-панелі.",
+          t("premium.errorDesc", "Підписку буде активовано після налаштування Stripe у адмін-панелі."),
         variant: "destructive",
       });
       setLoading(null);
@@ -85,8 +120,12 @@ const Premium = () => {
       <Confetti trigger={celebrate} />
       <section className="px-4 pt-6 pb-8 text-white text-center" style={{ background: "hsl(222 47% 22%)" }}>
         <Crown className="w-12 h-12 mx-auto mb-3 text-warning" strokeWidth={1.75} />
-        <h1 className="font-serif text-4xl tracking-tight mb-2 animate-fade-in">BridoConnect Premium</h1>
-        <p className="text-white/70 text-sm leading-relaxed">Максимум довіри. Мінімум комісій.</p>
+        <h1 className="font-serif text-4xl tracking-tight mb-2 animate-fade-in">
+          {t("premium.title", "BridoConnect Premium")}
+        </h1>
+        <p className="text-white/70 text-sm leading-relaxed">
+          {t("premium.subtitle", "Максимум довіри. Мінімум комісій.")}
+        </p>
       </section>
 
       <div className="px-4 -mt-4">
@@ -94,7 +133,7 @@ const Premium = () => {
         <div className="grid grid-cols-2 gap-3 mb-6">
           {perks.map((perk) => (
             <article
-              key={perk.title}
+              key={perk.title.key}
               className={`relative bg-background rounded-2xl p-4 shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)] overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 ${
                 perk.hero ? "col-span-2" : ""
               }`}
@@ -104,9 +143,11 @@ const Premium = () => {
                 strokeWidth={1.75}
               />
               <p className={`font-semibold text-foreground ${perk.hero ? "text-base" : "text-sm"}`}>
-                {perk.title}
+                {t(perk.title.key, perk.title.fallback)}
               </p>
-              <p className="text-xs text-muted-foreground leading-relaxed">{perk.desc}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {t(perk.desc.key, perk.desc.fallback)}
+              </p>
             </article>
           ))}
         </div>
@@ -122,25 +163,29 @@ const Premium = () => {
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-foreground">{plan.name}</p>
+                    <p className="font-semibold text-foreground">{t(plan.name.key, plan.name.fallback)}</p>
                     {plan.badge && (
                       <span className="text-[10px] bg-accent text-white px-1.5 py-0.5 rounded font-medium">
-                        {plan.badge}
+                        {t(plan.badge.key, plan.badge.fallback)}
                       </span>
                     )}
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold text-foreground">{plan.price}</span>
-                    <span className="text-xs text-muted-foreground">{plan.period}</span>
+                    <span className="text-2xl font-bold text-foreground">
+                      {formatIn(plan.priceEur, "eur")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {t(plan.period.key, plan.period.fallback)}
+                    </span>
                   </div>
                 </div>
                 {plan.popular && <Crown className="w-5 h-5 text-warning" strokeWidth={1.75} />}
               </div>
               <div className="space-y-1.5 mb-4">
                 {plan.features.map((f) => (
-                  <div key={f} className="flex items-center gap-2">
+                  <div key={f.key} className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-success" strokeWidth={1.75} />
-                    <span className="text-xs text-foreground">{f}</span>
+                    <span className="text-xs text-foreground">{t(f.key, f.fallback)}</span>
                   </div>
                 ))}
               </div>
@@ -154,21 +199,21 @@ const Premium = () => {
                 onClick={() => handleSubscribe(plan)}
               >
                 {loading === plan.id ? (
-                  "Відкриваємо…"
+                  t("premium.opening", "Відкриваємо…")
                 ) : plan.popular ? (
                   <span className="inline-flex items-center gap-2">
                     <Crown className="w-4 h-4" strokeWidth={1.75} />
-                    Обрати річний план
+                    {t("premium.chooseYearly", "Обрати річний план")}
                   </span>
                 ) : (
-                  "Обрати місячний"
+                  t("premium.chooseMonthly", "Обрати місячний")
                 )}
               </Button>
             </article>
           ))}
         </div>
         <p className="text-xs text-muted-foreground text-center leading-relaxed">
-          Скасувати підписку можна будь-коли. Безпечна оплата через Stripe.
+          {t("premium.footer", "Скасувати підписку можна будь-коли. Безпечна оплата через Stripe.")}
         </p>
       </div>
     </main>

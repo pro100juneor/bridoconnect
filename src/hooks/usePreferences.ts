@@ -2,10 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+// Колонка user_preferences.two_factor свідомо більше не мапиться: реальний
+// стан 2FA живе у факторах Supabase Auth (див. useMfa). Прапорець у таблиці
+// лишився мертвим — його треба дропнути окремою міграцією.
 export interface UserPreferences {
   push_notifications: boolean;
   email_notifications: boolean;
-  two_factor: boolean;
   dark_mode: boolean;
   language: string;
 }
@@ -13,7 +15,6 @@ export interface UserPreferences {
 const DEFAULT_PREFS: UserPreferences = {
   push_notifications: true,
   email_notifications: true,
-  two_factor: false,
   dark_mode: false,
   language: "uk",
 };

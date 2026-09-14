@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getStripeConnect } from "../_shared/payment-accounts.ts";
 import { sendTransactionalEmail } from "../_shared/email.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -28,8 +29,11 @@ function corsFor(origin: string | null) {
 }
 
 // Universal release: ветвится по deal.payment_processor.
-// - stripe: destination-charge — transfer уже произошёл на capture, мы лишь
-//   фиксируем completion + проверяем что charge не зарефанжен (P1-15 fix).
+// - stripe: separate charges & transfers — деньги лежат на балансе платформы с
+//   момента оплаты, и ИМЕННО ЗДЕСЬ уходят получателю через transfers.create.
+//   Это и есть настоящий эскроу. Легаси-сделки, оплаченные старым destination
+//   charge (у charge уже есть transfer), не переводим повторно — только
+//   фиксируем completion.
 // - paypal: для DELAYED_DISBURSEMENT нужен capture/release-call. Сейчас
 //   реализован shortcut: помечаем deal completed + ledger entry; реальный
 //   PayPal disbursement release делается на стороне PayPal Dashboard или
@@ -112,8 +116,55 @@ serve(async (req) => {
           headers: { ...headers, "Content-Type": "application/json" },
         });
       }
-      const t = charge?.transfer as string | Stripe.Transfer | null;
-      transferId = typeof t === "string" ? t : (t?.id ?? null);
+      const existing = charge?.transfer as string | Stripe.Transfer | null;
+      if (existing) {
+        // Легаси destination charge: перевод получателю уже состоялся при
+        // capture. Второй transfer означал бы двойную выплату.
+        transferId = typeof existing === "string" ? existing : existing.id;
+      } else {
+        // Новый поток: деньги на балансе платформы — переводим получателю.
+        const recipient = await getStripeConnect(supabase, deal.creator_id);
+        if (
+          !recipient.stripe_connect_account_id ||
+          recipient.stripe_connect_status !== "enabled"
+        ) {
+          return new Response(
+            JSON.stringify({
+              error: "recipient_not_onboarded",
+              message: "Recipient has not completed Stripe onboarding",
+            }),
+            { status: 409, headers: { ...headers, "Content-Type": "application/json" } }
+          );
+        }
+        const netCents = (deal.amount_cents || 0) - (deal.platform_fee_cents || 0);
+        if (netCents <= 0) {
+          return new Response(JSON.stringify({ error: "nothing to transfer" }), {
+            status: 400,
+            headers: { ...headers, "Content-Type": "application/json" },
+          });
+        }
+        // source_transaction привязывает перевод к конкретному платежу: Stripe
+        // сам дожидается доступности этих средств и не даёт уйти в минус по
+        // балансу платформы. Идемпотентный ключ защищает от двойного перевода
+        // при ретрае запроса.
+        const transfer = await stripe.transfers.create(
+          {
+            amount: netCents,
+            currency: (charge?.currency as string) || "eur",
+            destination: recipient.stripe_connect_account_id,
+            transfer_group: `deal_${dealId}`,
+            ...(charge?.id ? { source_transaction: charge.id } : {}),
+            metadata: {
+              deal_id: dealId,
+              recipient_id: deal.creator_id,
+              sponsor_id: deal.sponsor_id || "",
+              released_by: user.id,
+            },
+          },
+          { idempotencyKey: `release_deal_${dealId}` }
+        );
+        transferId = transfer.id;
+      }
     } else if (deal.payment_processor === "paypal") {
       if (!deal.paypal_capture_id) {
         return new Response(JSON.stringify({ error: "no paypal capture on deal" }), {

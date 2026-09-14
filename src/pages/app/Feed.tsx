@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useDeals } from "@/hooks/useDeals";
 import { useT } from "@/i18n/useT";
+import { useCurrency } from "@/hooks/useCurrency";
 import { usePromotions, type PromotedProfile } from "@/hooks/usePromotions";
 import PromoCarousel, { promoHref } from "@/components/PromoCarousel";
 
@@ -54,6 +55,7 @@ const categoryEmoji = (cat: string) => {
 const Feed = () => {
   const navigate = useNavigate();
   const { t } = useT();
+  const { dealProgress } = useCurrency();
   const [activeCategory, setActiveCategory] = useState("Всі");
   const [activeFlag, setActiveFlag] = useState<string | null>(null);
   const { deals: realDeals, loading, refetch } = useDeals({ status: "active" });
@@ -126,21 +128,21 @@ const Feed = () => {
           <button
             onClick={() => refetch()}
             className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Оновити"
+            aria-label={t("feed.refresh", "Оновити")}
           >
             <RefreshCw className="w-5 h-5" />
           </button>
           <button
             onClick={() => navigate("/app/search")}
             className="p-2 text-muted-foreground"
-            aria-label="Пошук"
+            aria-label={t("common.search", "Пошук")}
           >
             <Search className="w-5 h-5" />
           </button>
           <button
             onClick={() => navigate("/app/notifications")}
             className="p-2 text-muted-foreground relative"
-            aria-label="Сповіщення"
+            aria-label={t("feed.notifications", "Сповіщення")}
           >
             <Bell className="w-5 h-5" />
             <div className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
@@ -156,7 +158,7 @@ const Feed = () => {
               !activeFlag ? "bg-accent text-white" : "bg-secondary text-foreground"
             }`}
           >
-            Всі
+            {t("common.all", "Всі")}
           </button>
           {flags.map((f) => (
             <button
@@ -165,7 +167,7 @@ const Feed = () => {
               className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-xl transition-all ${
                 activeFlag === f ? "ring-2 ring-accent scale-110" : "bg-secondary"
               }`}
-              aria-label={`Фільтр ${f}`}
+              aria-label={t("feed.filterFlag", "Фільтр {flag}", { flag: f })}
             >
               {f}
             </button>
@@ -189,7 +191,10 @@ const Feed = () => {
         {(activeCategory !== "Всі" || activeFlag) && (
           <div className="flex items-center justify-between mt-2 text-xs">
             <span className="text-muted-foreground">
-              Показано {filteredCount} з {sourceCount}
+              {t("feed.shownCount", "Показано {shown} з {total}", {
+                shown: filteredCount,
+                total: sourceCount,
+              })}
             </span>
             <button
               onClick={() => {
@@ -198,7 +203,7 @@ const Feed = () => {
               }}
               className="text-accent font-medium"
             >
-              Скинути фільтри
+              {t("feed.resetFilters", "Скинути фільтри")}
             </button>
           </div>
         )}
@@ -214,14 +219,14 @@ const Feed = () => {
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent"
         >
           <Sparkles className="w-4 h-4" aria-hidden="true" />
-          Просувати себе
+          {t("feed.promoteSelf", "Просувати себе")}
         </button>
       </div>
 
       {promos.length > 0 && (
         <div className="mb-4">
           <div className="px-4 mb-2">
-            <h3 className="text-sm font-semibold text-foreground">Рекомендовані</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("feed.recommended", "Рекомендовані")}</h3>
           </div>
           <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide">
             {promos.map((p) => {
@@ -253,7 +258,7 @@ const Feed = () => {
                       {p.headline || p.city || p.country || ""}
                     </p>
                     <span className="mt-2 inline-flex items-center gap-0.5 text-xs font-medium text-accent">
-                      Переглянути
+                      {t("feed.view", "Переглянути")}
                       <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
                     </span>
                   </div>
@@ -298,8 +303,10 @@ const Feed = () => {
               <line x1="20" y1="20" x2="16.5" y2="16.5" />
             </svg>
           </div>
-          <p className="font-semibold text-foreground mb-2">Нічого не знайдено</p>
-          <p className="text-sm text-muted-foreground mb-4">За обраними фільтрами немає активних запитів.</p>
+          <p className="font-semibold text-foreground mb-2">{t("feed.emptyTitle", "Нічого не знайдено")}</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {t("feed.emptyDesc", "За обраними фільтрами немає активних запитів.")}
+          </p>
           <button
             onClick={() => {
               setActiveCategory("Всі");
@@ -307,14 +314,17 @@ const Feed = () => {
             }}
             className="text-sm text-accent font-semibold"
           >
-            Скинути фільтри
+            {t("feed.resetFilters", "Скинути фільтри")}
           </button>
         </div>
       )}
 
       <div className="px-4 space-y-4">
         {displayDeals.map((deal, idx) => {
-          const pct = deal.amount > 0 ? Math.round((deal.raised / deal.amount) * 100) : 0;
+          // deal.amount — у deal.currency, deal.raised — завжди EUR (чеки в EUR).
+          // dealProgress зводить їх до однієї валюти за живим курсом.
+          const progress = dealProgress(deal.amount, deal.currency, deal.raised);
+          const pct = progress.pct;
           const initials = (deal.creator_name || "?")
             .split(" ")
             .map((s: string) => s[0])
@@ -359,11 +369,11 @@ const Feed = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">
-                      {deal.creator_name || "Користувач"} {deal.creator_flag || "🏳️"}
+                      {deal.creator_name || t("common.user", "Користувач")} {deal.creator_flag || "🏳️"}
                     </p>
                     <p className="text-[10px] text-muted-foreground">
                       {deal.creator_city || ""} · ⭐ {(deal.creator_rating || 0).toFixed(1)} ·{" "}
-                      {deal.creator_deals || 0} угод
+                      {t("feed.dealsCount", "{n} угод", { n: deal.creator_deals || 0 })}
                     </p>
                   </div>
                   <span className="ml-auto text-xs bg-secondary text-muted-foreground px-2 py-0.5 rounded-full shrink-0">
@@ -373,11 +383,10 @@ const Feed = () => {
                 <p className="font-semibold text-sm text-foreground mb-1">{deal.title}</p>
                 <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{deal.description}</p>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xl font-bold text-foreground">
-                    €{(deal.raised || 0).toLocaleString()}
-                  </span>
+                  <span className="text-xl font-bold text-foreground">{progress.raised.formatted}</span>
                   <span className="text-xs text-muted-foreground">
-                    з €{(deal.amount || 0).toLocaleString()} · {pct}%
+                    {t("common.of", "з")} {progress.goal.formatted}
+                    {progress.comparable ? ` · ${pct}%` : ""}
                   </span>
                 </div>
                 <div className="w-full h-2 bg-secondary rounded-full">

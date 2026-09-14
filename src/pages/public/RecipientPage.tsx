@@ -42,7 +42,7 @@ const WishlistCard = ({ item }: { item: WishlistItem }) => {
         </div>
         <div className="p-3">
           <p className="text-sm font-medium text-foreground line-clamp-2">{p.title}</p>
-          <p className="text-sm font-semibold text-accent mt-1">{convert(p.price_cents).formatted}</p>
+          <p className="text-sm font-semibold text-accent mt-1">{convert(p.price_cents, p.currency).formatted}</p>
           {item.note && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.note}</p>}
         </div>
       </Link>

@@ -4,9 +4,25 @@ import { ArrowLeft, ImagePlus, PackagePlus, Video, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { tap, notify } from "@/lib/native";
 import { useProducts } from "@/hooks/useProducts";
+import { useT } from "@/i18n/useT";
+import { symbolFor } from "@/lib/money";
 import { toast } from "@/hooks/use-toast";
 
-const categories = ["Їжа", "Одяг", "Ліки", "Освіта", "Побут", "Зв'язок"];
+// Значение категории уходит в БД как есть (украинская строка) — переводится
+// только видимая подпись чипа, чтобы данные оставались едиными для всех локалей.
+const categories = [
+  { value: "Їжа", key: "product.cat.food" },
+  { value: "Одяг", key: "product.cat.clothes" },
+  { value: "Ліки", key: "product.cat.meds" },
+  { value: "Освіта", key: "product.cat.education" },
+  { value: "Побут", key: "product.cat.household" },
+  { value: "Зв'язок", key: "product.cat.connectivity" },
+];
+
+// Товар всегда создаётся в EUR: useProducts.createProduct пишет currency: "eur",
+// а Stripe-чек выставляется в той же валюте. Символ берём из справочника валют,
+// чтобы подпись поля цены не разъезжалась с тем, что реально сохраняется.
+const CREATE_CURRENCY = "eur";
 
 const MAX_IMAGES = 20;
 const MAX_VIDEOS = 5;
@@ -25,6 +41,8 @@ const readVideoDuration = (file: File): Promise<number> =>
     };
     el.onerror = () => {
       URL.revokeObjectURL(url);
+      // Техническая ошибка промиса: наружу пользователю показывается
+      // переведённый тост в onPickVideos, этот текст в UI не попадает.
       reject(new Error("Не вдалося прочитати відео"));
     };
     el.src = url;
@@ -33,6 +51,7 @@ const readVideoDuration = (file: File): Promise<number> =>
 const CreateProduct = () => {
   const navigate = useNavigate();
   const { createProduct } = useProducts();
+  const { t } = useT();
   const fileInput = useRef<HTMLInputElement>(null);
   const videoInput = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
@@ -70,7 +89,7 @@ const CreateProduct = () => {
     if (picked.length === 0) return;
     if (files.length + picked.length > MAX_IMAGES) {
       void notify("error");
-      toast({ title: `Максимум ${MAX_IMAGES} фото`, variant: "destructive" });
+      toast({ title: t("product.maxImages", "Максимум {n} фото", { n: MAX_IMAGES }), variant: "destructive" });
       return;
     }
     setFiles((f) => [...f, ...picked]);
@@ -83,26 +102,26 @@ const CreateProduct = () => {
     if (picked.length === 0) return;
     if (videos.length + picked.length > MAX_VIDEOS) {
       void notify("error");
-      toast({ title: `Максимум ${MAX_VIDEOS} відео`, variant: "destructive" });
+      toast({ title: t("product.maxVideos", "Максимум {n} відео", { n: MAX_VIDEOS }), variant: "destructive" });
       return;
     }
     const accepted: File[] = [];
     for (const file of picked) {
       if (file.size > MAX_VIDEO_BYTES) {
         void notify("error");
-        toast({ title: "Відео завелике: максимум 50 МБ", variant: "destructive" });
+        toast({ title: t("product.videoTooLarge", "Відео завелике: максимум 50 МБ"), variant: "destructive" });
         continue;
       }
       try {
         const duration = await readVideoDuration(file);
         if (duration > MAX_VIDEO_SEC + 0.5) {
           void notify("error");
-          toast({ title: "Відео задовге: максимум 30 секунд", variant: "destructive" });
+          toast({ title: t("product.videoTooLong", "Відео задовге: максимум 30 секунд"), variant: "destructive" });
           continue;
         }
       } catch {
         void notify("error");
-        toast({ title: "Не вдалося прочитати відео", variant: "destructive" });
+        toast({ title: t("product.videoReadFailed", "Не вдалося прочитати відео"), variant: "destructive" });
         continue;
       }
       accepted.push(file);
@@ -147,9 +166,9 @@ const CreateProduct = () => {
     if (error || !id) {
       void notify("error");
       if (error && /capacity/i.test(error)) {
-        toast({ title: "Досягнуто ліміту магазину (5000 позицій)", variant: "destructive" });
+        toast({ title: t("product.capacityReached", "Досягнуто ліміту магазину (5000 позицій)"), variant: "destructive" });
       } else {
-        alert(error || "Не вдалося створити товар");
+        alert(error || t("product.createFailed", "Не вдалося створити товар"));
       }
       setSaving(false);
       return;
@@ -163,18 +182,18 @@ const CreateProduct = () => {
       <div className="flex items-center gap-3 px-4 pt-4 pb-4 border-b border-border">
         <button
           onClick={() => navigate(-1)}
-          aria-label="Назад"
+          aria-label={t("shop.back", "Назад")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">Новий товар</h2>
+        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">{t("product.new", "Новий товар")}</h2>
       </div>
 
       <div className="px-4 space-y-4 mt-4">
         <div>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-            Фото (до 20) · {files.length}/{MAX_IMAGES}
+            {t("product.photosLabel", "Фото (до 20)")} · {files.length}/{MAX_IMAGES}
           </label>
           <div className="flex flex-wrap gap-2">
             {previews.map((src, i) => (
@@ -182,7 +201,7 @@ const CreateProduct = () => {
                 <img src={src} alt="" className="w-full h-full object-cover" />
                 <button
                   onClick={() => removeFile(i)}
-                  aria-label="Видалити фото"
+                  aria-label={t("product.removePhoto", "Видалити фото")}
                   className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-black/50 rounded-full"
                 >
                   <X className="w-3.5 h-3.5 text-white" strokeWidth={2} />
@@ -195,7 +214,7 @@ const CreateProduct = () => {
                   void tap("light");
                   fileInput.current?.click();
                 }}
-                aria-label="Додати фото"
+                aria-label={t("product.addPhoto", "Додати фото")}
                 className="w-20 h-20 rounded-2xl bg-secondary flex items-center justify-center text-muted-foreground/50 transition-transform duration-150 hover:-translate-y-px"
               >
                 <ImagePlus className="w-6 h-6" strokeWidth={1.75} />
@@ -214,7 +233,7 @@ const CreateProduct = () => {
 
         <div>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-            Відео (до 5, до 30с) · {videos.length}/{MAX_VIDEOS}
+            {t("product.videosLabel", "Відео (до 5, до 30с)")} · {videos.length}/{MAX_VIDEOS}
           </label>
           <div className="flex flex-wrap gap-2">
             {videoPreviews.map((src, i) => (
@@ -228,7 +247,7 @@ const CreateProduct = () => {
                 />
                 <button
                   onClick={() => removeVideo(i)}
-                  aria-label="Видалити відео"
+                  aria-label={t("product.removeVideo", "Видалити відео")}
                   className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-black/50 rounded-full"
                 >
                   <X className="w-3.5 h-3.5 text-white" strokeWidth={2} />
@@ -241,7 +260,7 @@ const CreateProduct = () => {
                   void tap("light");
                   videoInput.current?.click();
                 }}
-                aria-label="Додати відео"
+                aria-label={t("product.addVideo", "Додати відео")}
                 className="w-20 h-20 rounded-2xl bg-secondary flex items-center justify-center text-muted-foreground/50 transition-transform duration-150 hover:-translate-y-px"
               >
                 <Video className="w-6 h-6" strokeWidth={1.75} />
@@ -260,24 +279,24 @@ const CreateProduct = () => {
 
         <div>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-            Назва *
+            {t("product.nameLabel", "Назва")} *
           </label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Наприклад: Продуктовий набір"
+            placeholder={t("product.namePlaceholder", "Наприклад: Продуктовий набір")}
             className="w-full bg-secondary rounded-2xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
           />
         </div>
 
         <div>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-            Опис
+            {t("product.description", "Опис")}
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Що входить, стан, деталі…"
+            placeholder={t("product.descPlaceholder", "Що входить, стан, деталі…")}
             rows={4}
             className="w-full bg-secondary rounded-2xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30 resize-none"
           />
@@ -285,7 +304,7 @@ const CreateProduct = () => {
 
         <div>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-            Ціна (€) *
+            {t("product.priceLabel", "Ціна ({symbol})", { symbol: symbolFor(CREATE_CURRENCY) })} *
           </label>
           <input
             type="number"
@@ -295,26 +314,28 @@ const CreateProduct = () => {
             placeholder="0"
             className="w-full bg-secondary rounded-2xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
           />
-          <p className="text-xs text-muted-foreground mt-1">Одна позиція — одна одиниця товару</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {t("product.oneUnitHint", "Одна позиція — одна одиниця товару")}
+          </p>
         </div>
 
         <div>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-            Категорія
+            {t("product.categoryLabel", "Категорія")}
           </label>
           <div className="flex flex-wrap gap-2">
             {categories.map((cat) => (
               <button
-                key={cat}
+                key={cat.value}
                 onClick={() => {
                   void tap("light");
-                  setCategory(cat);
+                  setCategory(cat.value);
                 }}
                 className={`min-h-[44px] px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150 hover:-translate-y-px ${
-                  category === cat ? "bg-accent text-white border-accent" : "border-border text-foreground"
+                  category === cat.value ? "bg-accent text-white border-accent" : "border-border text-foreground"
                 }`}
               >
-                {cat}
+                {t(cat.key, cat.value)}
               </button>
             ))}
           </div>
@@ -326,7 +347,7 @@ const CreateProduct = () => {
           onClick={handleSubmit}
         >
           <PackagePlus className="w-4 h-4" strokeWidth={1.75} />{" "}
-          {saving ? "Публікуємо…" : "Опублікувати товар"}
+          {saving ? t("product.publishing", "Публікуємо…") : t("product.publish", "Опублікувати товар")}
         </Button>
       </div>
     </main>

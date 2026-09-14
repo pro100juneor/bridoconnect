@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { isNative } from "@/lib/native";
+import { useT } from "@/i18n/useT";
 
 // GDPR-compliant cookie banner.
 // Хранит выбор в localStorage; при "accept" грузит analytics/Sentry асинхронно.
@@ -39,6 +40,7 @@ export function setConsent(patch: Partial<Omit<Consent, "essential" | "ts">>) {
 }
 
 export function CookieConsent() {
+  const { t } = useT();
   const [visible, setVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [analytics, setAnalytics] = useState(true);
@@ -77,12 +79,13 @@ export function CookieConsent() {
       className="fixed inset-x-4 bottom-4 z-[9999] mx-auto max-w-2xl rounded-2xl border border-neutral-200 bg-white p-5 shadow-2xl sm:inset-x-6"
     >
       <h2 id="cookie-title" className="text-lg font-semibold text-neutral-900">
-        Ми використовуємо cookies
+        {t("cookie.title", "Ми використовуємо cookies")}
       </h2>
       <p id="cookie-desc" className="mt-2 text-sm leading-relaxed text-neutral-600">
-        Необхідні cookies для роботи сайту (авторизація, безпека) — завжди активні. За вашою згодою ми
-        додатково використовуємо analytics (PostHog, EU-hosted) та error tracking (Sentry) для покращення
-        сервісу. Детальніше —{" "}
+        {t(
+          "cookie.desc",
+          "Необхідні cookies для роботи сайту (авторизація, безпека) — завжди активні. За вашою згодою ми додатково використовуємо analytics (PostHog, EU-hosted) та error tracking (Sentry) для покращення сервісу. Детальніше —"
+        )}{" "}
         <Link to="/datenschutz" className="underline hover:text-red-600">
           Datenschutzerklärung
         </Link>
@@ -94,9 +97,9 @@ export function CookieConsent() {
           <label className="flex items-start gap-3">
             <input type="checkbox" checked disabled className="mt-1 h-4 w-4" />
             <div>
-              <div className="font-medium text-neutral-900">Необхідні</div>
+              <div className="font-medium text-neutral-900">{t("cookie.essential.title", "Необхідні")}</div>
               <div className="text-xs text-neutral-500">
-                Session, CSRF-token, вибір мови. Не можуть бути вимкнені.
+                {t("cookie.essential.desc", "Session, CSRF-token, вибір мови. Не можуть бути вимкнені.")}
               </div>
             </div>
           </label>
@@ -108,9 +111,12 @@ export function CookieConsent() {
               className="mt-1 h-4 w-4"
             />
             <div>
-              <div className="font-medium text-neutral-900">Аналітика</div>
+              <div className="font-medium text-neutral-900">{t("cookie.analytics.title", "Аналітика")}</div>
               <div className="text-xs text-neutral-500">
-                Анонімна статистика використання (PostHog, EU). Допомагає покращувати UX.
+                {t(
+                  "cookie.analytics.desc",
+                  "Анонімна статистика використання (PostHog, EU). Допомагає покращувати UX."
+                )}
               </div>
             </div>
           </label>
@@ -122,9 +128,11 @@ export function CookieConsent() {
               className="mt-1 h-4 w-4"
             />
             <div>
-              <div className="font-medium text-neutral-900">Error tracking</div>
+              <div className="font-medium text-neutral-900">
+                {t("cookie.errorTracking.title", "Error tracking")}
+              </div>
               <div className="text-xs text-neutral-500">
-                Sentry — збір технічних помилок для швидшого фіксу.
+                {t("cookie.errorTracking.desc", "Sentry — збір технічних помилок для швидшого фіксу.")}
               </div>
             </div>
           </label>
@@ -137,7 +145,7 @@ export function CookieConsent() {
           onClick={() => setShowDetails((v) => !v)}
           className="text-sm text-neutral-500 underline hover:text-neutral-800"
         >
-          {showDetails ? "Приховати" : "Налаштування"}
+          {showDetails ? t("cookie.hide", "Приховати") : t("cookie.settings", "Налаштування")}
         </button>
         <div className="flex-1" />
         <button
@@ -145,7 +153,7 @@ export function CookieConsent() {
           onClick={rejectAll}
           className="rounded-lg border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
         >
-          Тільки необхідні
+          {t("cookie.rejectAll", "Тільки необхідні")}
         </button>
         {showDetails ? (
           <button
@@ -153,7 +161,7 @@ export function CookieConsent() {
             onClick={savePreferences}
             className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
           >
-            Зберегти вибір
+            {t("cookie.savePreferences", "Зберегти вибір")}
           </button>
         ) : (
           <button
@@ -161,7 +169,7 @@ export function CookieConsent() {
             onClick={acceptAll}
             className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
           >
-            Прийняти все
+            {t("cookie.acceptAll", "Прийняти все")}
           </button>
         )}
       </div>

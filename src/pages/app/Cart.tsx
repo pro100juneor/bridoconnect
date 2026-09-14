@@ -9,7 +9,7 @@ import { useStripe } from "@/hooks/useStripe";
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { items, remove, totalCents } = useCart();
+  const { items, remove, totalCents, beginCheckout } = useCart();
   const { convert, code } = useCurrency();
   const { checkoutCart } = useStripe();
   const [paying, setPaying] = useState(false);
@@ -18,8 +18,12 @@ const Cart = () => {
     if (items.length === 0) return;
     void tap("medium");
     setPaying(true);
+    const productIds = items.map((i) => i.productId);
+    // Фіксуємо склад чекауту ДО редіректу на Stripe: після повернення на
+    // success-сторінку буде прибрано з кошика саме ці позиції.
+    beginCheckout(productIds);
     try {
-      await checkoutCart({ productIds: items.map((i) => i.productId), currency: code });
+      await checkoutCart({ productIds, currency: code });
     } catch (e) {
       void notify("error");
       alert(e instanceof Error ? e.message : "Не вдалося почати оплату");

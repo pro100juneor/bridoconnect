@@ -7,15 +7,6 @@ import { useMessages } from "@/hooks/useMessages";
 import { supabase } from "@/integrations/supabase/client";
 import { tap } from "@/lib/native";
 
-// supabase-js типізує embedded join як масив без FK-метаданих,
-// у рантаймі для to-one приходить об'єкт — нормалізуємо обидві форми.
-interface ChatPartnerJoin {
-  name: string | null;
-}
-
-const firstJoin = (value: ChatPartnerJoin | ChatPartnerJoin[] | null): ChatPartnerJoin | null =>
-  Array.isArray(value) ? (value[0] ?? null) : value;
-
 const Chat = () => {
   const navigate = useNavigate();
   const reduced = useReducedMotion();
@@ -24,6 +15,8 @@ const Chat = () => {
   const { messages, sendMessage, loading } = useMessages(id || "");
   const [input, setInput] = useState("");
   const [partnerName, setPartnerName] = useState("Чат");
+  const [partnerId, setPartnerId] = useState<string | null>(null);
+  const [partnerOnline, setPartnerOnline] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,17 +31,64 @@ const Chat = () => {
       .upsert({ user_id: user.id, deal_id: id, last_read_at: new Date().toISOString() });
   }, [id, user, messages.length]);
 
+  // Співрозмовник — це друга сторона угоди, а не завжди її автор.
   useEffect(() => {
-    if (!id) return;
-    supabase
-      .from("deals")
-      .select("title, creator_id, sponsor_id, profiles!creator_id(name)")
-      .eq("id", id)
-      .single()
-      .then(({ data }) => {
-        if (data) setPartnerName(firstJoin(data.profiles)?.name || "Партнер");
+    if (!id || !user) return;
+    let alive = true;
+    void (async () => {
+      const { data: deal } = await supabase
+        .from("deals")
+        .select("creator_id, sponsor_id")
+        .eq("id", id)
+        .single();
+      if (!alive || !deal) return;
+      const other = deal.creator_id === user.id ? deal.sponsor_id : deal.creator_id;
+      if (!other) {
+        setPartnerName("Партнер");
+        return;
+      }
+      setPartnerId(other);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", other)
+        .maybeSingle();
+      if (alive) setPartnerName(profile?.name || "Партнер");
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [id, user]);
+
+  // Реальний presence через Supabase Realtime: обидві сторони трекають себе в
+  // каналі угоди. «Онлайн» показуємо, лише поки партнер справді в каналі —
+  // раніше тут був статичний підпис, який брехав завжди.
+  useEffect(() => {
+    if (!id || !user) return;
+    const channel = supabase.channel(`presence:deal:${id}`, {
+      config: { presence: { key: user.id } },
+    });
+
+    const syncOnline = () => {
+      const state = channel.presenceState();
+      setPartnerOnline(!!partnerId && Object.prototype.hasOwnProperty.call(state, partnerId));
+    };
+
+    channel
+      .on("presence", { event: "sync" }, syncOnline)
+      .on("presence", { event: "join" }, syncOnline)
+      .on("presence", { event: "leave" }, syncOnline)
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          void channel.track({ online_at: new Date().toISOString() });
+        }
       });
-  }, [id]);
+
+    return () => {
+      setPartnerOnline(false);
+      void supabase.removeChannel(channel);
+    };
+  }, [id, user, partnerId]);
 
   const send = async () => {
     if (!input.trim() || !user || !id) return;
@@ -88,7 +128,8 @@ const Chat = () => {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm text-foreground truncate">{partnerName}</p>
-          <p className="text-xs text-success">онлайн</p>
+          {/* Без presence-даних не пишемо нічого — вигадувати статус не можна. */}
+          {partnerOnline && <p className="text-xs text-success">онлайн</p>}
         </div>
         <button
           onClick={() => {

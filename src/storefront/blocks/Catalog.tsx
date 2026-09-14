@@ -5,6 +5,8 @@ import type { BlockProps } from "../types";
 
 // Catalog: seller's products. Grid or list depending on layout.
 export default function Catalog({ products, theme }: BlockProps) {
+  // Цена товара хранится в products.currency — передаём её в convert,
+  // иначе любая сумма трактовалась бы как EUR.
   const { convert } = useCurrency();
 
   const listLayout = theme.layout === "compact-list" || theme.layout === "sidebar-left";
@@ -76,7 +78,7 @@ export default function Catalog({ products, theme }: BlockProps) {
                 </p>
               </div>
               <span style={{ fontWeight: 700, color: "var(--sf-primary)" }}>
-                {convert(p.price_cents).formatted}
+                {convert(p.price_cents, p.currency).formatted}
               </span>
             </Link>
           ))}
@@ -124,7 +126,7 @@ export default function Catalog({ products, theme }: BlockProps) {
                 </p>
                 <p style={{ margin: 0, fontWeight: 600, lineHeight: 1.25 }}>{p.title}</p>
                 <span style={{ fontWeight: 700, color: "var(--sf-primary)" }}>
-                  {convert(p.price_cents).formatted}
+                  {convert(p.price_cents, p.currency).formatted}
                 </span>
               </div>
             </Link>

@@ -81,9 +81,13 @@ serve(async (req) => {
       });
     }
 
+    // Адреса получателя больше не лежат в публичной profiles — они вынесены в
+    // закрытую profile_crypto_addresses (миграция 038); читать их отсюда
+    // (под service_role) можно, но инвойс выставляется на стор платформы в
+    // BTCPay, поэтому нужен только публичный флаг crypto_enabled.
     const { data: recipient } = await supabase
       .from("profiles")
-      .select("crypto_addresses, crypto_enabled")
+      .select("crypto_enabled")
       .eq("id", deal.creator_id)
       .maybeSingle();
     if (!recipient?.crypto_enabled) {

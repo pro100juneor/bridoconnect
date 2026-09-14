@@ -3,8 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Per-request access to a sponsor's page. The gate is enforced in the DB
-// (RLS on profile_access_grants + has_profile_access RPC). The Supabase client
-// has no Database generic here, so `.from()` / `.rpc()` accept any name.
+// (RLS on profile_access_grants + has_profile_access RPC). The revealed
+// questionnaire itself lives in profile_sponsor_reveal (migration 038) whose
+// SELECT policy calls the same gate, so a viewer without a grant cannot read it
+// through PostgREST either. The Supabase client has no Database generic here,
+// so `.from()` / `.rpc()` accept any name.
 
 export type AccessStatus = "pending" | "granted" | "revoked" | "denied";
 
@@ -123,42 +126,41 @@ export const useSponsorAccess = () => {
     [user]
   );
 
-  // profile + revealed fields — only if the gate passes, otherwise a minimal stub.
+  // profile + revealed fields. The questionnaire lives in profile_sponsor_reveal
+  // (migration 038) behind an RLS policy that calls the same has_profile_access
+  // gate — a viewer without a grant gets an empty result from the DB itself, not
+  // from this code. The canView call stays only to drive the UI copy.
   const getSponsorProfile = useCallback(
     async (ownerId: string): Promise<SponsorProfile | null> => {
-      const allowed = await canView(ownerId);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, name, avatar_url, sponsor_reveal, verification_status")
-        .eq("id", ownerId)
-        .maybeSingle();
+      const [allowed, { data, error }, { data: revealRow }] = await Promise.all([
+        canView(ownerId),
+        supabase
+          .from("profiles")
+          .select("id, name, avatar_url, verification_status")
+          .eq("id", ownerId)
+          .maybeSingle(),
+        supabase
+          .from("profile_sponsor_reveal")
+          .select("reveal")
+          .eq("profile_id", ownerId)
+          .maybeSingle(),
+      ]);
       if (error || !data) return null;
       const row = data as unknown as {
         id: string;
         name: string | null;
         avatar_url: string | null;
-        sponsor_reveal: SponsorReveal | null;
         verification_status: SponsorProfile["verification_status"] | null;
       };
-      const verification_status = row.verification_status ?? "unverified";
-      if (!allowed) {
-        // Minimal stub — name + avatar only, no revealed questionnaire.
-        return {
-          id: row.id,
-          name: row.name,
-          avatar_url: row.avatar_url,
-          reveal: {},
-          canView: false,
-          verification_status,
-        };
-      }
+      const reveal = (revealRow as { reveal?: SponsorReveal | null } | null)?.reveal || {};
       return {
         id: row.id,
         name: row.name,
         avatar_url: row.avatar_url,
-        reveal: row.sponsor_reveal || {},
-        canView: true,
-        verification_status,
+        // Nothing to show without a grant: RLS already returned no row.
+        reveal: allowed ? reveal : {},
+        canView: allowed,
+        verification_status: row.verification_status ?? "unverified",
       };
     },
     [canView]
@@ -186,19 +188,21 @@ export const useSponsorReveal = () => {
       return;
     }
     supabase
-      .from("profiles")
-      .select("sponsor_reveal")
-      .eq("id", user.id)
+      .from("profile_sponsor_reveal")
+      .select("reveal")
+      .eq("profile_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
-        if (data) setReveal((data as { sponsor_reveal?: SponsorReveal | null }).sponsor_reveal || {});
+        if (data) setReveal((data as { reveal?: SponsorReveal | null }).reveal || {});
         setLoading(false);
       });
   }, [user]);
 
   const save = async (next: SponsorReveal) => {
     if (!user) return { error: "Not authenticated" as const };
-    const { error } = await supabase.from("profiles").update({ sponsor_reveal: next }).eq("id", user.id);
+    const { error } = await supabase
+      .from("profile_sponsor_reveal")
+      .upsert({ profile_id: user.id, reveal: next, updated_at: new Date().toISOString() });
     if (!error) setReveal(next);
     return { error };
   };

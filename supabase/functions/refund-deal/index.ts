@@ -99,7 +99,7 @@ serve(async (req) => {
     const { data: deal } = await supabase
       .from("deals")
       .select(
-        "id, sponsor_id, status, payment_processor, stripe_payment_intent_id, paypal_capture_id, adyen_psp_reference, dlocal_payment_id, amount_cents, escrow_released_at, refunded_at, created_at, updated_at"
+        "id, sponsor_id, status, payment_processor, stripe_payment_intent_id, stripe_transfer_id, paypal_capture_id, adyen_psp_reference, dlocal_payment_id, amount_cents, escrow_released_at, refunded_at, created_at, updated_at"
       )
       .eq("id", dealId)
       .maybeSingle();
@@ -128,22 +128,36 @@ serve(async (req) => {
         headers: { ...headers, "Content-Type": "application/json" },
       });
     }
-    if (deal.escrow_released_at) {
+    // После релиза деньги уже у получателя. Спонсор вернуть их не может; админ
+    // может — по решению спора, отозвав transfer обратно на платформу.
+    // Отзыв возможен только если у получателя хватает баланса (иначе Stripe
+    // вернёт ошибку — это нормально, средства взыскиваются вне платформы).
+    const afterRelease = !!deal.escrow_released_at;
+    if (afterRelease && !isAdmin) {
       return new Response(JSON.stringify({ error: "escrow already released" }), {
         status: 409,
         headers: { ...headers, "Content-Type": "application/json" },
       });
     }
+    if (afterRelease && (deal.payment_processor || "stripe") !== "stripe") {
+      return new Response(
+        JSON.stringify({ error: "post-release refund supported only for stripe deals" }),
+        { status: 501, headers: { ...headers, "Content-Type": "application/json" } }
+      );
+    }
 
     // Атомарный claim рефанда: условный update закрывает гонку с release-escrow
     // и параллельными refund'ами. При ошибке процессора claim откатывается.
-    const { data: claimed } = await supabase
+    // Админский пост-релизный возврат условие по escrow_released_at не ставит:
+    // релиз там уже состоялся и является нормой, а не гонкой.
+    const claimQuery = supabase
       .from("deals")
       .update({ refunded_at: new Date().toISOString() })
       .eq("id", dealId)
-      .is("refunded_at", null)
-      .is("escrow_released_at", null)
-      .select("id");
+      .is("refunded_at", null);
+    const { data: claimed } = await (afterRelease
+      ? claimQuery.select("id")
+      : claimQuery.is("escrow_released_at", null).select("id"));
     if (!claimed?.length) {
       return new Response(JSON.stringify({ error: "refund already in progress or escrow released" }), {
         status: 409,
@@ -172,15 +186,45 @@ serve(async (req) => {
       if (!deal.stripe_payment_intent_id) { await rollbackClaim(); throw new Error("no PI on deal"); }
       let refund;
       try {
-        refund = await stripe.refunds.create({
-          payment_intent: deal.stripe_payment_intent_id,
-          reason: "requested_by_customer",
-          // Destination charge: без reverse_transfer возврат уходил бы из баланса
-          // платформы, а transfer оставался у получателя.
-          reverse_transfer: true,
-          refund_application_fee: true,
-          metadata: { deal_id: dealId, initiated_by: user.id, refund_reason: reason || "" },
+        // Способ возврата зависит от того, ушли ли деньги получателю.
+        // Новый поток (separate charges & transfers): до релиза средства на
+        // балансе платформы, transfer'а нет — обычный refund. Легаси
+        // destination charge: нужен reverse_transfer, иначе возврат оплатила бы
+        // платформа, а перевод остался бы у получателя.
+        const pi = await stripe.paymentIntents.retrieve(deal.stripe_payment_intent_id, {
+          expand: ["latest_charge"],
         });
+        const charge = pi.latest_charge as Stripe.Charge | null;
+        const chargeTransfer = charge?.transfer as string | Stripe.Transfer | null;
+        const hasTransfer = !!chargeTransfer;
+
+        if (afterRelease) {
+          // Деньги уже переведены получателю отдельным transfer'ом — отзываем
+          // его обратно на платформу, иначе возврат спонсору оплатит платформа.
+          // Легаси destination charge отзывать не нужно: там reverse_transfer
+          // ниже сделает это в рамках самого refund'а.
+          const releasedTransferId =
+            (deal as { stripe_transfer_id?: string | null }).stripe_transfer_id || null;
+          if (!hasTransfer && releasedTransferId) {
+            await stripe.transfers.createReversal(
+              releasedTransferId,
+              {
+                refund_application_fee: false,
+                metadata: { deal_id: dealId, reversed_by: user.id },
+              },
+              { idempotencyKey: `reverse_deal_${dealId}` }
+            );
+          }
+        }
+        refund = await stripe.refunds.create(
+          {
+            payment_intent: deal.stripe_payment_intent_id,
+            reason: "requested_by_customer",
+            ...(hasTransfer ? { reverse_transfer: true, refund_application_fee: true } : {}),
+            metadata: { deal_id: dealId, initiated_by: user.id, refund_reason: reason || "" },
+          },
+          { idempotencyKey: `refund_deal_${dealId}` }
+        );
       } catch (e) {
         await rollbackClaim();
         throw e;

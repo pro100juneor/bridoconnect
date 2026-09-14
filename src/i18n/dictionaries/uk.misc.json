@@ -1,0 +1,40 @@
+{
+  "chats.title": "Повідомлення",
+  "chats.searchPlaceholder": "Пошук чатів…",
+  "chats.notFound": "Нічого не знайдено",
+  "chats.empty": "Повідомлень ще немає.\nЗнайдіть людину і напишіть їй.",
+  "chats.yesterday": "Вчора",
+  "chats.dealFallback": "Деал: {title}",
+
+  "notifications.title": "Сповіщення",
+  "notifications.markAllRead": "Всі прочитано",
+  "notifications.emptyTitle": "Сповіщень немає",
+  "notifications.emptyLine1": "Тут з'являться сповіщення про угоди,",
+  "notifications.emptyLine2": "повідомлення та донати.",
+  "notifications.unreadAria": "Непрочитано",
+
+  "search.title": "Пошук",
+  "search.placeholder": "Ім'я, місто, потреба…",
+  "search.filtersAria": "Фільтри",
+  "search.hint": "Введіть ім'я або місто",
+  "search.notFound": "Нічого не знайдено",
+  "search.profile": "Профіль",
+  "search.deals": "{n} угод",
+
+  "wishlist.title": "Обрані",
+  "wishlist.searchAria": "Пошук",
+  "wishlist.emptyTitle": "Список порожній",
+  "wishlist.emptyLine1": "Додавайте людей в обрані щоб швидко знаходити",
+  "wishlist.emptyLine2": "їх і допомагати.",
+  "wishlist.findPeople": "Знайти людей →",
+  "wishlist.removed": "Видалено з обраних",
+  "wishlist.error": "Помилка",
+  "wishlist.messageAria": "Написати",
+  "wishlist.removeAria": "Видалити з обраних",
+  "wishlist.deals": "{n} угод",
+
+  "promo.badge": "Промо",
+  "promo.cardAria": "Промо: {name}",
+  "promo.slidesAria": "Промо-слайди",
+  "promo.slideAria": "Слайд {n}"
+}

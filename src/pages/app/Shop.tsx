@@ -1,21 +1,31 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ShoppingBag, Star, Heart, Plus, ShoppingCart, Palette } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { PullToRefresh } from "@/components/PullToRefresh";
-import { tap } from "@/lib/native";
+import { tap, notify } from "@/lib/native";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const cats = ["Всі", "Їжа", "Одяг", "Ліки", "Освіта", "Побут", "Зв'язок"];
 
 const flagFor = (country?: string | null) => (country === "Україна" ? "🇺🇦" : "🏳️");
 
+// Вебхук Stripe пише ордер асинхронно — даємо йому трохи часу, перш ніж
+// сказати користувачу, що замовлення оформлено.
+const ORDER_POLL_ATTEMPTS = 6;
+const ORDER_POLL_DELAY_MS = 1500;
+
 const Shop = () => {
   const navigate = useNavigate();
   const { listProducts } = useProducts();
-  const { items } = useCart();
+  const { items, finishCheckout } = useCart();
   const { convert } = useCurrency();
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [active, setActive] = useState("Всі");
   const [liked, setLiked] = useState<string[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,6 +42,54 @@ const Shop = () => {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // ── Повернення зі Stripe Checkout: success_url = /app/shop?success=true.
+  // Stripe редіректить сюди лише після успішної оплати сесії — тут і тільки
+  // тут прибираємо оплачені позиції з кошика. Раніше кошик лишався повним
+  // після покупки, і той самий товар можна було оплатити вдруге.
+  const successHandled = useRef(false);
+  useEffect(() => {
+    if (searchParams.get("success") !== "true" || successHandled.current) return;
+    successHandled.current = true;
+
+    const paid = finishCheckout();
+    // Прибираємо ?success=true, щоб reload не проганяв обробку повторно.
+    const next = new URLSearchParams(searchParams);
+    next.delete("success");
+    setSearchParams(next, { replace: true });
+    if (!paid) return;
+
+    void notify("success");
+    void load(); // stock змінився після оплати
+
+    // Ордер пише вебхук (клієнт у orders не пише зовсім) — дочікуємось запису,
+    // щоб текст був чесним: «оформлено» vs «ще обробляється».
+    void (async () => {
+      if (!user) return;
+      const since = new Date(paid.startedAt - 5 * 60_000).toISOString();
+      for (let attempt = 0; attempt < ORDER_POLL_ATTEMPTS; attempt++) {
+        const { data } = await supabase
+          .from("orders")
+          .select("id")
+          .eq("buyer_id", user.id)
+          .eq("status", "paid")
+          .gte("created_at", since)
+          .limit(1);
+        if (data && data.length > 0) {
+          toast({
+            title: "Оплату отримано",
+            description: "Замовлення оформлено, продавець отримав сповіщення.",
+          });
+          return;
+        }
+        await new Promise((r) => setTimeout(r, ORDER_POLL_DELAY_MS));
+      }
+      toast({
+        title: "Оплату отримано",
+        description: "Замовлення ще обробляється — воно з'явиться за хвилину.",
+      });
+    })();
+  }, [searchParams, setSearchParams, finishCheckout, load, user]);
 
   const filtered = active === "Всі" ? products : products.filter((p) => p.category === active);
 

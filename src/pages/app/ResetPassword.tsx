@@ -6,9 +6,11 @@ import { ArrowLeft, Mail, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { tap, notify } from "@/lib/native";
+import { useT } from "@/i18n/useT";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
+  const { t } = useT();
   const reduced = useReducedMotion();
   const [step, setStep] = useState<"email" | "sent">("email");
   const [email, setEmail] = useState("");
@@ -24,7 +26,11 @@ const ResetPassword = () => {
     setLoading(false);
     if (error) {
       void notify("error");
-      toast({ title: "Помилка", description: error.message, variant: "destructive" });
+      toast({
+        title: t("auth.reset.error.title", "Помилка"),
+        description: error.message,
+        variant: "destructive",
+      });
     } else {
       void notify("success");
       setStep("sent");
@@ -42,24 +48,28 @@ const ResetPassword = () => {
         >
           <Mail className="w-8 h-8 text-primary" strokeWidth={1.75} />
         </motion.div>
-        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-2 animate-fade-in">Перевірте пошту</h1>
-        <p className="text-muted-foreground text-sm mb-2 leading-relaxed">Ми надіслали посилання відновлення на:</p>
+        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-2 animate-fade-in">
+          {t("auth.reset.sent.title", "Перевірте пошту")}
+        </h1>
+        <p className="text-muted-foreground text-sm mb-2 leading-relaxed">
+          {t("auth.reset.sent.desc", "Ми надіслали посилання відновлення на:")}
+        </p>
         <p className="font-semibold text-foreground mb-6">{email}</p>
         <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
-          Не отримали? Перевірте папку Спам або спробуйте знову.
+          {t("auth.reset.sent.hint", "Не отримали? Перевірте папку Спам або спробуйте знову.")}
         </p>
         <Button
           variant="outline"
           className="w-full max-w-xs mb-3 min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
           onClick={() => setStep("email")}
         >
-          Надіслати знову
+          {t("auth.reset.sent.resend", "Надіслати знову")}
         </Button>
         <button
           className="text-sm text-accent font-medium min-h-[44px] px-2"
           onClick={() => navigate("/auth")}
         >
-          Повернутись до входу
+          {t("auth.reset.backToLogin", "Повернутись до входу")}
         </button>
       </main>
     );
@@ -70,21 +80,25 @@ const ResetPassword = () => {
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 text-muted-foreground mb-8 self-start min-h-[44px]"
-        aria-label="Назад"
+        aria-label={t("auth.reset.back", "Назад")}
       >
-        <ArrowLeft className="w-4 h-4" strokeWidth={1.75} /> Назад
+        <ArrowLeft className="w-4 h-4" strokeWidth={1.75} /> {t("auth.reset.back", "Назад")}
       </button>
       <div className="flex items-center gap-3 mb-2">
         <KeyRound className="w-7 h-7 text-accent" strokeWidth={1.75} />
-        <h1 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">Відновлення пароля</h1>
+        <h1 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">
+          {t("auth.reset.title", "Відновлення пароля")}
+        </h1>
       </div>
       <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
-        Введіть email вашого акаунту і ми надішлемо посилання для відновлення.
+        {t("auth.reset.desc", "Введіть email вашого акаунту і ми надішлемо посилання для відновлення.")}
       </p>
 
       <form onSubmit={handleReset} className="space-y-4">
         <div>
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Email</label>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+            {t("auth.reset.email", "Email")}
+          </label>
           <input
             type="email"
             value={email}
@@ -104,16 +118,16 @@ const ResetPassword = () => {
               animate={reduced ? {} : { opacity: [1, 0.4, 1] }}
               transition={{ repeat: Infinity, duration: 0.9 }}
             >
-              Надсилаємо…
+              {t("auth.reset.submitting", "Надсилаємо…")}
             </motion.span>
-          ) : "Надіслати посилання"}
+          ) : t("auth.reset.submit", "Надіслати посилання")}
         </Button>
         <button
           type="button"
           className="w-full text-sm text-muted-foreground text-center min-h-[44px]"
           onClick={() => navigate("/auth")}
         >
-          Повернутись до входу
+          {t("auth.reset.backToLogin", "Повернутись до входу")}
         </button>
       </form>
     </main>

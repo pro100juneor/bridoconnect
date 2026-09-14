@@ -584,7 +584,7 @@ const RecipientPageEditor = () => {
                   </p>
                   {item.product && (
                     <p className="text-xs font-semibold text-accent mt-0.5">
-                      {convert(item.product.price_cents).formatted}
+                      {convert(item.product.price_cents, item.product.currency).formatted}
                     </p>
                   )}
                 </div>
@@ -638,7 +638,7 @@ const RecipientPageEditor = () => {
                     <div className="p-2">
                       <p className="text-xs font-medium text-foreground line-clamp-2">{p.title}</p>
                       <p className="text-xs font-semibold text-accent mt-0.5">
-                        {convert(p.price_cents).formatted}
+                        {convert(p.price_cents, p.currency).formatted}
                       </p>
                     </div>
                   </button>

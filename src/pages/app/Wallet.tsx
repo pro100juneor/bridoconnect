@@ -1,21 +1,15 @@
-import { useState } from "react";
 import {
   ArrowUpRight,
   ArrowDownLeft,
-  Plus,
   TrendingUp,
-  X,
   RefreshCw,
   Wallet as WalletIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Drawer } from "vaul";
 import { Button } from "@/components/ui/button";
+import { tap } from "@/lib/native";
 import { useTransactions } from "@/hooks/useTransactions";
-import { useStripe } from "@/hooks/useStripe";
 import { useT } from "@/i18n/useT";
-import { toast } from "@/hooks/use-toast";
-import { tap, notify } from "@/lib/native";
 
 const TYPE_LABEL: Record<string, string> = {
   deposit: "Поповнення",
@@ -24,46 +18,12 @@ const TYPE_LABEL: Record<string, string> = {
   refund: "Повернення",
 };
 
-const QUICK_AMOUNTS = [10, 25, 50, 100, 250];
-
 const Wallet = () => {
   const navigate = useNavigate();
   const { t } = useT();
   const { transactions, balance, loading, refetch } = useTransactions();
-  const { createCheckout } = useStripe();
 
-  const [depositOpen, setDepositOpen] = useState(false);
-  const [depositAmount, setDepositAmount] = useState("50");
-  const [depositing, setDepositing] = useState(false);
 
-  const handleDeposit = async () => {
-    const n = Number(depositAmount);
-    if (!n || n < 1) {
-      toast({
-        title: "Некоректна сума",
-        description: "Мінімум €1",
-        variant: "destructive",
-      });
-      return;
-    }
-    setDepositing(true);
-    void tap("medium");
-    try {
-      void notify("success");
-      await createCheckout({ amount: n });
-      // Stripe checkout робить редирект всередині createCheckout
-    } catch (e) {
-      void notify("error");
-      toast({
-        title: "Stripe не підключено",
-        description:
-          (e instanceof Error && e.message) ||
-          "Платежі буде активовано після підключення Stripe. Зверніться до адміністратора.",
-        variant: "destructive",
-      });
-      setDepositing(false);
-    }
-  };
 
   const totalOut = transactions
     .filter((t) => t.type === "deal_payment" || t.type === "withdrawal")
@@ -82,16 +42,11 @@ const Wallet = () => {
           <p className="text-4xl font-bold">€{balance.toFixed(2)}</p>
           <p className="text-white/40 text-xs mt-1">≈ ${(balance * 1.09).toFixed(0)} USD</p>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setDepositOpen(true)}
-            className="flex flex-col gap-1 h-14 bg-white/10 hover:bg-white/20 text-white border-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="text-xs">{t("wallet.topup")}</span>
-          </Button>
+        {/* Пополнение кошелька скрыто намеренно: вывод и расход баланса не
+            реализованы, поэтому пополнение было бы дорогой в один конец.
+            Возвращать кнопку — только вместе с выводом средств (см.
+            KNOWN_ISSUES.md). Экран остаётся историей операций по сделкам. */}
+        <div className="grid grid-cols-1">
           <Button
             variant="secondary"
             size="sm"
@@ -195,62 +150,6 @@ const Wallet = () => {
         </div>
       </div>
 
-      {/* Deposit — vaul drawer with native drag-to-dismiss */}
-      <Drawer.Root open={depositOpen} onOpenChange={(o) => !depositing && setDepositOpen(o)}>
-        <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 bg-black/50 z-50" />
-          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-[20px] outline-none">
-            <div className="mx-auto w-12 h-1.5 rounded-full bg-muted my-3" />
-            <div className="p-6 pt-2">
-              <div className="flex items-center justify-between mb-4">
-                <Drawer.Title className="font-serif text-xl text-foreground">Поповнити гаманець</Drawer.Title>
-                <button
-                  onClick={() => !depositing && setDepositOpen(false)}
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center"
-                  aria-label="Закрити"
-                >
-                  <X className="w-5 h-5 text-muted-foreground" strokeWidth={1.75} />
-                </button>
-              </div>
-              <div className="grid grid-cols-5 gap-2 mb-4">
-                {QUICK_AMOUNTS.map((a) => (
-                  <button
-                    key={a}
-                    onClick={() => setDepositAmount(String(a))}
-                    className={`min-h-[44px] py-2 rounded-xl text-sm font-semibold border transition-all duration-150 hover:-translate-y-px ${
-                      depositAmount === String(a)
-                        ? "bg-accent text-white border-accent"
-                        : "border-border text-foreground"
-                    }`}
-                  >
-                    €{a}
-                  </button>
-                ))}
-              </div>
-              <div className="mb-4">
-                <label className="text-xs text-muted-foreground mb-1 block">Сума (EUR)</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  className="w-full bg-secondary rounded-xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
-                />
-              </div>
-              <Button
-                onClick={handleDeposit}
-                disabled={depositing || !depositAmount}
-                className="w-full bg-accent hover:bg-accent/90 text-white transition-transform duration-150 hover:-translate-y-px"
-              >
-                {depositing ? "Відкриваємо оплату…" : `Поповнити на €${depositAmount || "0"}`}
-              </Button>
-              <p className="text-[10px] text-muted-foreground text-center mt-3">
-                Оплата обробляється через Stripe · Захищено SSL
-              </p>
-            </div>
-          </Drawer.Content>
-        </Drawer.Portal>
-      </Drawer.Root>
     </div>
   );
 };

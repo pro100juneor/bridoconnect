@@ -256,6 +256,33 @@ serve(async (req) => {
         );
       }
 
+      // Резервируем каждую позицию ДО создания сессии: сток списывается здесь,
+      // а не в вебхуке, иначе двое покупателей успевали оплатить последний
+      // экземпляр. Если хоть одна позиция не зарезервировалась — откатываем всё.
+      const reservationIds: string[] = [];
+      for (const p of products) {
+        const { data: rid } = await supabase.rpc("reserve_stock", {
+          p_product_id: p.id,
+          p_buyer_id: user.id,
+          p_ttl_minutes: 30,
+        });
+        if (!rid) {
+          for (const done of reservationIds) {
+            await supabase.rpc("release_reservation", { p_reservation_id: done });
+          }
+          return new Response(
+            JSON.stringify({ error: "product unavailable", productId: p.id }),
+            { status: 409, headers: { ...headers, "Content-Type": "application/json" } }
+          );
+        }
+        reservationIds.push(rid as string);
+      }
+      const releaseAll = async () => {
+        for (const rid of reservationIds) {
+          await supabase.rpc("release_reservation", { p_reservation_id: rid });
+        }
+      };
+
       const line_items = products.map((p) => ({
         price_data: {
           currency: cur.code,
@@ -268,10 +295,12 @@ serve(async (req) => {
       const feeCents = Math.round((totalCents * PLATFORM_FEE_BPS) / 10_000);
       const idsJson = JSON.stringify(products.map((p) => p.id));
 
-      session = await stripe.checkout.sessions.create({
+      try {
+        session = await stripe.checkout.sessions.create({
         mode: "payment",
         payment_method_types: ["card"],
         line_items,
+        expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
         success_url: `${origin}/app/shop?success=true`,
         cancel_url: `${origin}/app/cart`,
         metadata: {
@@ -282,6 +311,7 @@ serve(async (req) => {
           recipient_id: sellerId,
           currency: cur.code,
           platform_fee_cents: String(feeCents),
+          reservationIds: JSON.stringify(reservationIds),
         },
         payment_intent_data: {
           application_fee_amount: feeCents,
@@ -293,7 +323,16 @@ serve(async (req) => {
             platform_fee_cents: String(feeCents),
           },
         },
-      });
+        });
+      } catch (e) {
+        // Сессия не создалась — резерв держать не за что, возвращаем товар.
+        await releaseAll();
+        throw e;
+      }
+      await supabase
+        .from("product_reservations")
+        .update({ stripe_session_id: session.id })
+        .in("id", reservationIds);
     } else if (productId) {
       // Product purchase: amount comes from the product's DB price (never the
       // client body) — this prevents a caller from paying an arbitrary amount.
@@ -337,44 +376,68 @@ serve(async (req) => {
       const unitCents = Math.round(product.price_cents * cur.rate);
       const feeCents = Math.round((unitCents * PLATFORM_FEE_BPS) / 10_000);
 
-      session = await stripe.checkout.sessions.create({
-        mode: "payment",
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price_data: {
-              currency: cur.code,
-              product_data: {
-                name: product.title,
-                description: `Товар BridoConnect`,
-              },
-              unit_amount: unitCents,
-            },
-            quantity: 1,
-          },
-        ],
-        success_url: `${origin}/app/shop/${productId}?success=true`,
-        cancel_url: `${origin}/app/shop/${productId}`,
-        metadata: {
-          productId,
-          seller_id: product.seller_id,
-          type: "product_purchase",
-          user_id: user.id,
-          recipient_id: product.seller_id,
-          currency: cur.code,
-          platform_fee_cents: String(feeCents),
-        },
-        payment_intent_data: {
-          application_fee_amount: feeCents,
-          transfer_data: { destination: seller.stripe_connect_account_id },
-          metadata: {
-            product_id: productId,
-            seller_id: product.seller_id,
-            buyer_id: user.id,
-            platform_fee_cents: String(feeCents),
-          },
-        },
+      // Резервация до оплаты — защита от продажи одного экземпляра дважды.
+      const { data: reservationId } = await supabase.rpc("reserve_stock", {
+        p_product_id: productId,
+        p_buyer_id: user.id,
+        p_ttl_minutes: 30,
       });
+      if (!reservationId) {
+        return new Response(JSON.stringify({ error: "product unavailable" }), {
+          status: 409,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+
+      try {
+        session = await stripe.checkout.sessions.create({
+          mode: "payment",
+          payment_method_types: ["card"],
+          line_items: [
+            {
+              price_data: {
+                currency: cur.code,
+                product_data: {
+                  name: product.title,
+                  description: `Товар BridoConnect`,
+                },
+                unit_amount: unitCents,
+              },
+              quantity: 1,
+            },
+          ],
+          expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
+          success_url: `${origin}/app/shop/${productId}?success=true`,
+          cancel_url: `${origin}/app/shop/${productId}`,
+          metadata: {
+            productId,
+            seller_id: product.seller_id,
+            type: "product_purchase",
+            user_id: user.id,
+            recipient_id: product.seller_id,
+            currency: cur.code,
+            platform_fee_cents: String(feeCents),
+            reservationIds: JSON.stringify([reservationId]),
+          },
+          payment_intent_data: {
+            application_fee_amount: feeCents,
+            transfer_data: { destination: seller.stripe_connect_account_id },
+            metadata: {
+              product_id: productId,
+              seller_id: product.seller_id,
+              buyer_id: user.id,
+              platform_fee_cents: String(feeCents),
+            },
+          },
+        });
+      } catch (e) {
+        await supabase.rpc("release_reservation", { p_reservation_id: reservationId });
+        throw e;
+      }
+      await supabase
+        .from("product_reservations")
+        .update({ stripe_session_id: session.id })
+        .eq("id", reservationId);
     } else {
       const amt = Number(amount);
       if (!Number.isFinite(amt) || amt < MIN_EUR || amt > MAX_EUR) {
@@ -468,18 +531,22 @@ serve(async (req) => {
           );
         }
         dealRow = { id: deal.id, creator_id: deal.creator_id };
+        // НАСТОЯЩИЙ ЭСКРОУ (separate charges & transfers): деньги остаются на
+        // балансе платформы до release-escrow, и только тогда уходят получателю
+        // отдельным transfer'ом. Раньше здесь был destination charge — средства
+        // доставались получателю сразу при capture, и «релиз» был лишь пометкой
+        // в БД. Проверку онбординга оставляем здесь: бессмысленно принимать
+        // деньги, если потом их некому будет перевести.
+        // transfer_group связывает charge и будущий transfer в отчётности Stripe.
         connectArgs = {
           payment_intent_data: {
-            application_fee_amount: feeCents,
-            transfer_data: { destination: recipient.stripe_connect_account_id },
-            // Don't auto-capture transfer: keep funds in platform until release_escrow.
-            // (Stripe destination charges actually transfer at capture; we use
-            //  on_behalf_of=false to keep the platform as merchant of record.)
+            transfer_group: `deal_${dealId}`,
             metadata: {
               deal_id: dealId,
               recipient_id: deal.creator_id,
               sponsor_id: user.id,
               platform_fee_cents: String(feeCents),
+              escrow: "separate_transfer",
             },
           },
         };

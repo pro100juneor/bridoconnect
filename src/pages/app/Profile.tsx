@@ -284,34 +284,39 @@ const CryptoCard = ({ userId }: { userId: string | undefined }) => {
   const [addrBtc, setAddrBtc] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Адреса живуть у закритій таблиці profile_crypto_addresses (міграція 038):
+  // у profiles лишився тільки публічний прапорець crypto_enabled.
   useEffect(() => {
     if (!userId) return;
-    supabase
-      .from("profiles")
-      .select("crypto_enabled, crypto_addresses")
-      .eq("id", userId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setEnabled(!!(data as { crypto_enabled?: boolean }).crypto_enabled);
-          const addrs =
-            (data as { crypto_addresses?: { usdt_trc20?: string; btc_ln?: string } }).crypto_addresses || {};
-          setAddrUsdt(addrs.usdt_trc20 || "");
-          setAddrBtc(addrs.btc_ln || "");
-        }
-      });
+    void (async () => {
+      const [{ data: prof }, { data: addr }] = await Promise.all([
+        supabase.from("profiles").select("crypto_enabled").eq("id", userId).maybeSingle(),
+        supabase
+          .from("profile_crypto_addresses")
+          .select("usdt_trc20, btc_ln")
+          .eq("profile_id", userId)
+          .maybeSingle(),
+      ]);
+      if (prof) setEnabled(!!(prof as { crypto_enabled?: boolean }).crypto_enabled);
+      const row = addr as { usdt_trc20?: string | null; btc_ln?: string | null } | null;
+      setAddrUsdt(row?.usdt_trc20 || "");
+      setAddrBtc(row?.btc_ln || "");
+    })();
   }, [userId]);
 
   const save = async () => {
     if (!userId) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        crypto_enabled: !enabled,
-        crypto_addresses: { usdt_trc20: addrUsdt.trim() || null, btc_ln: addrBtc.trim() || null },
-      })
-      .eq("id", userId);
+    const addrRes = await supabase.from("profile_crypto_addresses").upsert({
+      profile_id: userId,
+      usdt_trc20: addrUsdt.trim() || null,
+      btc_ln: addrBtc.trim() || null,
+      updated_at: new Date().toISOString(),
+    });
+    const flagRes = addrRes.error
+      ? null
+      : await supabase.from("profiles").update({ crypto_enabled: !enabled }).eq("id", userId);
+    const error = addrRes.error ?? flagRes?.error ?? null;
     setSaving(false);
     if (error) {
       toast({ title: "Crypto", description: error.message, variant: "destructive" });

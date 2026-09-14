@@ -1,49 +1,51 @@
-import { useEffect, useState } from "react";
-import uk from "./dictionaries/uk.json";
-import en from "./dictionaries/en.json";
-import de from "./dictionaries/de.json";
+import { useCallback, useContext, useSyncExternalStore } from "react";
+import { DICTS } from "./dictionaries";
+import { LocaleContext } from "./LocaleProvider";
+import {
+  LOCALE_TAG,
+  getLocale,
+  getServerLocale,
+  setLocale as setLocaleGlobal,
+  subscribeLocale,
+  type Locale,
+} from "./locales";
 
-export type Locale = "uk" | "en" | "de";
+export type { Locale };
+export { LOCALES, LOCALE_TAG } from "./locales";
 
-const DICTS: Record<Locale, Record<string, string>> = { uk, en, de };
-const STORAGE_KEY = "brido_locale";
+export type TranslateVars = Record<string, string | number>;
 
-function detectLocale(): Locale {
-  if (typeof window === "undefined") return "uk";
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (stored === "uk" || stored === "en" || stored === "de") return stored;
-  const browser = (navigator.language || "uk").slice(0, 2).toLowerCase();
-  if (browser === "en") return "en";
-  if (browser === "de") return "de";
-  return "uk";
+/** Підстановка {name} у рядок словника. */
+function interpolate(template: string, vars?: TranslateVars): string {
+  if (!vars) return template;
+  return template.replace(/\{(\w+)\}/g, (match, key: string) =>
+    key in vars ? String(vars[key]) : match
+  );
 }
 
+export type TFunction = (key: string, fallback?: string, vars?: TranslateVars) => string;
+
 /**
- * Lightweight i18n hook — JSON dictionaries, no heavy runtime.
- * Returns t(key, fallback?) and current locale + setter.
+ * Легкий i18n-хук — JSON-словники, без важкого рантайму.
+ * Повертає t(key, fallback?, vars?), поточну локаль і сеттер.
  *
- * Migration path: components currently use hardcoded Ukrainian strings.
- * Replace gradually: <p>Допоміг</p> → <p>{t("profile.helped")}</p>.
+ * Реактивність: локаль живе в модульному store (i18n/locales.ts), компонент
+ * підписується на неї через useSyncExternalStore. Перемикання мови одразу
+ * перемальовує всі відкриті екрани — перезавантаження не потрібне.
+ *
+ * Fallback: якщо ключа немає в словнику — береться fallback, інакше сам ключ.
+ * Тому міграцію можна робити поступово: <p>Допоміг</p> → <p>{t("profile.helped", "Допоміг")}</p>.
  */
 export const useT = () => {
-  const [locale, setLocaleState] = useState<Locale>(() => detectLocale());
+  const ctx = useContext(LocaleContext);
+  const storeLocale = useSyncExternalStore(subscribeLocale, getLocale, getServerLocale);
+  const locale = ctx?.locale ?? storeLocale;
+  const setLocale = ctx?.setLocale ?? setLocaleGlobal;
 
-  useEffect(() => {
-    if (typeof document !== "undefined") {
-      document.documentElement.lang = locale;
-    }
-  }, [locale]);
+  const t = useCallback<TFunction>(
+    (key, fallback, vars) => interpolate(DICTS[locale]?.[key] ?? fallback ?? key, vars),
+    [locale]
+  );
 
-  const setLocale = (l: Locale) => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, l);
-    }
-    setLocaleState(l);
-  };
-
-  const t = (key: string, fallback?: string): string => {
-    return DICTS[locale][key] ?? fallback ?? key;
-  };
-
-  return { t, locale, setLocale };
+  return { t, locale, setLocale, localeTag: LOCALE_TAG[locale] };
 };

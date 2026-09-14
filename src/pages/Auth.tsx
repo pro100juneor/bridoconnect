@@ -23,15 +23,21 @@ const Auth = () => {
     if (error) {
       void notify("error");
       toast({
-        title: "Помилка входу",
+        title: t("auth.login.error.title", "Помилка входу"),
         description:
-          error.message === "Invalid login credentials" ? "Невірний email або пароль" : error.message,
+          // Сообщение от Supabase приходит на английском — переводим только известный кейс.
+          error.message === "Invalid login credentials"
+            ? t("auth.login.error.invalidCredentials", "Невірний email або пароль")
+            : error.message,
         variant: "destructive",
       });
     } else {
       void tap("medium");
       void notify("success");
-      toast({ title: "Вітаємо! 👋", description: "Ви успішно увійшли в BridoConnect" });
+      toast({
+        title: t("auth.login.success.title", "Вітаємо! 👋"),
+        description: t("auth.login.success.desc", "Ви успішно увійшли в BridoConnect"),
+      });
       navigate("/app");
     }
   };
@@ -43,8 +49,11 @@ const Auth = () => {
     });
     if (error) {
       toast({
-        title: "Google OAuth не налаштовано",
-        description: "Адміністратор скоро це підключить. Поки що увійдіть через email.",
+        title: t("auth.google.notConfigured.title", "Google OAuth не налаштовано"),
+        description: t(
+          "auth.google.notConfigured.login",
+          "Адміністратор скоро це підключить. Поки що увійдіть через email."
+        ),
         variant: "destructive",
       });
     }
@@ -56,7 +65,9 @@ const Auth = () => {
         <h1 className="font-serif text-[38px] tracking-tight font-semibold text-foreground mb-2 animate-fade-in">
           {t("auth.login.title")}
         </h1>
-        <p className="text-muted-foreground text-sm leading-relaxed">Увійдіть до BridoConnect</p>
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          {t("auth.login.subtitle", "Увійдіть до BridoConnect")}
+        </p>
       </div>
 
       <form onSubmit={handleLogin} className="space-y-4">
@@ -86,7 +97,7 @@ const Auth = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="Ваш пароль"
+              placeholder={t("auth.login.passwordPlaceholder", "Ваш пароль")}
               autoComplete="current-password"
               data-testid="login-password"
               className="w-full bg-secondary rounded-xl px-4 py-3 pr-12 text-sm outline-none text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent/30"
@@ -94,7 +105,11 @@ const Auth = () => {
             <button
               type="button"
               onClick={() => setShowPass((s) => !s)}
-              aria-label={showPass ? "Сховати пароль" : "Показати пароль"}
+              aria-label={
+                showPass
+                  ? t("auth.password.hide", "Сховати пароль")
+                  : t("auth.password.show", "Показати пароль")
+              }
               className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground min-h-[44px] w-[44px] flex items-center justify-center"
             >
               {showPass ? (
@@ -128,7 +143,7 @@ const Auth = () => {
           ) : (
             <LogIn className="w-4 h-4" strokeWidth={1.75} />
           )}
-          {loading ? "Входимо…" : t("auth.login.submit")}
+          {loading ? t("auth.login.submitting", "Входимо…") : t("auth.login.submit")}
         </Button>
       </form>
 
@@ -145,7 +160,7 @@ const Auth = () => {
         <div className="mt-6">
           <div className="relative flex items-center gap-3 mb-4">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-muted-foreground">або</span>
+            <span className="text-xs text-muted-foreground">{t("auth.or", "або")}</span>
             <div className="flex-1 h-px bg-border" />
           </div>
           <Button
@@ -171,7 +186,7 @@ const Auth = () => {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Увійти через Google
+            {t("auth.login.google", "Увійти через Google")}
           </Button>
         </div>
       )}

@@ -1,0 +1,34 @@
+{
+  "nav.feed": "Feed",
+  "nav.live": "Live",
+  "nav.shop": "Shop",
+  "nav.profile": "Profil",
+  "nav.create": "Anfrage erstellen",
+  "nav.skipToContent": "Zum Hauptinhalt springen",
+
+  "settings.language": "Sprache",
+  "settings.currency": "Währung / Region",
+
+  "currency.eur": "Euro",
+  "currency.usd": "Dollar",
+  "currency.uah": "Hrywnja",
+  "currency.pln": "Zloty",
+  "currency.gbp": "Pfund",
+  "currency.czk": "Krone",
+  "currency.rateMissing": "Kurse noch nicht geladen — Beträge werden in ihrer Originalwährung angezeigt",
+
+  "common.save": "Speichern",
+  "common.saving": "Wird gespeichert…",
+  "common.delete": "Löschen",
+  "common.edit": "Bearbeiten",
+  "common.close": "Schließen",
+  "common.search": "Suche",
+  "common.retry": "Erneut versuchen",
+  "common.error": "Etwas ist schiefgelaufen",
+  "common.empty": "Nichts vorhanden",
+  "common.user": "Nutzer",
+  "common.next": "Weiter",
+  "common.done": "Fertig",
+  "common.of": "von",
+  "common.all": "Alle"
+}

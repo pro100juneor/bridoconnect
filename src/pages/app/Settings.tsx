@@ -32,11 +32,15 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { toast } from "@/hooks/use-toast";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
+import { TwoFactorDialog } from "@/components/TwoFactorDialog";
+import { useMfa } from "@/hooks/useMfa";
 
 const Settings = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { prefs, update, tableAvailable } = usePreferences();
+  const mfa = useMfa();
+  const [mfaDialog, setMfaDialog] = useState<"enroll" | "disable" | null>(null);
 
   // Застосовуємо dark-mode клас на <html>
   useEffect(() => {
@@ -104,9 +108,11 @@ const Settings = () => {
       value?: string;
       toggle?: boolean;
       toggleValue?: boolean;
+      toggleDisabled?: boolean;
       onChange?: (v: boolean) => void;
       arrow?: boolean;
       path?: string;
+      hint?: string;
     }>;
   }> = [
     {
@@ -139,8 +145,14 @@ const Settings = () => {
           icon: Shield,
           label: "Двофакторна автентифікація",
           toggle: true,
-          toggleValue: prefs.two_factor,
-          onChange: (v) => handleToggle("two_factor", v),
+          // Стан береться з реальних MFA-факторів Supabase, а не з прапорця в
+          // налаштуваннях: раніше тумблер лише писав boolean і нічого не робив.
+          toggleValue: mfa.enabled,
+          toggleDisabled: mfa.loading,
+          onChange: (v) => setMfaDialog(v ? "enroll" : "disable"),
+          hint: mfa.enabled
+            ? "Код із TOTP-застосунку потрібен при кожному вході"
+            : "Одноразові коди з Google Authenticator, 1Password тощо",
         },
         {
           icon: Shield,
@@ -215,10 +227,16 @@ const Settings = () => {
                   className={`flex items-center gap-3 px-4 py-3 min-h-[44px] ${item.path ? "cursor-pointer hover:bg-secondary/50 transition-colors" : ""}`}
                 >
                   {item.icon && <item.icon className="w-5 h-5 text-muted-foreground" strokeWidth={1.75} />}
-                  <span className="text-sm font-medium text-foreground flex-1">{item.label}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-foreground">{item.label}</span>
+                    {item.hint && (
+                      <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">{item.hint}</p>
+                    )}
+                  </div>
                   {item.toggle ? (
                     <Switch
                       checked={!!item.toggleValue}
+                      disabled={item.toggleDisabled}
                       onCheckedChange={(v) => {
                         void tap("light");
                         item.onChange?.(v);
@@ -261,6 +279,15 @@ const Settings = () => {
           з вимогами обліку.
         </p>
       </div>
+
+      {mfaDialog && (
+        <TwoFactorDialog
+          mode={mfaDialog}
+          open
+          onOpenChange={(v) => !v && setMfaDialog(null)}
+          mfa={mfa}
+        />
+      )}
 
       <Dialog open={deleteOpen} onOpenChange={(v) => !deleting && setDeleteOpen(v)}>
         <DialogContent>

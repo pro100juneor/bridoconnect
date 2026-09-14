@@ -3,26 +3,30 @@ import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChats } from "@/hooks/useChats";
+import { useT, type TFunction } from "@/i18n/useT";
 import { tap } from "@/lib/native";
 
-const formatTime = (iso: string | null): string => {
+// Форматирование времени последнего сообщения.
+// t и localeTag приходят параметрами: функция живёт вне компонента, хук тут вызвать нельзя.
+const formatTime = (iso: string | null, t: TFunction, localeTag: string): string => {
   if (!iso) return "";
   const d = new Date(iso);
   const now = new Date();
   const sameDay = d.toDateString() === now.toDateString();
   if (sameDay) {
-    return d.toLocaleTimeString("uk", { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleTimeString(localeTag, { hour: "2-digit", minute: "2-digit" });
   }
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
-  if (d.toDateString() === yesterday.toDateString()) return "Вчора";
-  return d.toLocaleDateString("uk", { day: "numeric", month: "short" });
+  if (d.toDateString() === yesterday.toDateString()) return t("chats.yesterday", "Вчора");
+  return d.toLocaleDateString(localeTag, { day: "numeric", month: "short" });
 };
 
 const ChatList = () => {
   const navigate = useNavigate();
   void useAuth();
   const { chats, loading } = useChats();
+  const { t, localeTag } = useT();
   const [query, setQuery] = useState("");
 
   const filtered = chats.filter((c) =>
@@ -33,13 +37,13 @@ const ChatList = () => {
   return (
     <div className="pb-8">
       <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-3">
-        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">Повідомлення</h1>
+        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">{t("chats.title", "Повідомлення")}</h1>
         <div className="flex items-center gap-2 bg-secondary rounded-2xl px-3 py-2 min-h-[44px]">
           <Search className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Пошук чатів…"
+            placeholder={t("chats.searchPlaceholder", "Пошук чатів…")}
             className="bg-transparent text-sm flex-1 outline-none text-foreground placeholder:text-muted-foreground"
           />
         </div>
@@ -61,8 +65,8 @@ const ChatList = () => {
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
             {query
-              ? "Нічого не знайдено"
-              : "Повідомлень ще немає.\nЗнайдіть людину і напишіть їй."}
+              ? t("chats.notFound", "Нічого не знайдено")
+              : t("chats.empty", "Повідомлень ще немає.\nЗнайдіть людину і напишіть їй.")}
           </p>
         </div>
       ) : (
@@ -97,12 +101,12 @@ const ChatList = () => {
                     </span>
                     {chat.last_message_at && (
                       <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                        {formatTime(chat.last_message_at)}
+                        {formatTime(chat.last_message_at, t, localeTag)}
                       </span>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">
-                    {chat.last_message || `Деал: ${chat.deal_title}`}
+                    {chat.last_message || t("chats.dealFallback", "Деал: {title}", { title: chat.deal_title })}
                   </p>
                 </div>
                 {chat.unread_count > 0 && (
