@@ -72,17 +72,17 @@ const Profile = () => {
     const stripe = searchParams.get("stripe");
     if (!stripe) return;
     if (stripe === "return") {
-      toast({ title: "Stripe", description: "Перевіряємо статус акаунту…" });
+      toast({ title: "Stripe", description: t("connect.stripe.checking", "Перевіряємо статус акаунту…") });
     } else if (stripe === "refresh") {
       toast({
         title: "Stripe",
-        description: "Посилання застаріло, спробуйте ще раз.",
+        description: t("connect.stripe.linkExpired", "Посилання застаріло, спробуйте ще раз."),
         variant: "destructive",
       });
     }
     searchParams.delete("stripe");
     setSearchParams(searchParams, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, t]);
 
   const handleSignOut = async () => {
     void tap("medium");
@@ -100,7 +100,7 @@ const Profile = () => {
     try {
       await connectOnboard();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Помилка Stripe";
+      const msg = e instanceof Error ? e.message : t("connect.stripe.error", "Помилка Stripe");
       toast({ title: "Stripe Connect", description: msg, variant: "destructive" });
     }
   };
@@ -110,7 +110,7 @@ const Profile = () => {
     try {
       await onboardPaypal();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Помилка PayPal";
+      const msg = e instanceof Error ? e.message : t("connect.paypal.error", "Помилка PayPal");
       toast({ title: "PayPal", description: msg, variant: "destructive" });
     }
   };
@@ -148,7 +148,7 @@ const Profile = () => {
 
   return (
     <div>
-      <h1 className="sr-only">Профіль</h1>
+      <h1 className="sr-only">{t("profile.title", "Профіль")}</h1>
       <div className="px-4 pt-4 pb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">
@@ -159,7 +159,7 @@ const Profile = () => {
               void tap("light");
               navigate("/app/settings");
             }}
-            aria-label="Налаштування"
+            aria-label={t("profile.menu.settings", "Налаштування")}
             className="p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground"
           >
             <Settings className="w-5 h-5" strokeWidth={1.75} />
@@ -175,15 +175,19 @@ const Profile = () => {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-foreground">{profile?.name || "Користувач"}</h3>
+            <h3 className="text-lg font-semibold text-foreground">
+              {profile?.name || t("common.user", "Користувач")}
+            </h3>
             <p className="text-xs text-muted-foreground">
               {profile?.country ? `${profile.country} · ` : ""}
-              {profile?.role === "recipient" ? "Отримувач" : "Спонсор"}
+              {profile?.role === "recipient"
+                ? t("profile.role.recipient", "Отримувач")
+                : t("profile.role.sponsor", "Спонсор")}
             </p>
             {profile?.verified && (
               <span className="inline-flex items-center gap-1 text-[10px] text-success mt-1">
                 <CheckCircle2 strokeWidth={1.75} className="w-3.5 h-3.5" aria-hidden="true" />
-                Верифіковано
+                {t("profile.verified", "Верифіковано")}
               </span>
             )}
           </div>
@@ -192,7 +196,7 @@ const Profile = () => {
             size="icon"
             className="ml-auto min-h-[44px] min-w-[44px] transition-transform duration-150 hover:-translate-y-px"
             onClick={goEdit}
-            aria-label="Редагувати"
+            aria-label={t("common.edit", "Редагувати")}
           >
             <Edit2 className="w-4 h-4" strokeWidth={1.75} />
           </Button>
@@ -234,16 +238,53 @@ const Profile = () => {
 
       <div className="px-4 space-y-2 pb-4">
         {[
-          { icon: Globe, label: "Моя публічна сторінка", color: "text-accent", path: "/app/my-page" },
-          { icon: Heart, label: "Активні угоди", color: "text-accent", path: "/app/deals" },
-          { icon: Star, label: "Обрані виконавці", color: "text-warning", path: "/app/wishlist" },
-          { icon: CreditCard, label: "Гаманець", color: "text-primary", path: "/app/wallet" },
-          { icon: Award, label: "Верифікація", color: "text-success", path: "/verification" },
+          {
+            icon: Globe,
+            label: t("profile.menu.publicPage", "Моя публічна сторінка"),
+            color: "text-accent",
+            path: "/app/my-page",
+          },
+          {
+            icon: Heart,
+            label: t("profile.menu.activeDeals", "Активні угоди"),
+            color: "text-accent",
+            path: "/app/deals",
+          },
+          {
+            icon: Star,
+            label: t("profile.menu.favorites", "Обрані виконавці"),
+            color: "text-warning",
+            path: "/app/wishlist",
+          },
+          {
+            icon: CreditCard,
+            label: t("wallet.title", "Гаманець"),
+            color: "text-primary",
+            path: "/app/wallet",
+          },
+          {
+            icon: Award,
+            label: t("profile.menu.verification", "Верифікація"),
+            color: "text-success",
+            path: "/verification",
+          },
           // Premium ховаємо на iOS: цифрова підписка поза In-App Purchase — guideline 3.1.1
           ...(isNative
             ? []
-            : [{ icon: Crown, label: "Premium підписка", color: "text-warning", path: "/app/premium" }]),
-          { icon: BarChart3, label: "Налаштування", color: "text-primary", path: "/app/settings" },
+            : [
+                {
+                  icon: Crown,
+                  label: t("profile.menu.premium", "Premium підписка"),
+                  color: "text-warning",
+                  path: "/app/premium",
+                },
+              ]),
+          {
+            icon: BarChart3,
+            label: t("profile.menu.settings", "Налаштування"),
+            color: "text-primary",
+            path: "/app/settings",
+          },
         ].map((item) => (
           <button
             key={item.label}
@@ -263,22 +304,60 @@ const Profile = () => {
           className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-destructive/20 min-h-[44px] hover:bg-destructive/5 hover:-translate-y-px transition-all duration-150 mt-2"
         >
           <LogOut className="w-5 h-5 text-destructive" strokeWidth={1.75} />
-          <span className="text-sm font-medium text-destructive flex-1 text-left">Вийти з акаунту</span>
+          <span className="text-sm font-medium text-destructive flex-1 text-left">
+            {t("profile.signOut", "Вийти з акаунту")}
+          </span>
         </button>
       </div>
     </div>
   );
 };
 
-const STATUS_COPY: Record<ConnectStatus["status"], { label: string; tone: string; cta: string }> = {
-  none: { label: "Не підключено", tone: "text-muted-foreground", cta: "Підключити Stripe" },
-  pending: { label: "Очікує верифікації", tone: "text-warning", cta: "Завершити налаштування" },
-  enabled: { label: "Активний", tone: "text-success", cta: "Оновити дані" },
-  restricted: { label: "Обмежено", tone: "text-destructive", cta: "Виправити та продовжити" },
-  rejected: { label: "Відхилено", tone: "text-destructive", cta: "Звернутись до підтримки" },
+// Підписи беруться зі словника на кожному рендері (ключ + український fallback),
+// інакше константа зафіксувала б українську мову до перезавантаження сторінки.
+const STATUS_COPY: Record<
+  ConnectStatus["status"],
+  { labelKey: string; label: string; tone: string; ctaKey: string; cta: string }
+> = {
+  none: {
+    labelKey: "connect.stripe.none",
+    label: "Не підключено",
+    tone: "text-muted-foreground",
+    ctaKey: "connect.stripe.cta.connect",
+    cta: "Підключити Stripe",
+  },
+  pending: {
+    labelKey: "connect.stripe.pending",
+    label: "Очікує верифікації",
+    tone: "text-warning",
+    ctaKey: "connect.stripe.cta.finish",
+    cta: "Завершити налаштування",
+  },
+  enabled: {
+    labelKey: "connect.stripe.enabled",
+    label: "Активний",
+    tone: "text-success",
+    ctaKey: "connect.stripe.cta.update",
+    cta: "Оновити дані",
+  },
+  restricted: {
+    labelKey: "connect.stripe.restricted",
+    label: "Обмежено",
+    tone: "text-destructive",
+    ctaKey: "connect.stripe.cta.fix",
+    cta: "Виправити та продовжити",
+  },
+  rejected: {
+    labelKey: "connect.stripe.rejected",
+    label: "Відхилено",
+    tone: "text-destructive",
+    ctaKey: "connect.stripe.cta.support",
+    cta: "Звернутись до підтримки",
+  },
 };
 
 const CryptoCard = ({ userId }: { userId: string | undefined }) => {
+  const { t } = useT();
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [addrUsdt, setAddrUsdt] = useState("");
   const [addrBtc, setAddrBtc] = useState("");
@@ -324,7 +403,9 @@ const CryptoCard = ({ userId }: { userId: string | undefined }) => {
       setEnabled((v) => !v);
       toast({
         title: "Crypto",
-        description: enabled ? "Виплати в крипті вимкнено" : "Виплати в крипті увімкнено",
+        description: enabled
+          ? t("connect.crypto.turnedOff", "Виплати в крипті вимкнено")
+          : t("connect.crypto.turnedOn", "Виплати в крипті увімкнено"),
       });
     }
   };
@@ -338,12 +419,15 @@ const CryptoCard = ({ userId }: { userId: string | undefined }) => {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground">Crypto donations</p>
           <p className={`text-xs ${enabled ? "text-success" : "text-muted-foreground"}`}>
-            {enabled ? "Активно" : "Не підключено"}
+            {enabled ? t("connect.crypto.on", "Активно") : t("connect.crypto.off", "Не підключено")}
           </p>
         </div>
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        BTC Lightning + USDT TRC20. Для отримання без банку (sanctioned regions, refugees).
+        {t(
+          "connect.crypto.desc",
+          "BTC Lightning + USDT TRC20. Для отримання без банку (sanctioned regions, refugees)."
+        )}
       </p>
       {enabled && (
         <div className="space-y-2 mb-3">
@@ -352,7 +436,7 @@ const CryptoCard = ({ userId }: { userId: string | undefined }) => {
             type="text"
             value={addrUsdt}
             onChange={(e) => setAddrUsdt(e.target.value)}
-            placeholder="USDT TRC20 адреса (T...)"
+            placeholder={t("connect.crypto.usdtPlaceholder", "USDT TRC20 адреса (T...)")}
             className="w-full bg-secondary rounded-xl px-3 py-2 text-xs outline-none text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent/30"
           />
           <input
@@ -372,22 +456,25 @@ const CryptoCard = ({ userId }: { userId: string | undefined }) => {
         disabled={saving}
         onClick={save}
       >
-        {enabled ? "Зберегти / Вимкнути" : "Увімкнути crypto"}
+        {enabled
+          ? t("connect.crypto.saveOrDisable", "Зберегти / Вимкнути")
+          : t("connect.crypto.enable", "Увімкнути crypto")}
       </Button>
     </div>
   );
 };
 
 const PaypalCard = ({ status, onConnect }: { status: string | null; onConnect: () => void }) => {
+  const { t } = useT();
   const s = status || "none";
   const label =
     s === "active"
-      ? "Активний"
+      ? t("connect.paypal.active", "Активний")
       : s === "pending"
-        ? "Очікує верифікації"
+        ? t("connect.paypal.pending", "Очікує верифікації")
         : s === "restricted"
-          ? "Обмежено"
-          : "Не підключено";
+          ? t("connect.paypal.restricted", "Обмежено")
+          : t("connect.paypal.none", "Не підключено");
   const tone =
     s === "active"
       ? "text-success"
@@ -396,7 +483,10 @@ const PaypalCard = ({ status, onConnect }: { status: string | null; onConnect: (
         : s === "restricted"
           ? "text-destructive"
           : "text-muted-foreground";
-  const cta = s === "active" ? "Оновити дані" : "Підключити PayPal";
+  const cta =
+    s === "active"
+      ? t("connect.paypal.cta.update", "Оновити дані")
+      : t("connect.paypal.cta.connect", "Підключити PayPal");
   return (
     <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 before:rounded-t-2xl">
       <div className="flex items-center gap-3 mb-3">
@@ -404,12 +494,17 @@ const PaypalCard = ({ status, onConnect }: { status: string | null; onConnect: (
           PP
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground">PayPal Commerce</p>
+          <p className="text-sm font-semibold text-foreground">
+            {t("connect.paypal.title", "PayPal Commerce")}
+          </p>
           <p className={`text-xs ${tone}`}>{label}</p>
         </div>
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        Альтернатива Stripe. Спонсори з 200+ країн зможуть підтримати через PayPal-баланс.
+        {t(
+          "connect.paypal.desc",
+          "Альтернатива Stripe. Спонсори з 200+ країн зможуть підтримати через PayPal-баланс."
+        )}
       </p>
       <Button
         data-testid="paypal-onboard"
@@ -432,6 +527,7 @@ const ConnectCard = ({
   loading: boolean;
   onConnect: () => void;
 }) => {
+  const { t } = useT();
   if (loading) {
     return <div className="h-24 bg-secondary animate-pulse rounded-2xl" />;
   }
@@ -444,17 +540,22 @@ const ConnectCard = ({
           <Wallet className="w-5 h-5 text-primary" strokeWidth={1.75} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground">Stripe Connect</p>
-          <p className={`text-xs ${copy.tone}`}>{copy.label}</p>
+          <p className="text-sm font-semibold text-foreground">
+            {t("connect.stripe.title", "Stripe Connect")}
+          </p>
+          <p className={`text-xs ${copy.tone}`}>{t(copy.labelKey, copy.label)}</p>
         </div>
       </div>
       {status === "enabled" ? (
         <p className="text-xs text-muted-foreground mb-3">
-          Ви можете отримувати кошти за угодами напряму на свій рахунок.
+          {t("connect.stripe.descEnabled", "Ви можете отримувати кошти за угодами напряму на свій рахунок.")}
         </p>
       ) : (
         <p className="text-xs text-muted-foreground mb-3">
-          Підключіть Stripe, щоб отримувати кошти від спонсорів. Займе 2-5 хвилин.
+          {t(
+            "connect.stripe.descConnect",
+            "Підключіть Stripe, щоб отримувати кошти від спонсорів. Займе 2-5 хвилин."
+          )}
         </p>
       )}
       <Button
@@ -462,7 +563,7 @@ const ConnectCard = ({
         className="w-full bg-accent hover:bg-accent/90 text-white transition-transform duration-150 hover:-translate-y-px"
         onClick={onConnect}
       >
-        {copy.cta}
+        {t(copy.ctaKey, copy.cta)}
       </Button>
     </div>
   );

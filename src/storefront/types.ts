@@ -15,6 +15,8 @@ export const DEFAULT_BLOCK_ORDER: BlockKey[] = [
   "messengers",
 ];
 
+// Editor-only display names for the blocks. The BlockKey itself is what gets
+// persisted — these labels never leave the UI, so they are translated.
 export const BLOCK_LABELS: Record<BlockKey, string> = {
   hero: "Шапка / логотип",
   about: "Опис магазину",
@@ -22,6 +24,16 @@ export const BLOCK_LABELS: Record<BlockKey, string> = {
   contacts: "Контакти",
   messengers: "Месенджери",
   promo: "Промо-банер",
+};
+
+// Dictionary keys paired with BLOCK_LABELS (used as the t() fallback).
+export const BLOCK_LABEL_KEYS: Record<BlockKey, string> = {
+  hero: "storefrontEditor.block.hero",
+  about: "storefrontEditor.block.about",
+  catalog: "storefrontEditor.block.catalog",
+  contacts: "storefrontEditor.block.contacts",
+  messengers: "storefrontEditor.block.messengers",
+  promo: "storefrontEditor.block.promo",
 };
 
 export interface ShopBrand {

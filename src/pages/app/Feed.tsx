@@ -226,7 +226,9 @@ const Feed = () => {
       {promos.length > 0 && (
         <div className="mb-4">
           <div className="px-4 mb-2">
-            <h3 className="text-sm font-semibold text-foreground">{t("feed.recommended", "Рекомендовані")}</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              {t("feed.recommended", "Рекомендовані")}
+            </h3>
           </div>
           <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide">
             {promos.map((p) => {
@@ -352,12 +354,12 @@ const Feed = () => {
                 <div className="absolute top-3 left-3 flex gap-2">
                   {deal.creator_verified && (
                     <span className="bg-success/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      ✓ Верифіковано
+                      ✓ {t("shop.verified", "Верифіковано")}
                     </span>
                   )}
                   {deal.urgent && (
                     <span className="bg-accent text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      🔴 Терміново
+                      🔴 {t("deals.create.urgent", "Терміново")}
                     </span>
                   )}
                 </div>

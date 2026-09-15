@@ -3,13 +3,21 @@ import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { Shield, Eye, Users, Lock, CheckCircle, Plus } from "lucide-react";
 import VideoHero from "@/components/VideoHero";
+import { useT } from "@/i18n/useT";
 
+// Демо-витрина получателей. Числа/флаги/фото — не переводятся, текст живёт
+// в словаре (<locale>.public.json) и подтягивается по *Key.
 const recipients = [
   {
+    id: "r1",
+    nameKey: "home.recipients.r1.name",
     name: "Оксана К.",
     flag: "🇺🇦",
+    cityKey: "home.recipients.r1.city",
     city: "Харків",
+    needKey: "home.recipients.r1.need",
     need: "Відновлення житла",
+    bioKey: "home.recipients.r1.bio",
     bio: "Будинок пошкоджений. Дві доньки. Потрібна допомога з ремонтом.",
     goal: 3200,
     raised: 1840,
@@ -18,10 +26,15 @@ const recipients = [
     photo: "/images/recipients/uk-mother.jpg",
   },
   {
+    id: "r2",
+    nameKey: "home.recipients.r2.name",
     name: "Аміна Х.",
     flag: "🇸🇾",
+    cityKey: "home.recipients.r2.city",
     city: "Алеппо",
+    needKey: "home.recipients.r2.need",
     need: "Протез ноги",
+    bioKey: "home.recipients.r2.bio",
     bio: "Втратила ногу. Хоче повернутись до роботи вчителькою.",
     goal: 3200,
     raised: 2304,
@@ -30,10 +43,15 @@ const recipients = [
     photo: "/images/recipients/syrian-father.jpg",
   },
   {
+    id: "r3",
+    nameKey: "home.recipients.r3.name",
     name: "Фатіма А.",
     flag: "🇦🇫",
+    cityKey: "home.recipients.r3.city",
     city: "Кабул",
+    needKey: "home.recipients.r3.need",
     need: "Освіта для дівчат",
+    bioKey: "home.recipients.r3.bio",
     bio: "Організовує підпільні уроки. Потрібні підручники.",
     goal: 1400,
     raised: 1232,
@@ -42,10 +60,15 @@ const recipients = [
     photo: "/images/recipients/afghan-teacher.jpg",
   },
   {
+    id: "r4",
+    nameKey: "home.recipients.r4.name",
     name: "Ахмед М.",
     flag: "🇸🇾",
+    cityKey: "home.recipients.r4.city",
     city: "Дамаск",
+    needKey: "home.recipients.r4.need",
     need: "Ліки та їжа",
+    bioKey: "home.recipients.r4.bio",
     bio: "Батько трьох дітей. Потребує базової підтримки.",
     goal: 2400,
     raised: 960,
@@ -54,10 +77,15 @@ const recipients = [
     photo: "/images/recipients/syrian-father.jpg",
   },
   {
+    id: "r5",
+    nameKey: "home.recipients.r5.name",
     name: "Надія Р.",
     flag: "🇺🇦",
+    cityKey: "home.recipients.r5.city",
     city: "Миколаїв",
+    needKey: "home.recipients.r5.need",
     need: "Генератор",
+    bioKey: "home.recipients.r5.bio",
     bio: "Медсестра. Потрібне автономне живлення для обладнання.",
     goal: 800,
     raised: 340,
@@ -66,10 +94,15 @@ const recipients = [
     photo: "/images/recipients/uk-mother.jpg",
   },
   {
+    id: "r6",
+    nameKey: "home.recipients.r6.name",
     name: "Карім О.",
     flag: "🇸🇩",
+    cityKey: "home.recipients.r6.city",
     city: "Хартум",
+    needKey: "home.recipients.r6.need",
     need: "Їжа та вода",
+    bioKey: "home.recipients.r6.bio",
     bio: "Доглядає за батьками в зоні конфлікту.",
     goal: 600,
     raised: 180,
@@ -85,15 +118,16 @@ const CARD_INSET =
   "relative before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 before:rounded-t-2xl";
 
 const SECTIONS = [
-  { id: "hero", label: "Головна" },
-  { id: "how", label: "Як це працює" },
-  { id: "recipients", label: "Люди" },
-  { id: "transparency", label: "Прозорість" },
-  { id: "cta", label: "Приєднатись" },
+  { id: "hero", labelKey: "home.nav.hero", label: "Головна" },
+  { id: "how", labelKey: "nav.howItWorks", label: "Як це працює" },
+  { id: "recipients", labelKey: "home.nav.recipients", label: "Люди" },
+  { id: "transparency", labelKey: "nav.transparency", label: "Прозорість" },
+  { id: "cta", labelKey: "home.nav.cta", label: "Приєднатись" },
 ];
 
 export default function HomePage() {
   const reduced = useReducedMotion();
+  const { t } = useT();
   const [ri, setRi] = useState(0);
   const [activeSection, setActiveSection] = useState("hero");
 
@@ -127,9 +161,11 @@ export default function HomePage() {
 
   const r = recipients[ri];
   const pct = Math.round((r.raised / r.goal) * 100);
+  const rName = t(r.nameKey, r.name);
 
-  // Hero title word-stagger (DESIGN.md §Animation).
-  const heroWords = ["Допомога", "від", "людини —"];
+  // Hero title word-stagger (DESIGN.md §Animation) — split the translated line
+  // so every language keeps the effect, not just Ukrainian.
+  const heroWords = t("home.hero.titleLead", "Допомога від людини —").split(" ");
   const wordVariant = (i: number) =>
     reduced
       ? {}
@@ -156,7 +192,7 @@ export default function HomePage() {
     <div className="relative">
       {/* Sticky in-page nav bar — vertical-scroll affordance with button taps to jump */}
       <nav
-        aria-label="Розділи"
+        aria-label={t("home.nav.aria", "Розділи")}
         className="sticky top-0 z-40 bg-background/85 backdrop-blur-md border-b border-border"
       >
         <div className="max-w-5xl mx-auto px-4 py-2 overflow-x-auto scrollbar-hide">
@@ -171,7 +207,7 @@ export default function HomePage() {
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {s.label}
+                  {t(s.labelKey, s.label)}
                 </button>
               </li>
             ))}
@@ -198,11 +234,11 @@ export default function HomePage() {
               style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)" }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-              Зараз 0 прямих ефірів · Платформа запускається
+              {t("home.hero.badge", "Зараз 0 прямих ефірів · Платформа запускається")}
             </div>
             <h1 className="font-serif text-4xl sm:text-5xl text-white leading-tight mb-5">
               {heroWords.map((w, i) => (
-                <motion.span key={i} className="inline-block mr-3" {...wordVariant(i)}>
+                <motion.span key={`${w}-${i}`} className="inline-block mr-3" {...wordVariant(i)}>
                   {w}
                 </motion.span>
               ))}
@@ -212,12 +248,14 @@ export default function HomePage() {
                 style={{ color: "#e94560" }}
                 {...wordVariant(heroWords.length)}
               >
-                людині
+                {t("home.hero.titleEm", "людині")}
               </motion.em>
             </h1>
             <p className="text-base text-white/60 leading-relaxed mb-8 max-w-md">
-              Обери верифіковану людину і допоможи напряму. Без анонімних фондів. Без посередників. Ти бачиш
-              результат.
+              {t(
+                "home.hero.subtitle",
+                "Обери верифіковану людину і допоможи напряму. Без анонімних фондів. Без посередників. Ти бачиш результат."
+              )}
             </p>
             <div className="flex flex-wrap gap-3 mb-10">
               <Link
@@ -225,22 +263,22 @@ export default function HomePage() {
                 className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white transition-transform duration-150 hover:-translate-y-px min-h-[44px]"
                 style={{ background: "#e94560" }}
               >
-                Почати допомагати →
+                {t("home.hero.ctaPrimary", "Почати допомагати →")}
               </Link>
               <Link
                 to="/register?role=executor"
                 className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white/80 transition-transform duration-150 hover:-translate-y-px min-h-[44px]"
                 style={{ border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.05)" }}
               >
-                Мені потрібна допомога
+                {t("home.hero.ctaSecondary", "Мені потрібна допомога")}
               </Link>
             </div>
             <div className="flex gap-8 pt-6" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
               {[
-                ["0", "ефірів зараз"],
-                ["5%", "комісія"],
-                ["24 год", "верифікація"],
-              ].map(([v, l]) => (
+                { v: "0", l: t("home.hero.stat1.label", "ефірів зараз") },
+                { v: "5%", l: t("home.hero.stat2.label", "комісія") },
+                { v: t("home.hero.stat3.value", "24 год"), l: t("home.hero.stat3.label", "верифікація") },
+              ].map(({ v, l }) => (
                 <div key={l}>
                   <div className="text-xl font-bold text-white">{v}</div>
                   <div className="text-xs text-white/35 uppercase tracking-wider">{l}</div>
@@ -259,10 +297,11 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-6 sm:px-8">
           <InView className="text-left mb-12 border-l-2 border-accent pl-4">
             <span className="text-xs font-bold uppercase tracking-widest text-accent block mb-3">
-              Як це працює
+              {t("nav.howItWorks", "Як це працює")}
             </span>
             <h2 className="font-serif text-4xl text-foreground tracking-tight">
-              Три кроки до <em className="not-italic text-accent">реальної допомоги</em>
+              {t("home.how.titleLead", "Три кроки до")}{" "}
+              <em className="not-italic text-accent">{t("home.how.titleEm", "реальної допомоги")}</em>
             </h2>
           </InView>
           <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1.5fr] gap-6">
@@ -270,24 +309,33 @@ export default function HomePage() {
               {
                 n: "01",
                 icon: Users,
-                t: "Знайди людину",
-                d: "Переглянь профілі верифікованих отримувачів. Читай реальні історії та рейтинг. Обирай сам, без посередників.",
-                tag: "Лише верифіковані",
-                extended: "Кожен профіль перевірений — документи, фото, історія.",
+                t: t("home.how.step1.title", "Знайди людину"),
+                d: t(
+                  "home.how.step1.desc",
+                  "Переглянь профілі верифікованих отримувачів. Читай реальні історії та рейтинг. Обирай сам, без посередників."
+                ),
+                tag: t("home.how.step1.tag", "Лише верифіковані"),
+                extended: t(
+                  "home.how.step1.extended",
+                  "Кожен профіль перевірений — документи, фото, історія."
+                ),
               },
               {
                 n: "02",
                 icon: CheckCircle,
-                t: "Обери формат",
-                d: "Переведи гроші, купи товар зі списку або постав завдання. 95% суми доходить до людини.",
-                tag: "95% отримувачу",
+                t: t("home.how.step2.title", "Обери формат"),
+                d: t(
+                  "home.how.step2.desc",
+                  "Переведи гроші, купи товар зі списку або постав завдання. 95% суми доходить до людини."
+                ),
+                tag: t("home.how.step2.tag", "95% отримувачу"),
               },
               {
                 n: "03",
                 icon: Eye,
-                t: "Отримай підтвердження",
-                d: "Фото і відео після виконання. Escrow захищає тебе.",
-                tag: "Прозоро і публічно",
+                t: t("home.how.step3.title", "Отримай підтвердження"),
+                d: t("home.how.step3.desc", "Фото і відео після виконання. Escrow захищає тебе."),
+                tag: t("home.how.step3.tag", "Прозоро і публічно"),
               },
             ].map((s, idx) => (
               <InView key={s.n}>
@@ -331,7 +379,7 @@ export default function HomePage() {
               to="/how-it-works"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-secondary transition-colors min-h-[44px]"
             >
-              Детальніше про процес →
+              {t("home.how.more", "Детальніше про процес →")}
             </Link>
           </InView>
         </div>
@@ -342,10 +390,11 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-6 sm:px-8">
           <InView className="text-left mb-8 border-l-2 border-accent pl-4">
             <span className="text-xs font-bold uppercase tracking-widest text-accent block mb-3">
-              Реальні люди
+              {t("home.recipients.eyebrow", "Реальні люди")}
             </span>
             <h2 className="font-serif text-4xl text-foreground tracking-tight">
-              Тобі можуть <em className="not-italic text-accent">допомогти</em>
+              {t("home.recipients.titleLead", "Тобі можуть")}{" "}
+              <em className="not-italic text-accent">{t("home.recipients.titleEm", "допомогти")}</em>
             </h2>
           </InView>
           <div className="grid lg:grid-cols-2 gap-6 items-start">
@@ -366,7 +415,7 @@ export default function HomePage() {
                     className="text-xs px-2.5 py-1 rounded-full font-medium text-white backdrop-blur-md"
                     style={{ background: "rgba(29,138,90,0.85)" }}
                   >
-                    ✓ Верифіковано
+                    ✓ {t("shop.verified", "Верифіковано")}
                   </span>
                 </div>
               </div>
@@ -374,21 +423,27 @@ export default function HomePage() {
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <h3 className="font-bold text-foreground text-lg">
-                      {r.name} {r.flag}
+                      {rName} {r.flag}
                     </h3>
-                    <p className="text-xs text-muted-foreground">{r.city}</p>
+                    <p className="text-xs text-muted-foreground">{t(r.cityKey, r.city)}</p>
                   </div>
                   <div className="text-right">
                     <div className="text-xs font-medium">⭐ {r.rating}</div>
-                    <div className="text-xs text-muted-foreground">{r.deals} угод</div>
+                    <div className="text-xs text-muted-foreground">
+                      {t("feed.dealsCount", "{n} угод", { n: r.deals })}
+                    </div>
                   </div>
                 </div>
-                <p className="text-xs font-bold uppercase tracking-wide mb-2 text-accent">{r.need}</p>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4">{r.bio}</p>
+                <p className="text-xs font-bold uppercase tracking-wide mb-2 text-accent">
+                  {t(r.needKey, r.need)}
+                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4">{t(r.bioKey, r.bio)}</p>
                 <div className="mb-4">
                   <div className="flex justify-between text-xs mb-1.5">
                     <span className="font-semibold">€{r.raised.toLocaleString()}</span>
-                    <span className="text-muted-foreground">з €{r.goal.toLocaleString()}</span>
+                    <span className="text-muted-foreground">
+                      {t("common.of", "з")} €{r.goal.toLocaleString()}
+                    </span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
@@ -400,23 +455,23 @@ export default function HomePage() {
                   style={{ background: "#e94560" }}
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Допомогти {r.name.split(" ")[0]}
+                  {t("home.recipients.helpCta", "Допомогти {name}", { name: rName.split(" ")[0] })}
                 </Link>
               </div>
             </InView>
             <div className="space-y-2">
               {recipients.map((rec, i) => (
                 <button
-                  key={rec.name}
+                  key={rec.id}
                   onClick={() => setRi(i)}
                   className={`w-full flex items-center gap-3 p-3 rounded-2xl border text-left transition-all min-h-[44px] hover:-translate-y-px duration-150 ${i === ri ? "border-accent bg-accent/5" : "border-border bg-card hover:border-accent/40"}`}
                 >
                   <span className="text-2xl">{rec.flag}</span>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold truncate">
-                      {rec.name} · {rec.city}
+                      {t(rec.nameKey, rec.name)} · {t(rec.cityKey, rec.city)}
                     </div>
-                    <div className="text-xs text-muted-foreground truncate">{rec.need}</div>
+                    <div className="text-xs text-muted-foreground truncate">{t(rec.needKey, rec.need)}</div>
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {Math.round((rec.raised / rec.goal) * 100)}%
@@ -427,7 +482,7 @@ export default function HomePage() {
                 to="/register?role=executor"
                 className="w-full flex items-center justify-center py-2.5 rounded-2xl border border-border text-sm font-medium hover:bg-secondary transition-colors mt-2 min-h-[44px]"
               >
-                Зареєструватись і опублікувати профіль →
+                {t("home.recipients.publishCta", "Зареєструватись і опублікувати профіль →")}
               </Link>
             </div>
           </div>
@@ -439,10 +494,11 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-6 sm:px-8">
           <InView className="text-left mb-10 border-l-2 border-accent pl-4">
             <span className="text-xs font-bold uppercase tracking-widest text-accent block mb-3">
-              Безпека і прозорість
+              {t("home.transparency.eyebrow", "Безпека і прозорість")}
             </span>
             <h2 className="font-serif text-4xl text-foreground tracking-tight">
-              Кожен цент <em className="not-italic text-accent">на виду</em>
+              {t("home.transparency.titleLead", "Кожен цент")}{" "}
+              <em className="not-italic text-accent">{t("home.transparency.titleEm", "на виду")}</em>
             </h2>
           </InView>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr] gap-5 mb-8">
@@ -450,27 +506,39 @@ export default function HomePage() {
               {
                 icon: Shield,
                 n: "100%",
-                l: "Верифіковані",
-                d: "Кожен отримувач проходить перевірку документів. Жодного анонімного профілю.",
+                l: t("home.transparency.pillar1.label", "Верифіковані"),
+                d: t(
+                  "home.transparency.pillar1.desc",
+                  "Кожен отримувач проходить перевірку документів. Жодного анонімного профілю."
+                ),
                 anchor: true,
               },
               {
                 icon: Lock,
                 n: "AES-256",
-                l: "Шифрування",
-                d: "Дані зашифровані. Сервери в Німеччині (AWS Frankfurt). Повна відповідність GDPR.",
+                l: t("home.transparency.pillar2.label", "Шифрування"),
+                d: t(
+                  "home.transparency.pillar2.desc",
+                  "Дані зашифровані. Сервери в Німеччині (AWS Frankfurt). Повна відповідність GDPR."
+                ),
               },
               {
                 icon: Eye,
                 n: "98%",
-                l: "Доходить",
-                d: "98% угод завершуються успішно. Публічна історія кожної транзакції.",
+                l: t("home.transparency.pillar3.label", "Доходить"),
+                d: t(
+                  "home.transparency.pillar3.desc",
+                  "98% угод завершуються успішно. Публічна історія кожної транзакції."
+                ),
               },
               {
                 icon: CheckCircle,
                 n: "5%",
-                l: "Комісія",
-                d: "Лише 5% від суми. Покриває верифікацію, escrow і безпеку платежів.",
+                l: t("home.transparency.pillar4.label", "Комісія"),
+                d: t(
+                  "home.transparency.pillar4.desc",
+                  "Лише 5% від суми. Покриває верифікацію, escrow і безпеку платежів."
+                ),
               },
             ].map((p) => (
               <InView key={p.n}>
@@ -495,14 +563,32 @@ export default function HomePage() {
             ))}
           </div>
           <InView className={`bg-secondary rounded-2xl p-6 ${CARD_INSET}`}>
-            <h3 className="text-sm font-semibold text-center mb-4">Як працює Escrow-захист</h3>
+            <h3 className="text-sm font-semibold text-center mb-4">
+              {t("home.transparency.escrowTitle", "Як працює Escrow-захист")}
+            </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                ["1", "Спонсор платить", "Гроші заморожені"],
-                ["2", "Виконавець стартує", "Підтверджує задачу"],
-                ["3", "Звіт з доказами", "Фото або відео"],
-                ["4", "Виплата 95%", "Після підтвердження"],
-              ].map(([n, t, s]) => (
+                {
+                  n: "1",
+                  t: t("home.transparency.escrow1.title", "Спонсор платить"),
+                  s: t("home.transparency.escrow1.desc", "Гроші заморожені"),
+                },
+                {
+                  n: "2",
+                  t: t("home.transparency.escrow2.title", "Виконавець стартує"),
+                  s: t("home.transparency.escrow2.desc", "Підтверджує задачу"),
+                },
+                {
+                  n: "3",
+                  t: t("home.transparency.escrow3.title", "Звіт з доказами"),
+                  s: t("home.transparency.escrow3.desc", "Фото або відео"),
+                },
+                {
+                  n: "4",
+                  t: t("home.transparency.escrow4.title", "Виплата 95%"),
+                  s: t("home.transparency.escrow4.desc", "Після підтвердження"),
+                },
+              ].map(({ n, t: title, s }) => (
                 <div key={n} className="text-center">
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-accent mx-auto mb-2"
@@ -510,7 +596,7 @@ export default function HomePage() {
                   >
                     {n}
                   </div>
-                  <div className="text-xs font-semibold mb-1">{t}</div>
+                  <div className="text-xs font-semibold mb-1">{title}</div>
                   <div className="text-xs text-muted-foreground">{s}</div>
                 </div>
               ))}
@@ -521,7 +607,7 @@ export default function HomePage() {
               to="/transparency"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-secondary transition-colors min-h-[44px]"
             >
-              Детальніше →
+              {t("home.transparency.more", "Детальніше →")}
             </Link>
           </InView>
         </div>
@@ -532,16 +618,21 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto px-6 sm:px-8 text-center">
           <InView>
             <span className="text-xs font-bold uppercase tracking-widest text-accent block mb-6">
-              Приєднуйся
+              {t("home.cta.eyebrow", "Приєднуйся")}
             </span>
             <h2 className="font-serif text-4xl sm:text-5xl text-white mb-6 leading-tight tracking-tight">
-              Один крок —<br />і чиєсь життя{" "}
+              {t("home.cta.titleLine1", "Один крок —")}
+              <br />
+              {t("home.cta.titleLine2", "і чиєсь життя")}{" "}
               <em className="not-italic" style={{ color: "#e94560" }}>
-                зміниться
+                {t("home.cta.titleEm", "зміниться")}
               </em>
             </h2>
             <p className="text-white/55 text-base mb-10 max-w-md mx-auto leading-relaxed">
-              Реєстрація — 2 хвилини. Верифікація — до 24 годин. Перша допомога — одразу після входу.
+              {t(
+                "home.cta.subtitle",
+                "Реєстрація — 2 хвилини. Верифікація — до 24 годин. Перша допомога — одразу після входу."
+              )}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
               <Link
@@ -550,18 +641,23 @@ export default function HomePage() {
                 style={{ background: "#e94560" }}
               >
                 <Plus className="w-5 h-5" />
-                Зареєструватись
+                {t("auth.register.submit", "Зареєструватись")}
               </Link>
               <Link
                 to="/register?role=executor"
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white text-lg transition-transform duration-150 hover:-translate-y-px min-h-[44px]"
                 style={{ border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.08)" }}
               >
-                Мені потрібна допомога
+                {t("home.hero.ctaSecondary", "Мені потрібна допомога")}
               </Link>
             </div>
             <div className="flex flex-wrap justify-center gap-6 text-sm text-white/40">
-              {["✓ 100% верифіковані", "✓ Escrow-захист", "✓ Сервери в Німеччині", "✓ GDPR"].map((f) => (
+              {[
+                t("home.cta.badge1", "✓ 100% верифіковані"),
+                t("home.cta.badge2", "✓ Escrow-захист"),
+                t("home.cta.badge3", "✓ Сервери в Німеччині"),
+                t("home.cta.badge4", "✓ GDPR"),
+              ].map((f) => (
                 <span key={f}>{f}</span>
               ))}
             </div>

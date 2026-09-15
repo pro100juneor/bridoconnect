@@ -2,29 +2,34 @@ import { useNavigate } from "react-router-dom";
 import { Shield, Search, MessageCircle, CheckCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import VideoHero from "@/components/VideoHero";
+import { useT } from "@/i18n/useT";
 
 const steps = [
   {
     icon: Search,
     num: "01",
+    key: "howItWorks.step1",
     title: "Знайди того, кому потрібна допомога",
     desc: "Переглядай верифіковані запити у стрічці. Фільтруй за категорією, країною або сумою.",
   },
   {
     icon: MessageCircle,
     num: "02",
+    key: "howItWorks.step2",
     title: "Напиши і домовся",
     desc: "Зв'яжись безпосередньо через захищений чат. Уточни деталі перед відправкою коштів.",
   },
   {
     icon: Shield,
     num: "03",
+    key: "howItWorks.step3",
     title: "Угода з захистом",
     desc: "Кошти резервуються у системі. Одержувач отримує тільки після підтвердження виконання.",
   },
   {
     icon: CheckCircle,
     num: "04",
+    key: "howItWorks.step4",
     title: "Підтвердження і відгук",
     desc: "Обидві сторони підтверджують угоду. Залиш відгук і продовжуй допомагати.",
   },
@@ -32,14 +37,18 @@ const steps = [
 
 const HowItWorksPage = () => {
   const navigate = useNavigate();
+  const { t } = useT();
   return (
     <main className="min-h-screen bg-background">
       <section className="px-6 py-16 max-w-2xl mx-auto">
         <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">
-          Як це працює
+          {t("howItWorks.title", "Як це працює")}
         </h1>
         <p className="text-muted-foreground mb-12 leading-relaxed">
-          BridoConnect — прозора P2P платформа гуманітарної допомоги без посередників.
+          {t(
+            "howItWorks.subtitle",
+            "BridoConnect — прозора P2P платформа гуманітарної допомоги без посередників."
+          )}
         </p>
         <div className="mb-10">
           <VideoHero variant="explainer" />
@@ -62,8 +71,12 @@ const HowItWorksPage = () => {
                 </div>
                 <div className="pb-8 flex-1 min-w-0">
                   <span className="text-sm font-bold text-accent tracking-widest">{step.num}</span>
-                  <h3 className="font-semibold text-lg text-foreground mt-1 mb-2">{step.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed mb-3">{step.desc}</p>
+                  <h3 className="font-semibold text-lg text-foreground mt-1 mb-2">
+                    {t(`${step.key}.title`, step.title)}
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-3">
+                    {t(`${step.key}.desc`, step.desc)}
+                  </p>
                   <video
                     src={stepVideos[idx]}
                     className="w-full aspect-video rounded-xl object-cover border border-border"
@@ -93,15 +106,19 @@ const HowItWorksPage = () => {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           <div className="absolute bottom-5 left-5 right-5 text-white">
-            <p className="text-[10px] uppercase tracking-widest text-white/70 mb-1">Глобально</p>
-            <p className="font-serif text-2xl leading-tight">200+ країн · 6 платіжних коридорів</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/70 mb-1">
+              {t("howItWorks.globalLabel", "Глобально")}
+            </p>
+            <p className="font-serif text-2xl leading-tight">
+              {t("howItWorks.globalStat", "200+ країн · 6 платіжних коридорів")}
+            </p>
           </div>
         </div>
         <Button
           className="w-full bg-accent hover:bg-accent/90 text-white mt-4 min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
           onClick={() => navigate("/register")}
         >
-          Почати зараз <ArrowRight className="w-4 h-4 ml-2" strokeWidth={1.75} />
+          {t("howItWorks.cta", "Почати зараз")} <ArrowRight className="w-4 h-4 ml-2" strokeWidth={1.75} />
         </Button>
       </section>
     </main>

@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useMfa, TotpEnrollment } from "@/hooks/useMfa";
 import { toast } from "@/hooks/use-toast";
+import { useT } from "@/i18n/useT";
 import { tap, notify } from "@/lib/native";
 
 type Mode = "enroll" | "disable";
@@ -31,6 +32,7 @@ const CODE_LENGTH = 6;
  */
 export const TwoFactorDialog = ({ mode, open, onOpenChange, mfa }: Props) => {
   const { startEnrollment, confirmEnrollment, cancelEnrollment, disable } = mfa;
+  const { t } = useT();
   const [enrollment, setEnrollment] = useState<TotpEnrollment | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -80,9 +82,7 @@ export const TwoFactorDialog = ({ mode, open, onOpenChange, mfa }: Props) => {
     setBusy(true);
     setError(null);
     const err =
-      mode === "enroll"
-        ? await confirmEnrollment(enrollment?.factorId ?? "", code)
-        : await disable(code);
+      mode === "enroll" ? await confirmEnrollment(enrollment?.factorId ?? "", code) : await disable(code);
     setBusy(false);
     if (err) {
       void notify("error");
@@ -93,11 +93,14 @@ export const TwoFactorDialog = ({ mode, open, onOpenChange, mfa }: Props) => {
     confirmed.current = true;
     void notify("success");
     toast({
-      title: mode === "enroll" ? "Двофакторку увімкнено" : "Двофакторку вимкнено",
+      title:
+        mode === "enroll"
+          ? t("mfa.enabled.title", "Двофакторку увімкнено")
+          : t("mfa.disabled.title", "Двофакторку вимкнено"),
       description:
         mode === "enroll"
-          ? "Наступного входу знадобиться код із застосунку."
-          : "Вхід тепер лише за паролем.",
+          ? t("mfa.enabled.desc", "Наступного входу знадобиться код із застосунку.")
+          : t("mfa.disabled.desc", "Вхід тепер лише за паролем."),
     });
     onOpenChange(false);
   };
@@ -109,7 +112,7 @@ export const TwoFactorDialog = ({ mode, open, onOpenChange, mfa }: Props) => {
       setCopied(true);
       void tap("light");
     } catch {
-      toast({ title: "Не вдалося скопіювати", variant: "destructive" });
+      toast({ title: t("mfa.copyFailed", "Не вдалося скопіювати"), variant: "destructive" });
     }
   };
 
@@ -118,12 +121,17 @@ export const TwoFactorDialog = ({ mode, open, onOpenChange, mfa }: Props) => {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {mode === "enroll" ? "Увімкнути двофакторну автентифікацію" : "Вимкнути двофакторку"}
+            {mode === "enroll"
+              ? t("mfa.enroll.title", "Увімкнути двофакторну автентифікацію")
+              : t("mfa.disable.title", "Вимкнути двофакторку")}
           </DialogTitle>
           <DialogDescription>
             {mode === "enroll"
-              ? "Відскануйте QR-код у Google Authenticator, 1Password, Aegis або іншому TOTP-застосунку та введіть код, який він покаже."
-              : "Підтвердьте дію кодом із застосунку — без нього вимкнути не можна."}
+              ? t(
+                  "mfa.enroll.desc",
+                  "Відскануйте QR-код у Google Authenticator, 1Password, Aegis або іншому TOTP-застосунку та введіть код, який він покаже."
+                )
+              : t("mfa.disable.desc", "Підтвердьте дію кодом із застосунку — без нього вимкнути не можна.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -131,10 +139,10 @@ export const TwoFactorDialog = ({ mode, open, onOpenChange, mfa }: Props) => {
           <div className="flex flex-col items-center gap-3">
             <img
               src={enrollment.qrCode}
-              alt="QR-код для TOTP-застосунку"
+              alt={t("mfa.qrAlt", "QR-код для TOTP-застосунку")}
               className="w-44 h-44 rounded-xl bg-white p-2"
             />
-            <p className="text-xs text-muted-foreground">Або введіть ключ вручну:</p>
+            <p className="text-xs text-muted-foreground">{t("mfa.manualKey", "Або введіть ключ вручну:")}</p>
             <button
               type="button"
               onClick={() => void copySecret()}
@@ -151,7 +159,9 @@ export const TwoFactorDialog = ({ mode, open, onOpenChange, mfa }: Props) => {
         )}
 
         {mode === "enroll" && !enrollment && busy && (
-          <p className="text-sm text-muted-foreground text-center py-6">Готуємо ключ…</p>
+          <p className="text-sm text-muted-foreground text-center py-6">
+            {t("mfa.preparingKey", "Готуємо ключ…")}
+          </p>
         )}
 
         {(mode === "disable" || enrollment) && (
@@ -160,7 +170,7 @@ export const TwoFactorDialog = ({ mode, open, onOpenChange, mfa }: Props) => {
               htmlFor="mfa-code"
               className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5"
             >
-              Код із застосунку
+              {t("mfa.codeLabel", "Код із застосунку")}
             </label>
             <input
               id="mfa-code"
@@ -179,14 +189,18 @@ export const TwoFactorDialog = ({ mode, open, onOpenChange, mfa }: Props) => {
 
         <DialogFooter className="gap-2">
           <Button variant="outline" disabled={busy} onClick={() => close(false)}>
-            Скасувати
+            {t("common.cancel", "Скасувати")}
           </Button>
           <Button
             variant={mode === "disable" ? "destructive" : "default"}
             disabled={busy || code.length !== CODE_LENGTH}
             onClick={() => void submit()}
           >
-            {busy ? "Перевіряємо…" : mode === "enroll" ? "Підтвердити" : "Вимкнути"}
+            {busy
+              ? t("mfa.verifying", "Перевіряємо…")
+              : mode === "enroll"
+                ? t("common.confirm", "Підтвердити")
+                : t("mfa.disableCta", "Вимкнути")}
           </Button>
         </DialogFooter>
       </DialogContent>

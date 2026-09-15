@@ -13,12 +13,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { tap, notify } from "@/lib/native";
 import { toast } from "@/hooks/use-toast";
+import { useT } from "@/i18n/useT";
 import { useShopProfile, type ShopProfilePatch } from "@/hooks/useShopProfile";
 import { getTheme, THEME_COUNT } from "@/storefront/themes";
 import Storefront from "@/storefront/Storefront";
 import {
   ALL_BLOCKS,
   BLOCK_LABELS,
+  BLOCK_LABEL_KEYS,
   DEFAULT_BLOCK_ORDER,
   type BlockKey,
   type ShopBrand,
@@ -35,6 +37,7 @@ const labelCls = "text-xs font-semibold text-muted-foreground uppercase tracking
 
 export default function StorefrontEditor() {
   const navigate = useNavigate();
+  const { t } = useT();
   const { getMine, upsert, uploadLogo } = useShopProfile();
   const logoInput = useRef<HTMLInputElement>(null);
 
@@ -109,9 +112,15 @@ export default function StorefrontEditor() {
     [slug, themeId, logoUrl, brand, contacts, messengers, order, hidden, published]
   );
 
+  // Preview-only stub — never persisted, so the placeholder name is translatable.
   const previewSeller = useMemo(
-    () => ({ id: "preview", name: brand.name || "Ваш магазин", rating: 5, verified: true }),
-    [brand.name]
+    () => ({
+      id: "preview",
+      name: brand.name || t("storefrontEditor.previewShopName", "Ваш магазин"),
+      rating: 5,
+      verified: true,
+    }),
+    [brand.name, t]
   );
 
   const themeIds = useMemo(() => {
@@ -136,7 +145,10 @@ export default function StorefrontEditor() {
     const { url, error } = await uploadLogo(file);
     if (error || !url) {
       void notify("error");
-      toast({ title: error || "Не вдалося завантажити логотип", variant: "destructive" });
+      toast({
+        title: error || t("storefrontEditor.logoUploadFailed", "Не вдалося завантажити логотип"),
+        variant: "destructive",
+      });
       return;
     }
     setLogoUrl(url);
@@ -175,16 +187,23 @@ export default function StorefrontEditor() {
     setSaving(false);
     if (error || !data) {
       void notify("error");
-      toast({ title: error || "Не вдалося зберегти", variant: "destructive" });
+      toast({
+        title: error || t("storefrontEditor.saveFailed", "Не вдалося зберегти"),
+        variant: "destructive",
+      });
       return;
     }
     void notify("success");
     setSlug(data.slug);
-    toast({ title: "Вітрину збережено" });
+    toast({ title: t("storefrontEditor.saved", "Вітрину збережено") });
   };
 
   if (loading) {
-    return <div className="px-4 mt-8 text-center text-sm text-muted-foreground">Завантаження…</div>;
+    return (
+      <div className="px-4 mt-8 text-center text-sm text-muted-foreground">
+        {t("storefrontEditor.loading", "Завантаження…")}
+      </div>
+    );
   }
 
   const theme = getTheme(themeId);
@@ -194,12 +213,14 @@ export default function StorefrontEditor() {
       <div className="flex items-center gap-3 px-4 pt-4 pb-4 border-b border-border">
         <button
           onClick={() => navigate(-1)}
-          aria-label="Назад"
+          aria-label={t("storefrontEditor.back", "Назад")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">Оформлення вітрини</h2>
+        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">
+          {t("storefrontEditor.title", "Оформлення вітрини")}
+        </h2>
         {slug && (
           <button
             onClick={() => {
@@ -208,7 +229,7 @@ export default function StorefrontEditor() {
             }}
             className="text-xs font-medium text-accent flex items-center gap-1 min-h-[44px]"
           >
-            <ExternalLink className="w-4 h-4" strokeWidth={1.75} /> Відкрити
+            <ExternalLink className="w-4 h-4" strokeWidth={1.75} /> {t("storefrontEditor.open", "Відкрити")}
           </button>
         )}
       </div>
@@ -219,7 +240,10 @@ export default function StorefrontEditor() {
           {/* Theme gallery */}
           <section>
             <label className={labelCls}>
-              Тема ({THEME_COUNT} стилів) · обрано #{themeId}
+              {t("storefrontEditor.themeLabel", "Тема ({count} стилів) · обрано #{id}", {
+                count: THEME_COUNT,
+                id: themeId,
+              })}
             </label>
             <div className="relative mb-3">
               <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
@@ -229,7 +253,7 @@ export default function StorefrontEditor() {
                   setThemeQuery(e.target.value);
                   setThemePage(0);
                 }}
-                placeholder="Пошук за назвою або номером…"
+                placeholder={t("storefrontEditor.themeSearchPlaceholder", "Пошук за назвою або номером…")}
                 className={`${inputCls} pl-9`}
               />
             </div>
@@ -281,7 +305,7 @@ export default function StorefrontEditor() {
                   disabled={themePage === 0}
                   className="text-xs px-3 py-1.5 rounded-full bg-secondary disabled:opacity-40 min-h-[44px]"
                 >
-                  Назад
+                  {t("storefrontEditor.pagePrev", "Назад")}
                 </button>
                 <span className="text-xs text-muted-foreground">
                   {themePage + 1} / {pageCount}
@@ -291,7 +315,7 @@ export default function StorefrontEditor() {
                   disabled={themePage >= pageCount - 1}
                   className="text-xs px-3 py-1.5 rounded-full bg-secondary disabled:opacity-40 min-h-[44px]"
                 >
-                  Далі
+                  {t("storefrontEditor.pageNext", "Далі")}
                 </button>
               </div>
             )}
@@ -299,11 +323,15 @@ export default function StorefrontEditor() {
 
           {/* Logo */}
           <section>
-            <label className={labelCls}>Логотип</label>
+            <label className={labelCls}>{t("storefrontEditor.logo", "Логотип")}</label>
             <div className="flex items-center gap-3">
               <div className="w-16 h-16 rounded-2xl bg-secondary overflow-hidden flex items-center justify-center shrink-0">
                 {logoUrl ? (
-                  <img src={logoUrl} alt="Логотип" className="w-full h-full object-cover" />
+                  <img
+                    src={logoUrl}
+                    alt={t("storefrontEditor.logo", "Логотип")}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <Store className="w-6 h-6 text-muted-foreground/50" strokeWidth={1.5} />
                 )}
@@ -315,7 +343,8 @@ export default function StorefrontEditor() {
                 }}
                 className="flex items-center gap-2 text-sm bg-secondary rounded-2xl px-4 py-3 min-h-[44px]"
               >
-                <ImagePlus className="w-4 h-4" strokeWidth={1.75} /> Завантажити
+                <ImagePlus className="w-4 h-4" strokeWidth={1.75} />{" "}
+                {t("storefrontEditor.upload", "Завантажити")}
               </button>
               <input ref={logoInput} type="file" accept="image/*" onChange={onPickLogo} className="hidden" />
             </div>
@@ -324,48 +353,48 @@ export default function StorefrontEditor() {
           {/* Brand text */}
           <section className="space-y-3">
             <div>
-              <label className={labelCls}>Назва магазину</label>
+              <label className={labelCls}>{t("storefrontEditor.shopName", "Назва магазину")}</label>
               <input
                 value={brand.name ?? ""}
                 onChange={(e) => setBrand((b) => ({ ...b, name: e.target.value }))}
-                placeholder="Наприклад: Родинна пекарня"
+                placeholder={t("storefrontEditor.shopNamePlaceholder", "Наприклад: Родинна пекарня")}
                 className={inputCls}
               />
             </div>
             <div>
-              <label className={labelCls}>Слоган</label>
+              <label className={labelCls}>{t("storefrontEditor.tagline", "Слоган")}</label>
               <input
                 value={brand.tagline ?? ""}
                 onChange={(e) => setBrand((b) => ({ ...b, tagline: e.target.value }))}
-                placeholder="Короткий девіз бренду"
+                placeholder={t("storefrontEditor.taglinePlaceholder", "Короткий девіз бренду")}
                 className={inputCls}
               />
             </div>
             <div>
-              <label className={labelCls}>Опис</label>
+              <label className={labelCls}>{t("storefrontEditor.about", "Опис")}</label>
               <textarea
                 value={brand.about ?? ""}
                 onChange={(e) => setBrand((b) => ({ ...b, about: e.target.value }))}
-                placeholder="Розкажіть про ваш магазин…"
+                placeholder={t("storefrontEditor.aboutPlaceholder", "Розкажіть про ваш магазин…")}
                 rows={4}
                 className={`${inputCls} resize-none`}
               />
             </div>
             <div>
-              <label className={labelCls}>Промо-заголовок</label>
+              <label className={labelCls}>{t("storefrontEditor.promoTitle", "Промо-заголовок")}</label>
               <input
                 value={brand.promo_title ?? ""}
                 onChange={(e) => setBrand((b) => ({ ...b, promo_title: e.target.value }))}
-                placeholder="Напр.: Знижка -20% цього тижня"
+                placeholder={t("storefrontEditor.promoTitlePlaceholder", "Напр.: Знижка -20% цього тижня")}
                 className={inputCls}
               />
             </div>
             <div>
-              <label className={labelCls}>Промо-текст</label>
+              <label className={labelCls}>{t("storefrontEditor.promoText", "Промо-текст")}</label>
               <input
                 value={brand.promo_text ?? ""}
                 onChange={(e) => setBrand((b) => ({ ...b, promo_text: e.target.value }))}
-                placeholder="Деталі акції"
+                placeholder={t("storefrontEditor.promoTextPlaceholder", "Деталі акції")}
                 className={inputCls}
               />
             </div>
@@ -373,11 +402,19 @@ export default function StorefrontEditor() {
 
           {/* Contacts */}
           <section className="space-y-3">
-            <p className="font-semibold text-sm text-foreground">Контакти</p>
+            <p className="font-semibold text-sm text-foreground">
+              {t("storefrontEditor.contacts", "Контакти")}
+            </p>
             {(["phone", "email", "address", "site"] as (keyof ShopContacts)[]).map((k) => (
               <div key={k}>
                 <label className={labelCls}>
-                  {k === "phone" ? "Телефон" : k === "email" ? "Email" : k === "address" ? "Адреса" : "Сайт"}
+                  {k === "phone"
+                    ? t("storefrontEditor.contact.phone", "Телефон")
+                    : k === "email"
+                      ? t("storefrontEditor.contact.email", "Email")
+                      : k === "address"
+                        ? t("storefrontEditor.contact.address", "Адреса")
+                        : t("storefrontEditor.contact.site", "Сайт")}
                 </label>
                 <input
                   value={contacts[k] ?? ""}
@@ -390,18 +427,20 @@ export default function StorefrontEditor() {
 
           {/* Messengers */}
           <section className="space-y-3">
-            <p className="font-semibold text-sm text-foreground">Месенджери</p>
+            <p className="font-semibold text-sm text-foreground">
+              {t("storefrontEditor.messengers", "Месенджери")}
+            </p>
             {(
               [
-                ["whatsapp", "WhatsApp (номер)"],
-                ["telegram", "Telegram (@handle)"],
-                ["viber", "Viber (номер)"],
-                ["signal", "Signal (номер)"],
-                ["messenger", "Messenger (handle)"],
-              ] as [keyof ShopMessengers, string][]
-            ).map(([k, label]) => (
+                ["whatsapp", "storefrontEditor.messenger.whatsapp", "WhatsApp (номер)"],
+                ["telegram", "storefrontEditor.messenger.telegram", "Telegram (@handle)"],
+                ["viber", "storefrontEditor.messenger.viber", "Viber (номер)"],
+                ["signal", "storefrontEditor.messenger.signal", "Signal (номер)"],
+                ["messenger", "storefrontEditor.messenger.messenger", "Messenger (handle)"],
+              ] as [keyof ShopMessengers, string, string][]
+            ).map(([k, labelKey, labelUk]) => (
               <div key={k}>
-                <label className={labelCls}>{label}</label>
+                <label className={labelCls}>{t(labelKey, labelUk)}</label>
                 <input
                   value={messengers[k] ?? ""}
                   onChange={(e) => setMessengers((m) => ({ ...m, [k]: e.target.value }))}
@@ -413,7 +452,9 @@ export default function StorefrontEditor() {
 
           {/* Blocks order + visibility */}
           <section>
-            <p className="font-semibold text-sm text-foreground mb-2">Блоки вітрини</p>
+            <p className="font-semibold text-sm text-foreground mb-2">
+              {t("storefrontEditor.blocks", "Блоки вітрини")}
+            </p>
             <div className="space-y-2">
               {order.map((key, idx) => {
                 const isHidden = hidden.includes(key);
@@ -425,12 +466,12 @@ export default function StorefrontEditor() {
                     <span
                       className={`flex-1 text-sm ${isHidden ? "text-muted-foreground line-through" : "text-foreground"}`}
                     >
-                      {BLOCK_LABELS[key]}
+                      {t(BLOCK_LABEL_KEYS[key], BLOCK_LABELS[key])}
                     </span>
                     <button
                       onClick={() => move(idx, -1)}
                       disabled={idx === 0}
-                      aria-label="Вгору"
+                      aria-label={t("storefrontEditor.moveUp", "Вгору")}
                       className="w-9 h-9 flex items-center justify-center rounded-xl bg-secondary disabled:opacity-30"
                     >
                       <ChevronUp className="w-4 h-4" strokeWidth={2} />
@@ -438,7 +479,7 @@ export default function StorefrontEditor() {
                     <button
                       onClick={() => move(idx, 1)}
                       disabled={idx === order.length - 1}
-                      aria-label="Вниз"
+                      aria-label={t("storefrontEditor.moveDown", "Вниз")}
                       className="w-9 h-9 flex items-center justify-center rounded-xl bg-secondary disabled:opacity-30"
                     >
                       <ChevronDown className="w-4 h-4" strokeWidth={2} />
@@ -449,7 +490,9 @@ export default function StorefrontEditor() {
                         isHidden ? "bg-secondary text-muted-foreground" : "bg-accent text-white"
                       }`}
                     >
-                      {isHidden ? "Сховано" : "Видно"}
+                      {isHidden
+                        ? t("storefrontEditor.blockHidden", "Сховано")
+                        : t("storefrontEditor.blockVisible", "Видно")}
                     </button>
                   </div>
                 );
@@ -460,8 +503,12 @@ export default function StorefrontEditor() {
           {/* Published toggle */}
           <section className="flex items-center justify-between p-3 rounded-2xl border border-border">
             <div>
-              <p className="text-sm font-medium text-foreground">Опублікувати вітрину</p>
-              <p className="text-xs text-muted-foreground">Вимкніть, щоб бачити лише вам (чернетка)</p>
+              <p className="text-sm font-medium text-foreground">
+                {t("storefrontEditor.publish", "Опублікувати вітрину")}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("storefrontEditor.publishHint", "Вимкніть, щоб бачити лише вам (чернетка)")}
+              </p>
             </div>
             <button
               onClick={() => {
@@ -483,7 +530,9 @@ export default function StorefrontEditor() {
 
         {/* -------- Live preview -------- */}
         <div className="lg:sticky lg:top-4 lg:self-start">
-          <label className={labelCls}>Попередній перегляд · {theme.name}</label>
+          <label className={labelCls}>
+            {t("storefrontEditor.preview", "Попередній перегляд")} · {theme.name}
+          </label>
           <div className="rounded-2xl overflow-hidden border border-border h-[70vh] overflow-y-auto">
             <Storefront profile={draft} theme={theme} products={[]} seller={previewSeller} preview />
           </div>
@@ -498,7 +547,7 @@ export default function StorefrontEditor() {
             disabled={saving}
             onClick={save}
           >
-            {saving ? "Збереження…" : "Зберегти"}
+            {saving ? t("common.saving", "Збереження…") : t("common.save", "Зберегти")}
           </Button>
           {slug && (
             <Button
@@ -509,7 +558,8 @@ export default function StorefrontEditor() {
                 navigate(`/store/${slug}`);
               }}
             >
-              <ExternalLink className="w-4 h-4" strokeWidth={1.75} /> Відкрити вітрину
+              <ExternalLink className="w-4 h-4" strokeWidth={1.75} />{" "}
+              {t("storefrontEditor.openStore", "Відкрити вітрину")}
             </Button>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { useT } from "@/i18n/useT";
 
 interface Props {
   children: ReactNode;
@@ -14,6 +15,31 @@ const CHUNK_RELOAD_FLAG = "chunk-reload-attempted";
 function isChunkLoadError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   return message.includes("dynamically imported module") || message.includes("Loading chunk");
+}
+
+/**
+ * Экран ошибки вынесен в отдельный функциональный компонент: useT() — хук,
+ * а из классового ErrorBoundary хуки вызывать нельзя.
+ */
+function ErrorFallback({ onReload }: { onReload: () => void }) {
+  const { t } = useT();
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-6 text-center">
+      <h1 className="font-serif text-2xl text-foreground">{t("common.error", "Щось пішло не так")}</h1>
+      <p className="text-sm text-muted-foreground max-w-xs">
+        {t(
+          "errorBoundary.desc",
+          "Сталася помилка. Спробуйте перезавантажити сторінку — це зазвичай допомагає."
+        )}
+      </p>
+      <button
+        onClick={onReload}
+        className="bg-accent text-white px-6 py-2.5 rounded-2xl text-sm font-medium min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
+      >
+        {t("errorBoundary.reload", "Перезавантажити")}
+      </button>
+    </div>
+  );
 }
 
 /**
@@ -57,20 +83,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-6 text-center">
-          <h1 className="font-serif text-2xl text-foreground">Щось пішло не так</h1>
-          <p className="text-sm text-muted-foreground max-w-xs">
-            Сталася помилка. Спробуйте перезавантажити сторінку — це зазвичай допомагає.
-          </p>
-          <button
-            onClick={this.handleReload}
-            className="bg-accent text-white px-6 py-2.5 rounded-2xl text-sm font-medium min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
-          >
-            Перезавантажити
-          </button>
-        </div>
-      );
+      return <ErrorFallback onReload={this.handleReload} />;
     }
     return this.props.children;
   }

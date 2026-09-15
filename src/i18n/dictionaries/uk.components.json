@@ -1,0 +1,32 @@
+{
+  "mfa.enroll.title": "Увімкнути двофакторну автентифікацію",
+  "mfa.enroll.desc": "Відскануйте QR-код у Google Authenticator, 1Password, Aegis або іншому TOTP-застосунку та введіть код, який він покаже.",
+  "mfa.disable.title": "Вимкнути двофакторку",
+  "mfa.disable.desc": "Підтвердьте дію кодом із застосунку — без нього вимкнути не можна.",
+  "mfa.disableCta": "Вимкнути",
+  "mfa.qrAlt": "QR-код для TOTP-застосунку",
+  "mfa.manualKey": "Або введіть ключ вручну:",
+  "mfa.preparingKey": "Готуємо ключ…",
+  "mfa.codeLabel": "Код із застосунку",
+  "mfa.copyFailed": "Не вдалося скопіювати",
+  "mfa.verifying": "Перевіряємо…",
+  "mfa.enabled.title": "Двофакторку увімкнено",
+  "mfa.enabled.desc": "Наступного входу знадобиться код із застосунку.",
+  "mfa.disabled.title": "Двофакторку вимкнено",
+  "mfa.disabled.desc": "Вхід тепер лише за паролем.",
+
+  "mfa.challenge.title": "Підтвердьте вхід",
+  "mfa.challenge.desc": "Введіть шестизначний код із вашого TOTP-застосунку.",
+  "mfa.challenge.codeLabel": "Код",
+  "mfa.challenge.submit": "Увійти",
+  "mfa.challenge.signOut": "Вийти з акаунту",
+  "mfa.challenge.factorsFailed": "Не вдалося отримати фактори. Спробуйте увійти ще раз.",
+  "mfa.challenge.invalidCode": "Невірний або протермінований код",
+
+  "errorBoundary.desc": "Сталася помилка. Спробуйте перезавантажити сторінку — це зазвичай допомагає.",
+  "errorBoundary.reload": "Перезавантажити",
+
+  "pullToRefresh.refreshing": "Оновлюємо…",
+  "pullToRefresh.release": "Відпустіть, щоб оновити",
+  "pullToRefresh.pull": "Потягніть вниз"
+}

@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { useT } from "@/i18n/useT";
 
+// Німецький текст АГБ — юридично зобов'язуюча редакція. Не перекладається і не скорочується.
 const sections = [
   {
     title: "§ 1 Geltungsbereich",
@@ -55,18 +57,19 @@ const sections = [
 
 const AGBPage = () => {
   const navigate = useNavigate();
+  const { t } = useT();
   return (
     <main className="min-h-screen bg-background px-6 py-10 max-w-2xl mx-auto">
       <button
         onClick={() => navigate(-1)}
-        aria-label="Назад"
+        aria-label={t("common.back", "Назад")}
         className="flex items-center gap-2 text-muted-foreground mb-8 text-sm min-h-[44px]"
       >
-        <ArrowLeft className="w-4 h-4" strokeWidth={1.75} /> Назад
+        <ArrowLeft className="w-4 h-4" strokeWidth={1.75} /> {t("common.back", "Назад")}
       </button>
       <h1 className="font-serif text-4xl tracking-tight text-foreground mb-2 animate-fade-in">AGB</h1>
       <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
-        Allgemeine Geschäftsbedingungen · Загальні умови
+        {t("agb.subtitle", "Allgemeine Geschäftsbedingungen · Загальні умови")}
       </p>
       <div className="space-y-6">
         {sections.map((s, i) => (

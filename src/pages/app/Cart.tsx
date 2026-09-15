@@ -6,12 +6,14 @@ import { tap, notify } from "@/lib/native";
 import { useCart } from "@/hooks/useCart";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useStripe } from "@/hooks/useStripe";
+import { useT } from "@/i18n/useT";
 
 const Cart = () => {
   const navigate = useNavigate();
   const { items, remove, totalCents, beginCheckout } = useCart();
   const { convert, code } = useCurrency();
   const { checkoutCart } = useStripe();
+  const { t } = useT();
   const [paying, setPaying] = useState(false);
 
   const handleCheckout = async () => {
@@ -26,7 +28,8 @@ const Cart = () => {
       await checkoutCart({ productIds, currency: code });
     } catch (e) {
       void notify("error");
-      alert(e instanceof Error ? e.message : "Не вдалося почати оплату");
+      // error.message приходит с бэкенда — не переводим
+      alert(e instanceof Error ? e.message : t("product.payFailed", "Не вдалося почати оплату"));
       setPaying(false);
     }
   };
@@ -36,12 +39,14 @@ const Cart = () => {
       <div className="flex items-center gap-3 px-4 pt-4 pb-4">
         <button
           onClick={() => navigate(-1)}
-          aria-label="Назад"
+          aria-label={t("common.back", "Назад")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">Кошик</h2>
+        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">
+          {t("cart.title", "Кошик")}
+        </h2>
       </div>
 
       {items.length === 0 ? (
@@ -51,9 +56,9 @@ const Cart = () => {
             strokeWidth={1.5}
             aria-hidden="true"
           />
-          <p className="text-sm text-muted-foreground mb-4">Кошик порожній</p>
+          <p className="text-sm text-muted-foreground mb-4">{t("cart.empty", "Кошик порожній")}</p>
           <Button variant="outline" onClick={() => navigate("/app/shop")}>
-            До магазину
+            {t("product.toShop", "До магазину")}
           </Button>
         </div>
       ) : (
@@ -86,7 +91,7 @@ const Cart = () => {
                     void tap("light");
                     remove(i.productId);
                   }}
-                  aria-label="Прибрати з кошика"
+                  aria-label={t("cart.removeItem", "Прибрати з кошика")}
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground"
                 >
                   <Trash2 className="w-4 h-4" strokeWidth={1.75} />
@@ -97,7 +102,7 @@ const Cart = () => {
 
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/85 backdrop-blur-md border-t border-border">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-muted-foreground">Разом</span>
+              <span className="text-sm text-muted-foreground">{t("cart.total", "Разом")}</span>
               <span className="text-xl font-bold text-foreground">{convert(totalCents).formatted}</span>
             </div>
             <Button
@@ -105,7 +110,7 @@ const Cart = () => {
               disabled={paying}
               onClick={handleCheckout}
             >
-              {paying ? "Оплата…" : "Оформити"}
+              {paying ? t("product.paying", "Оплата…") : t("cart.checkout", "Оформити")}
             </Button>
           </div>
         </>

@@ -3,13 +3,17 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { MfaChallenge } from "@/components/MfaChallenge";
+import { useT } from "@/i18n/useT";
 
-const Spinner = () => (
-  <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
-    <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-    <p className="text-sm text-muted-foreground">Завантаження...</p>
-  </div>
-);
+const Spinner = () => {
+  const { t } = useT();
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
+      <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      <p className="text-sm text-muted-foreground">{t("common.loading", "Завантаження...")}</p>
+    </div>
+  );
+};
 
 /** aal1 при доступному aal2 = пароль введено, другий фактор — ще ні. */
 type AalState = "checking" | "ok" | "needs-mfa";

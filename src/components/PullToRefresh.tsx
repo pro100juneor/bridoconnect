@@ -4,6 +4,7 @@
 import { useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Loader2, ArrowDown } from "lucide-react";
+import { useT } from "@/i18n/useT";
 
 type Props = {
   onRefresh: () => Promise<unknown> | void;
@@ -17,6 +18,7 @@ export const PullToRefresh = ({ onRefresh, threshold = 80, children }: Props) =>
   const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const reduced = useReducedMotion();
+  const { t } = useT();
 
   const onTouchStart = (e: React.TouchEvent) => {
     const el = containerRef.current;
@@ -74,11 +76,11 @@ export const PullToRefresh = ({ onRefresh, threshold = 80, children }: Props) =>
           )}
           <span className="text-[10px] mt-1">
             {refreshing
-              ? "Обновляю..."
+              ? t("pullToRefresh.refreshing", "Обновляю...")
               : pull >= threshold
-                ? "Отпустите для обновления"
+                ? t("pullToRefresh.release", "Отпустите для обновления")
                 : pull > 10
-                  ? "Потяните вниз"
+                  ? t("pullToRefresh.pull", "Потяните вниз")
                   : ""}
           </span>
         </div>

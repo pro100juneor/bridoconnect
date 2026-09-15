@@ -25,25 +25,83 @@ import {
 } from "@/hooks/useRecipientPage";
 import { useProducts, type Product } from "@/hooks/useProducts";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useT } from "@/i18n/useT";
 
 // Public-page sections the owner can show/hide, in display order.
-const VISIBILITY_ROWS: { key: VisibilityKey; label: string; hint: string }[] = [
-  { key: "bio", label: "Біо", hint: "Текст про себе під іменем" },
-  { key: "photos", label: "Фото", hint: "Галерея фотографій" },
-  { key: "wall", label: "Стіна", hint: "Записи та новини" },
-  { key: "wishlist", label: "Список бажань", hint: "Що потрібно" },
-  { key: "location", label: "Локація", hint: "Місто та країна" },
+// `key` is the persisted field_visibility key — only label/hint are UI copy.
+const VISIBILITY_ROWS: {
+  key: VisibilityKey;
+  labelKey: string;
+  labelUk: string;
+  hintKey: string;
+  hintUk: string;
+}[] = [
+  {
+    key: "bio",
+    labelKey: "recipientPage.section.bio",
+    labelUk: "Біо",
+    hintKey: "recipientPage.section.bioHint",
+    hintUk: "Текст про себе під іменем",
+  },
+  {
+    key: "photos",
+    labelKey: "recipientPage.section.photos",
+    labelUk: "Фото",
+    hintKey: "recipientPage.section.photosHint",
+    hintUk: "Галерея фотографій",
+  },
+  {
+    key: "wall",
+    labelKey: "recipientPage.section.wall",
+    labelUk: "Стіна",
+    hintKey: "recipientPage.section.wallHint",
+    hintUk: "Записи та новини",
+  },
+  {
+    key: "wishlist",
+    labelKey: "recipientPage.section.wishlist",
+    labelUk: "Список бажань",
+    hintKey: "recipientPage.section.wishlistHint",
+    hintUk: "Що потрібно",
+  },
+  {
+    key: "location",
+    labelKey: "recipientPage.section.location",
+    labelUk: "Локація",
+    hintKey: "recipientPage.section.locationHint",
+    hintUk: "Місто та країна",
+  },
 ];
 
 // Read-only presentation of the verification status set by the moderation flow.
-const VERIFICATION_META: Record<string, { label: string; Icon: typeof BadgeCheck; className: string }> = {
-  verified: { label: "Верифіковано", Icon: BadgeCheck, className: "text-accent" },
-  pending: { label: "На перевірці", Icon: Clock, className: "text-warning" },
-  unverified: { label: "Не верифіковано", Icon: ShieldOff, className: "text-muted-foreground" },
+// The status strings themselves come from the DB and stay as they are.
+const VERIFICATION_META: Record<
+  string,
+  { labelKey: string; labelUk: string; Icon: typeof BadgeCheck; className: string }
+> = {
+  verified: {
+    labelKey: "recipientPage.verification.verified",
+    labelUk: "Верифіковано",
+    Icon: BadgeCheck,
+    className: "text-accent",
+  },
+  pending: {
+    labelKey: "recipientPage.verification.pending",
+    labelUk: "На перевірці",
+    Icon: Clock,
+    className: "text-warning",
+  },
+  unverified: {
+    labelKey: "recipientPage.verification.unverified",
+    labelUk: "Не верифіковано",
+    Icon: ShieldOff,
+    className: "text-muted-foreground",
+  },
 };
 
 const RecipientPageEditor = () => {
   const navigate = useNavigate();
+  const { t, localeTag } = useT();
   const {
     getMine,
     ensureSlug,
@@ -126,7 +184,11 @@ const RecipientPageEditor = () => {
     setBusy(false);
     if (error) {
       void notify("error");
-      toast({ title: "Обкладинка", description: error, variant: "destructive" });
+      toast({
+        title: t("recipientPage.toast.cover", "Обкладинка"),
+        description: error,
+        variant: "destructive",
+      });
       return;
     }
     void notify("success");
@@ -142,7 +204,11 @@ const RecipientPageEditor = () => {
       const { error } = await addPhoto(file);
       if (error) {
         void notify("error");
-        toast({ title: "Фото", description: error, variant: "destructive" });
+        toast({
+          title: t("recipientPage.toast.photo", "Фото"),
+          description: error,
+          variant: "destructive",
+        });
       }
     }
     setBusy(false);
@@ -164,7 +230,12 @@ const RecipientPageEditor = () => {
     for (const file of files) {
       const { url, error } = await uploadMedia(file);
       if (url) setPostMedia((m) => [...m, url]);
-      else if (error) toast({ title: "Медіа", description: error, variant: "destructive" });
+      else if (error)
+        toast({
+          title: t("recipientPage.toast.media", "Медіа"),
+          description: error,
+          variant: "destructive",
+        });
     }
     setBusy(false);
   };
@@ -177,7 +248,11 @@ const RecipientPageEditor = () => {
     setBusy(false);
     if (error) {
       void notify("error");
-      toast({ title: "Пост", description: error, variant: "destructive" });
+      toast({
+        title: t("recipientPage.toast.post", "Пост"),
+        description: error,
+        variant: "destructive",
+      });
       return;
     }
     void notify("success");
@@ -199,7 +274,11 @@ const RecipientPageEditor = () => {
     const { error } = await addWishlistProduct(productId);
     setBusy(false);
     if (error) {
-      toast({ title: "Список бажань", description: error, variant: "destructive" });
+      toast({
+        title: t("recipientPage.toast.wishlist", "Список бажань"),
+        description: error,
+        variant: "destructive",
+      });
       return;
     }
     void notify("success");
@@ -213,7 +292,11 @@ const RecipientPageEditor = () => {
     const { error } = await addWishlistCustom(customTitle.trim(), customNote.trim() || undefined);
     setBusy(false);
     if (error) {
-      toast({ title: "Побажання", description: error, variant: "destructive" });
+      toast({
+        title: t("recipientPage.toast.wish", "Побажання"),
+        description: error,
+        variant: "destructive",
+      });
       return;
     }
     void notify("success");
@@ -255,7 +338,11 @@ const RecipientPageEditor = () => {
     const { error } = await setFieldVisibility({ [key]: visible });
     if (error) {
       void notify("error");
-      toast({ title: "Видимість", description: error, variant: "destructive" });
+      toast({
+        title: t("recipientPage.toast.visibility", "Видимість"),
+        description: error,
+        variant: "destructive",
+      });
       await reload();
     }
   };
@@ -277,12 +364,14 @@ const RecipientPageEditor = () => {
       <div className="flex items-center gap-3 px-4 pt-4 pb-4 border-b border-border">
         <button
           onClick={() => navigate(-1)}
-          aria-label="Назад"
+          aria-label={t("recipientPage.back", "Назад")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">Моя публічна сторінка</h2>
+        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">
+          {t("recipientPage.title", "Моя публічна сторінка")}
+        </h2>
       </div>
 
       <div className="px-4 space-y-6 mt-4">
@@ -290,15 +379,21 @@ const RecipientPageEditor = () => {
         <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">Статус сторінки</p>
+              <p className="text-sm font-semibold text-foreground">
+                {t("recipientPage.status", "Статус сторінки")}
+              </p>
               <p
                 className={`text-xs ${profile?.public_page_enabled ? "text-success" : "text-muted-foreground"}`}
               >
-                {profile?.public_page_enabled ? "Опублікована" : "Прихована"}
+                {profile?.public_page_enabled
+                  ? t("recipientPage.statusPublished", "Опублікована")
+                  : t("recipientPage.statusHidden", "Прихована")}
               </p>
             </div>
             <Button variant="outline" onClick={togglePublic} className="shrink-0">
-              {profile?.public_page_enabled ? "Приховати" : "Опублікувати"}
+              {profile?.public_page_enabled
+                ? t("recipientPage.hide", "Приховати")
+                : t("recipientPage.publish", "Опублікувати")}
             </Button>
           </div>
           {slug && (
@@ -308,8 +403,8 @@ const RecipientPageEditor = () => {
               rel="noreferrer"
               className="inline-flex items-center gap-2 text-sm font-medium text-accent underline underline-offset-4"
             >
-              <ExternalLink className="w-4 h-4" strokeWidth={1.75} /> Відкрити мою публічну сторінку (/u/
-              {slug})
+              <ExternalLink className="w-4 h-4" strokeWidth={1.75} />{" "}
+              {t("recipientPage.openPublic", "Відкрити мою публічну сторінку (/u/{slug})", { slug })}
             </a>
           )}
         </div>
@@ -323,15 +418,20 @@ const RecipientPageEditor = () => {
             <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground">Верифікація</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {t("recipientPage.verification", "Верифікація")}
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    Статус встановлює модерація — змінити його вручну не можна.
+                    {t(
+                      "recipientPage.verificationHint",
+                      "Статус встановлює модерація — змінити його вручну не можна."
+                    )}
                   </p>
                 </div>
                 <span
                   className={`shrink-0 inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium ${meta.className}`}
                 >
-                  <Icon className="w-4 h-4" strokeWidth={1.75} /> {meta.label}
+                  <Icon className="w-4 h-4" strokeWidth={1.75} /> {t(meta.labelKey, meta.labelUk)}
                 </span>
               </div>
             </div>
@@ -340,26 +440,32 @@ const RecipientPageEditor = () => {
 
         {/* Section visibility */}
         <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
-          <p className="text-sm font-semibold text-foreground">Видимість</p>
+          <p className="text-sm font-semibold text-foreground">
+            {t("recipientPage.visibility", "Видимість")}
+          </p>
           <p className="text-xs text-muted-foreground mb-3">
-            Оберіть, які розділи показувати відвідувачам вашої сторінки.
+            {t(
+              "recipientPage.visibilityHint",
+              "Оберіть, які розділи показувати відвідувачам вашої сторінки."
+            )}
           </p>
           <div className="divide-y divide-border">
             {VISIBILITY_ROWS.map((row) => {
               const on = isVisible(profile?.field_visibility, row.key);
+              const label = t(row.labelKey, row.labelUk);
               return (
                 <label
                   key={row.key}
                   className="flex items-center justify-between gap-3 py-2.5 cursor-pointer"
                 >
                   <span className="min-w-0">
-                    <span className="block text-sm text-foreground">{row.label}</span>
-                    <span className="block text-xs text-muted-foreground">{row.hint}</span>
+                    <span className="block text-sm text-foreground">{label}</span>
+                    <span className="block text-xs text-muted-foreground">{t(row.hintKey, row.hintUk)}</span>
                   </span>
                   <Switch
                     checked={on}
                     onCheckedChange={(v) => toggleVisibility(row.key, v)}
-                    aria-label={`Показувати: ${row.label}`}
+                    aria-label={t("recipientPage.showAria", "Показувати: {label}", { label })}
                   />
                 </label>
               );
@@ -370,7 +476,7 @@ const RecipientPageEditor = () => {
         {/* Cover */}
         <section>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-2">
-            Обкладинка
+            {t("recipientPage.cover", "Обкладинка")}
           </label>
           <button
             onClick={() => {
@@ -391,7 +497,7 @@ const RecipientPageEditor = () => {
         {/* Photos */}
         <section>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-2">
-            Фотографії
+            {t("recipientPage.photos", "Фотографії")}
           </label>
           <div className="flex flex-wrap gap-2">
             {data?.photos.map((ph) => (
@@ -399,7 +505,7 @@ const RecipientPageEditor = () => {
                 <img src={ph.url} alt="" className="w-full h-full object-cover" />
                 <button
                   onClick={() => onDeletePhoto(ph.id)}
-                  aria-label="Видалити фото"
+                  aria-label={t("recipientPage.deletePhoto", "Видалити фото")}
                   className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-black/50 rounded-full"
                 >
                   <X className="w-3.5 h-3.5 text-white" strokeWidth={2} />
@@ -411,7 +517,7 @@ const RecipientPageEditor = () => {
                 void tap("light");
                 photoInput.current?.click();
               }}
-              aria-label="Додати фото"
+              aria-label={t("recipientPage.addPhoto", "Додати фото")}
               className="w-20 h-20 rounded-2xl bg-secondary flex items-center justify-center text-muted-foreground/50 transition-transform duration-150 hover:-translate-y-px"
             >
               <ImagePlus className="w-6 h-6" strokeWidth={1.75} />
@@ -430,12 +536,12 @@ const RecipientPageEditor = () => {
         {/* Wall composer */}
         <section>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-2">
-            Стіна
+            {t("recipientPage.wall", "Стіна")}
           </label>
           <textarea
             value={postText}
             onChange={(e) => setPostText(e.target.value)}
-            placeholder="Поділіться новиною, подякою, історією…"
+            placeholder={t("recipientPage.wallPlaceholder", "Поділіться новиною, подякою, історією…")}
             rows={3}
             className="w-full bg-secondary rounded-2xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30 resize-none"
           />
@@ -446,7 +552,7 @@ const RecipientPageEditor = () => {
                   <img src={m} alt="" className="w-full h-full object-cover" />
                   <button
                     onClick={() => setPostMedia((arr) => arr.filter((x) => x !== m))}
-                    aria-label="Прибрати"
+                    aria-label={t("recipientPage.remove", "Прибрати")}
                     className="absolute top-0.5 right-0.5 w-5 h-5 flex items-center justify-center bg-black/50 rounded-full"
                   >
                     <X className="w-3 h-3 text-white" strokeWidth={2} />
@@ -464,7 +570,7 @@ const RecipientPageEditor = () => {
                 postMediaInput.current?.click();
               }}
             >
-              <ImagePlus className="w-4 h-4 mr-1" strokeWidth={1.75} /> Фото
+              <ImagePlus className="w-4 h-4 mr-1" strokeWidth={1.75} /> {t("recipientPage.photoBtn", "Фото")}
             </Button>
             <Button
               size="sm"
@@ -472,7 +578,8 @@ const RecipientPageEditor = () => {
               disabled={!postText.trim() || busy}
               onClick={submitPost}
             >
-              <Send className="w-4 h-4 mr-1" strokeWidth={1.75} /> Опублікувати
+              <Send className="w-4 h-4 mr-1" strokeWidth={1.75} />{" "}
+              {t("recipientPage.publishPost", "Опублікувати")}
             </Button>
           </div>
           <input
@@ -492,11 +599,14 @@ const RecipientPageEditor = () => {
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-xs text-muted-foreground">
-                    {new Date(post.created_at).toLocaleDateString("uk", { day: "numeric", month: "long" })}
+                    {new Date(post.created_at).toLocaleDateString(localeTag, {
+                      day: "numeric",
+                      month: "long",
+                    })}
                   </p>
                   <button
                     onClick={() => onDeletePost(post.id)}
-                    aria-label="Видалити пост"
+                    aria-label={t("recipientPage.deletePost", "Видалити пост")}
                     className="text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="w-4 h-4" strokeWidth={1.75} />
@@ -524,10 +634,11 @@ const RecipientPageEditor = () => {
         <section>
           <div className="flex items-center justify-between mb-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Список бажань
+              {t("recipientPage.wishlist", "Список бажань")}
             </label>
             <Button variant="outline" size="sm" onClick={openPicker}>
-              <Plus className="w-4 h-4 mr-1" strokeWidth={1.75} /> З каталогу
+              <Plus className="w-4 h-4 mr-1" strokeWidth={1.75} />{" "}
+              {t("recipientPage.fromCatalog", "З каталогу")}
             </Button>
           </div>
 
@@ -536,13 +647,13 @@ const RecipientPageEditor = () => {
             <input
               value={customTitle}
               onChange={(e) => setCustomTitle(e.target.value)}
-              placeholder="Своє побажання (напр. Ліки для мами)"
+              placeholder={t("recipientPage.customWishPlaceholder", "Своє побажання (напр. Ліки для мами)")}
               className="w-full bg-secondary rounded-xl px-3 py-2 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
             />
             <input
               value={customNote}
               onChange={(e) => setCustomNote(e.target.value)}
-              placeholder="Деталі (необов'язково)"
+              placeholder={t("recipientPage.customNotePlaceholder", "Деталі (необов'язково)")}
               className="w-full bg-secondary rounded-xl px-3 py-2 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
             />
             <Button
@@ -552,7 +663,7 @@ const RecipientPageEditor = () => {
               disabled={!customTitle.trim() || busy}
               onClick={onAddCustom}
             >
-              Додати побажання
+              {t("recipientPage.addWish", "Додати побажання")}
             </Button>
           </div>
 
@@ -564,7 +675,7 @@ const RecipientPageEditor = () => {
               >
                 <button
                   onClick={() => onRemoveWish(item.id)}
-                  aria-label="Прибрати"
+                  aria-label={t("recipientPage.remove", "Прибрати")}
                   className="absolute top-1 right-1 z-10 w-6 h-6 flex items-center justify-center bg-black/50 rounded-full"
                 >
                   <X className="w-3.5 h-3.5 text-white" strokeWidth={2} />
@@ -580,7 +691,7 @@ const RecipientPageEditor = () => {
                 </div>
                 <div className="p-2">
                   <p className="text-xs font-medium text-foreground line-clamp-2">
-                    {item.product?.title || item.title || "Побажання"}
+                    {item.product?.title || item.title || t("recipientPage.wishFallback", "Побажання")}
                   </p>
                   {item.product && (
                     <p className="text-xs font-semibold text-accent mt-0.5">
@@ -603,13 +714,13 @@ const RecipientPageEditor = () => {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Пошук у каталозі…"
+                placeholder={t("recipientPage.catalogSearchPlaceholder", "Пошук у каталозі…")}
                 className="flex-1 bg-transparent text-sm outline-none text-foreground"
                 autoFocus
               />
               <button
                 onClick={() => setPickerOpen(false)}
-                aria-label="Закрити"
+                aria-label={t("common.close", "Закрити")}
                 className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground"
               >
                 <X className="w-5 h-5" strokeWidth={2} />
@@ -618,7 +729,7 @@ const RecipientPageEditor = () => {
             <div className="overflow-y-auto p-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
               {filtered.length === 0 ? (
                 <p className="col-span-full text-center text-sm text-muted-foreground py-8">
-                  Нічого не знайдено
+                  {t("recipientPage.catalogEmpty", "Нічого не знайдено")}
                 </p>
               ) : (
                 filtered.map((p) => (

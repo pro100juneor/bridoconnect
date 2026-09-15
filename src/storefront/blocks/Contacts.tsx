@@ -1,8 +1,10 @@
 import { Phone, Mail, MapPin, Globe } from "lucide-react";
+import { useT } from "@/i18n/useT";
 import type { BlockProps } from "../types";
 
 // Contacts: phone / email / address / site. Hidden entirely if all empty.
 export default function Contacts({ profile }: BlockProps) {
+  const { t } = useT();
   const c = profile.contacts;
   const rows: { icon: React.ReactNode; label: string; href?: string }[] = [];
   if (c.phone)
@@ -27,7 +29,7 @@ export default function Contacts({ profile }: BlockProps) {
       }}
     >
       <h2 style={{ fontFamily: "var(--sf-font-heading)", fontSize: "1.35rem", margin: "0 0 1rem" }}>
-        Контакти
+        {t("storefront.contacts.title", "Контакти")}
       </h2>
       <ul
         style={{

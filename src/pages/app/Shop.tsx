@@ -9,8 +9,21 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useT } from "@/i18n/useT";
 
 const cats = ["Всі", "Їжа", "Одяг", "Ліки", "Освіта", "Побут", "Зв'язок"];
+
+// Категорія лишається в БД українською (так її читає фільтр products.category) —
+// перекладається лише підпис чипа.
+const catKeys: Record<string, string> = {
+  Всі: "common.all",
+  Їжа: "product.cat.food",
+  Одяг: "product.cat.clothes",
+  Ліки: "product.cat.meds",
+  Освіта: "product.cat.education",
+  Побут: "product.cat.household",
+  "Зв'язок": "product.cat.connectivity",
+};
 
 const flagFor = (country?: string | null) => (country === "Україна" ? "🇺🇦" : "🏳️");
 
@@ -25,6 +38,7 @@ const Shop = () => {
   const { items, finishCheckout } = useCart();
   const { convert } = useCurrency();
   const { user } = useAuth();
+  const { t } = useT();
   const [searchParams, setSearchParams] = useSearchParams();
   const [active, setActive] = useState("Всі");
   const [liked, setLiked] = useState<string[]>([]);
@@ -77,21 +91,22 @@ const Shop = () => {
           .limit(1);
         if (data && data.length > 0) {
           toast({
-            title: "Оплату отримано",
-            description: "Замовлення оформлено, продавець отримав сповіщення.",
+            title: t("product.paidTitle", "Оплату отримано"),
+            description: t("shop.orderPlacedDesc", "Замовлення оформлено, продавець отримав сповіщення."),
           });
           return;
         }
         await new Promise((r) => setTimeout(r, ORDER_POLL_DELAY_MS));
       }
       toast({
-        title: "Оплату отримано",
-        description: "Замовлення ще обробляється — воно з'явиться за хвилину.",
+        title: t("product.paidTitle", "Оплату отримано"),
+        description: t("shop.orderPendingDesc", "Замовлення ще обробляється — воно з'явиться за хвилину."),
       });
     })();
-  }, [searchParams, setSearchParams, finishCheckout, load, user]);
+  }, [searchParams, setSearchParams, finishCheckout, load, user, t]);
 
   const filtered = active === "Всі" ? products : products.filter((p) => p.category === active);
+  const catLabel = (cat: string) => t(catKeys[cat] ?? "", cat);
 
   const refetch = useCallback(async () => {
     void tap("light");
@@ -105,11 +120,11 @@ const Shop = () => {
 
   return (
     <div className="pb-8">
-      <h1 className="sr-only">Гуманітарний магазин</h1>
+      <h1 className="sr-only">{t("shop.catalogTitle", "Гуманітарний магазин")}</h1>
       <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-3">
         <div className="flex items-start justify-between mb-3">
           <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">
-            Гуманітарний магазин
+            {t("shop.catalogTitle", "Гуманітарний магазин")}
           </h2>
           <div className="flex items-center gap-1 shrink-0">
             <button
@@ -117,7 +132,7 @@ const Shop = () => {
                 void tap("light");
                 navigate("/app/shop/design");
               }}
-              aria-label="Оформити магазин"
+              aria-label={t("shop.designAria", "Оформити магазин")}
               className="min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <Palette className="w-5 h-5 text-foreground" strokeWidth={1.75} />
@@ -127,7 +142,7 @@ const Shop = () => {
                 void tap("light");
                 navigate("/app/cart");
               }}
-              aria-label="Кошик"
+              aria-label={t("cart.title", "Кошик")}
               className="relative min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <ShoppingCart className="w-5 h-5 text-foreground" strokeWidth={1.75} />
@@ -151,7 +166,7 @@ const Shop = () => {
                 active === cat ? "bg-accent text-white" : "bg-secondary text-foreground"
               }`}
             >
-              {cat}
+              {catLabel(cat)}
             </button>
           ))}
         </div>
@@ -159,7 +174,9 @@ const Shop = () => {
 
       <PullToRefresh onRefresh={refetch}>
         {loading ? (
-          <div className="px-4 mt-8 text-center text-sm text-muted-foreground">Завантаження…</div>
+          <div className="px-4 mt-8 text-center text-sm text-muted-foreground">
+            {t("shop.loading", "Завантаження…")}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="px-4 mt-16 flex flex-col items-center text-center">
             <ShoppingBag
@@ -167,8 +184,12 @@ const Shop = () => {
               strokeWidth={1.5}
               aria-hidden="true"
             />
-            <p className="text-sm text-muted-foreground mb-1">Поки що немає товарів</p>
-            <p className="text-xs text-muted-foreground/70">Станьте першим — додайте товар</p>
+            <p className="text-sm text-muted-foreground mb-1">
+              {t("shop.noProducts", "Поки що немає товарів")}
+            </p>
+            <p className="text-xs text-muted-foreground/70">
+              {t("shop.beFirst", "Станьте першим — додайте товар")}
+            </p>
           </div>
         ) : (
           /* DESIGN.md §Anti-patterns: break symmetric 2-col — first product spans full width as hero */
@@ -207,7 +228,11 @@ const Shop = () => {
                         e.stopPropagation();
                         toggleLike(p.id);
                       }}
-                      aria-label={liked.includes(p.id) ? "Прибрати з обраних" : "В обрані"}
+                      aria-label={
+                        liked.includes(p.id)
+                          ? t("product.unlike", "Прибрати з обраних")
+                          : t("product.like", "В обрані")
+                      }
                       className="absolute top-2 right-2 min-h-[44px] min-w-[44px] flex items-center justify-center bg-white/80 rounded-full backdrop-blur-sm"
                     >
                       <Heart
@@ -220,7 +245,9 @@ const Shop = () => {
                     </span>
                   </div>
                   <div className="p-3">
-                    <p className="text-xs text-muted-foreground mb-1">{p.category || "Товар"}</p>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {p.category || t("product.categoryFallback", "Товар")}
+                    </p>
                     <p
                       className={`font-semibold text-foreground leading-tight mb-2 line-clamp-2 ${isHero ? "text-base" : "text-sm"}`}
                     >
@@ -242,7 +269,7 @@ const Shop = () => {
                         }}
                         className="text-xs bg-accent text-white px-3 py-1.5 rounded-2xl font-medium min-h-[44px] transition-transform duration-150 hover:-translate-y-px disabled:opacity-60"
                       >
-                        Купити
+                        {t("product.buy", "Купити")}
                       </button>
                     </div>
                   </div>
@@ -258,10 +285,10 @@ const Shop = () => {
           void tap("medium");
           navigate("/app/shop/new");
         }}
-        aria-label="Додати товар"
+        aria-label={t("shop.addProduct", "Додати товар")}
         className="fixed bottom-24 right-4 z-20 flex items-center gap-2 bg-accent text-white pl-4 pr-5 py-3 rounded-2xl shadow-lg font-medium text-sm transition-transform duration-150 hover:-translate-y-px"
       >
-        <Plus className="w-4 h-4" strokeWidth={2} /> Додати товар
+        <Plus className="w-4 h-4" strokeWidth={2} /> {t("shop.addProduct", "Додати товар")}
       </button>
     </div>
   );

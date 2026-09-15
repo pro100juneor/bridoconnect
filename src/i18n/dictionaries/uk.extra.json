@@ -1,0 +1,13 @@
+{
+  "shop.designAria": "Оформити магазин",
+  "shop.beFirst": "Станьте першим — додайте товар",
+  "shop.addProduct": "Додати товар",
+  "shop.orderPlacedDesc": "Замовлення оформлено, продавець отримав сповіщення.",
+  "shop.orderPendingDesc": "Замовлення ще обробляється — воно з'явиться за хвилину.",
+
+  "cart.title": "Кошик",
+  "cart.empty": "Кошик порожній",
+  "cart.removeItem": "Прибрати з кошика",
+  "cart.total": "Разом",
+  "cart.checkout": "Оформити"
+}

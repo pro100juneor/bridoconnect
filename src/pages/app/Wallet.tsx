@@ -1,36 +1,38 @@
-import {
-  ArrowUpRight,
-  ArrowDownLeft,
-  TrendingUp,
-  RefreshCw,
-  Wallet as WalletIcon,
-} from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, TrendingUp, RefreshCw, Wallet as WalletIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { tap } from "@/lib/native";
 import { useTransactions } from "@/hooks/useTransactions";
-import { useT } from "@/i18n/useT";
+import { useT, type TFunction } from "@/i18n/useT";
 
-const TYPE_LABEL: Record<string, string> = {
-  deposit: "Поповнення",
-  withdrawal: "Виведення",
-  deal_payment: "Платіж по угоді",
-  refund: "Повернення",
+// Ключи здесь — значения type из БД, их не переводим; переводим только подписи.
+// t приходит параметром: функция живёт вне компонента, хук тут вызвать нельзя.
+const typeLabel = (type: string, t: TFunction): string => {
+  switch (type) {
+    case "deposit":
+      return t("wallet.type.deposit", "Поповнення");
+    case "withdrawal":
+      return t("wallet.type.withdrawal", "Виведення");
+    case "deal_payment":
+      return t("wallet.type.dealPayment", "Платіж по угоді");
+    case "refund":
+      return t("wallet.type.refund", "Повернення");
+    default:
+      return type;
+  }
 };
 
 const Wallet = () => {
   const navigate = useNavigate();
-  const { t } = useT();
+  const { t, localeTag } = useT();
   const { transactions, balance, loading, refetch } = useTransactions();
 
-
-
   const totalOut = transactions
-    .filter((t) => t.type === "deal_payment" || t.type === "withdrawal")
-    .reduce((s, t) => s + t.amount, 0);
+    .filter((tx) => tx.type === "deal_payment" || tx.type === "withdrawal")
+    .reduce((s, tx) => s + tx.amount, 0);
   const totalIn = transactions
-    .filter((t) => t.type === "deposit" || t.type === "refund")
-    .reduce((s, t) => s + t.amount, 0);
+    .filter((tx) => tx.type === "deposit" || tx.type === "refund")
+    .reduce((s, tx) => s + tx.amount, 0);
 
   return (
     <div className="pb-8">
@@ -38,7 +40,7 @@ const Wallet = () => {
       <div className="px-4 pt-4 pb-6 bg-primary text-white rounded-b-3xl mb-4">
         <h2 className="font-serif text-xl mb-6">{t("wallet.title")}</h2>
         <div className="text-center mb-6">
-          <p className="text-white/60 text-sm mb-1">Доступний баланс</p>
+          <p className="text-white/60 text-sm mb-1">{t("wallet.availableBalance", "Доступний баланс")}</p>
           <p className="text-4xl font-bold">€{balance.toFixed(2)}</p>
           <p className="text-white/40 text-xs mt-1">≈ ${(balance * 1.09).toFixed(0)} USD</p>
         </div>
@@ -54,7 +56,7 @@ const Wallet = () => {
             className="flex flex-col gap-1 h-14 bg-white/10 hover:bg-white/20 text-white border-0"
           >
             <ArrowUpRight className="w-4 h-4" />
-            <span className="text-xs">Відправити</span>
+            <span className="text-xs">{t("wallet.send", "Відправити")}</span>
           </Button>
         </div>
       </div>
@@ -64,14 +66,14 @@ const Wallet = () => {
           <div className="bg-secondary rounded-2xl p-3">
             <div className="flex items-center gap-2 mb-1">
               <ArrowUpRight className="w-4 h-4 text-accent" />
-              <span className="text-xs text-muted-foreground">Відправлено</span>
+              <span className="text-xs text-muted-foreground">{t("wallet.sentTotal", "Відправлено")}</span>
             </div>
             <p className="text-lg font-bold text-foreground">€{totalOut.toFixed(0)}</p>
           </div>
           <div className="bg-secondary rounded-2xl p-3">
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="w-4 h-4 text-success" />
-              <span className="text-xs text-muted-foreground">Поповнено</span>
+              <span className="text-xs text-muted-foreground">{t("wallet.receivedTotal", "Поповнено")}</span>
             </div>
             <p className="text-lg font-bold text-foreground">€{totalIn.toFixed(0)}</p>
           </div>
@@ -80,14 +82,14 @@ const Wallet = () => {
 
       <div className="px-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-foreground">Транзакції</h3>
+          <h3 className="font-semibold text-foreground">{t("wallet.transactions", "Транзакції")}</h3>
           <button
             onClick={() => {
               void tap("light");
               void refetch();
             }}
             className="text-muted-foreground hover:text-foreground transition-transform duration-150 hover:-translate-y-px min-h-[44px] min-w-[44px] flex items-center justify-end"
-            aria-label="Оновити"
+            aria-label={t("wallet.refreshAria", "Оновити")}
           >
             <RefreshCw className="w-4 h-4" strokeWidth={1.75} />
           </button>
@@ -99,22 +101,22 @@ const Wallet = () => {
               <WalletIcon className="w-7 h-7 text-muted-foreground" strokeWidth={1.5} aria-hidden="true" />
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed text-center max-w-[16rem]">
-              Транзакцій ще немає.
+              {t("wallet.emptyTitle", "Транзакцій ще немає.")}
               <br />
-              Поповніть гаманець, щоб почати.
+              {t("wallet.emptyHint", "Поповніть гаманець, щоб почати.")}
             </p>
           </div>
         )}
 
         <div className="space-y-2">
-          {transactions.map((t) => {
-            const isOut = t.type === "deal_payment" || t.type === "withdrawal";
+          {transactions.map((tx) => {
+            const isOut = tx.type === "deal_payment" || tx.type === "withdrawal";
             return (
               <div
-                key={t.id}
-                onClick={() => t.deal_id && navigate(`/app/deal/${t.deal_id}`)}
+                key={tx.id}
+                onClick={() => tx.deal_id && navigate(`/app/deal/${tx.deal_id}`)}
                 className={`flex items-center gap-3 p-3 rounded-2xl transition-shadow duration-200 ${
-                  t.deal_id
+                  tx.deal_id
                     ? "cursor-pointer hover:shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)]"
                     : ""
                 }`}
@@ -131,9 +133,9 @@ const Wallet = () => {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">{TYPE_LABEL[t.type] || t.type}</p>
+                  <p className="text-sm font-medium text-foreground">{typeLabel(tx.type, t)}</p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(t.created_at).toLocaleDateString("uk", {
+                    {new Date(tx.created_at).toLocaleDateString(localeTag, {
                       day: "numeric",
                       month: "short",
                       hour: "2-digit",
@@ -142,14 +144,13 @@ const Wallet = () => {
                   </p>
                 </div>
                 <span className={`font-semibold text-sm ${isOut ? "text-accent" : "text-success"}`}>
-                  {isOut ? "-" : "+"}€{t.amount.toFixed(0)}
+                  {isOut ? "-" : "+"}€{tx.amount.toFixed(0)}
                 </span>
               </div>
             );
           })}
         </div>
       </div>
-
     </div>
   );
 };

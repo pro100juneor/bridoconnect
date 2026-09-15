@@ -6,6 +6,7 @@ import { useProducts, type Product } from "@/hooks/useProducts";
 import { getTheme } from "@/storefront/themes";
 import Storefront from "@/storefront/Storefront";
 import type { ShopProfile, SellerSummary } from "@/storefront/types";
+import { useT } from "@/i18n/useT";
 
 type LoadState = "loading" | "notfound" | "ready";
 
@@ -13,6 +14,7 @@ export default function StorefrontPage() {
   const { slug } = useParams();
   const { getBySlug } = useShopProfile();
   const { productsBySeller } = useProducts();
+  const { t } = useT();
 
   const [state, setState] = useState<LoadState>("loading");
   const [profile, setProfile] = useState<ShopProfile | null>(null);
@@ -52,16 +54,16 @@ export default function StorefrontPage() {
 
   useEffect(() => {
     if (profile) {
-      const name = profile.brand.name || seller?.name || "Магазин";
-      document.title = `${name} — вітрина`;
+      const name = profile.brand.name || seller?.name || t("nav.shop", "Магазин");
+      document.title = t("storefront.docTitle", "{name} — вітрина", { name });
     }
-  }, [profile, seller]);
+  }, [profile, seller, t]);
 
   if (state === "loading") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background">
         <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">Завантаження вітрини…</p>
+        <p className="text-sm text-muted-foreground">{t("storefront.loading", "Завантаження вітрини…")}</p>
       </div>
     );
   }
@@ -69,12 +71,16 @@ export default function StorefrontPage() {
   if (state === "notfound" || !profile) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-background px-6 text-center">
-        <h1 className="font-serif text-3xl text-foreground">Вітрину не знайдено</h1>
+        <h1 className="font-serif text-3xl text-foreground">
+          {t("storefront.notFound.title", "Вітрину не знайдено")}
+        </h1>
         <p className="text-sm text-muted-foreground max-w-sm">
-          Магазин за адресою «{slug}» не існує або ще не опублікований.
+          {t("storefront.notFound.desc", "Магазин за адресою «{slug}» не існує або ще не опублікований.", {
+            slug: slug ?? "",
+          })}
         </p>
         <Link to="/shop" className="mt-2 text-sm font-medium text-accent underline underline-offset-4">
-          Перейти до магазину
+          {t("storefront.notFound.cta", "Перейти до магазину")}
         </Link>
       </div>
     );

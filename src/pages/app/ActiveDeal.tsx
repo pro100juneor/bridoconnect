@@ -157,7 +157,10 @@ const ActiveDeal = () => {
         // Без Drop-in SDK: показываем session id и ждём WIP интеграции.
         toast({
           title: "Adyen session created",
-          description: `Session ${session.sessionId.slice(0, 12)}… — Drop-in UI підключиться у наступному релізі.`,
+          description: `Session ${session.sessionId.slice(0, 12)}… — ${t(
+            "deal.adyen.dropinSoon",
+            "Drop-in UI підключиться у наступному релізі."
+          )}`,
         });
       } else {
         await createCheckout({ amount: n, dealId: id });
@@ -183,7 +186,10 @@ const ActiveDeal = () => {
       void notify("success");
       toast({
         title: t("deal.refund.requested", "Запит на повернення"),
-        description: t("deal.refund.requestedDesc", "Refund ініційовано, processor підтвердить через webhook."),
+        description: t(
+          "deal.refund.requestedDesc",
+          "Refund ініційовано, processor підтвердить через webhook."
+        ),
       });
       setDeal((prev) =>
         prev ? { ...prev, status: "cancelled", refunded_at: new Date().toISOString() } : prev
@@ -192,7 +198,8 @@ const ActiveDeal = () => {
       void notify("error");
       toast({
         title: t("deal.refund.error", "Не вдалося повернути"),
-        description: e instanceof Error && e.message ? e.message : t("common.retryLater", "Спробуйте пізніше."),
+        description:
+          e instanceof Error && e.message ? e.message : t("common.retryLater", "Спробуйте пізніше."),
         variant: "destructive",
       });
     } finally {
@@ -328,7 +335,11 @@ const ActiveDeal = () => {
         {!finished && (
           <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
             <h3 className="font-semibold text-foreground mb-3">{t("deal.support.title")}</h3>
-            <div className="flex gap-2 mb-3" role="tablist" aria-label={t("deal.payMethod.label", "Спосіб оплати")}>
+            <div
+              className="flex gap-2 mb-3"
+              role="tablist"
+              aria-label={t("deal.payMethod.label", "Спосіб оплати")}
+            >
               {(["stripe", "paypal", "adyen"] as const).map((m) => (
                 <button
                   key={m}

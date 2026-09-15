@@ -1,9 +1,11 @@
 import { MessageCircle } from "lucide-react";
+import { useT } from "@/i18n/useT";
 import { buildMessengerLinks } from "../types";
 import type { BlockProps } from "../types";
 
 // Messengers: deep-link buttons to reach the shop. Only filled channels shown.
 export default function Messengers({ profile }: BlockProps) {
+  const { t } = useT();
   const links = buildMessengerLinks(profile.messengers);
   if (links.length === 0) return null;
 
@@ -19,7 +21,7 @@ export default function Messengers({ profile }: BlockProps) {
       }}
     >
       <h2 style={{ fontFamily: "var(--sf-font-heading)", fontSize: "1.35rem", margin: "0 0 1rem" }}>
-        Зв'язатися з нами
+        {t("storefront.messengers.title", "Зв'язатися з нами")}
       </h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
         {links.map((l) => (

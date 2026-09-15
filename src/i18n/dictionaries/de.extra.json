@@ -1,0 +1,13 @@
+{
+  "shop.designAria": "Shop gestalten",
+  "shop.beFirst": "Seien Sie der Erste — fügen Sie einen Artikel hinzu",
+  "shop.addProduct": "Artikel hinzufügen",
+  "shop.orderPlacedDesc": "Bestellung aufgegeben, der Verkäufer wurde benachrichtigt.",
+  "shop.orderPendingDesc": "Die Bestellung wird noch verarbeitet — sie erscheint in einer Minute.",
+
+  "cart.title": "Warenkorb",
+  "cart.empty": "Ihr Warenkorb ist leer",
+  "cart.removeItem": "Aus dem Warenkorb entfernen",
+  "cart.total": "Gesamt",
+  "cart.checkout": "Zur Kasse"
+}
