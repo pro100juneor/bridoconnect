@@ -9,6 +9,7 @@ interface DealWithProfile extends Deal {
   creator_rating?: number;
   creator_deals?: number;
   creator_verified?: boolean;
+  creator_avatar?: string | null;
 }
 
 interface DealCreatorJoin {
@@ -18,6 +19,7 @@ interface DealCreatorJoin {
   rating: number | null;
   deals_count: number | null;
   verified: boolean | null;
+  avatar_url: string | null;
 }
 
 type DealRow = Deal & { profiles: DealCreatorJoin | null };
@@ -44,7 +46,7 @@ export const useDeals = (filters?: DealsFilter) => {
         `
         *,
         profiles!creator_id(
-          name, country, city, rating, deals_count, verified
+          name, country, city, rating, deals_count, verified, avatar_url
         )
       `
       )
@@ -66,6 +68,7 @@ export const useDeals = (filters?: DealsFilter) => {
         creator_rating: d.profiles?.rating || 0,
         creator_deals: d.profiles?.deals_count || 0,
         creator_verified: d.profiles?.verified || false,
+        creator_avatar: d.profiles?.avatar_url ?? null,
       }));
       setDeals(enriched);
     }

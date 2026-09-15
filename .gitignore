@@ -42,6 +42,8 @@ secrets/
 *.key
 test-results/
 supabase/.temp/
+# Служебное состояние CLI (текущая ветка локального стека) — машинное, не наше.
+supabase/.branches/
 public/audio/
 .env.staging
 .env.*.local

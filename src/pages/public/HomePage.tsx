@@ -4,10 +4,37 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Shield, Eye, Users, Lock, CheckCircle, Plus } from "lucide-react";
 import VideoHero from "@/components/VideoHero";
 import { useT } from "@/i18n/useT";
+import { useDeals } from "@/hooks/useDeals";
 
-// Демо-витрина получателей. Числа/флаги/фото — не переводятся, текст живёт
+/**
+ * Карточка получателя на витрине главной. Одна форма для двух источников:
+ * реальные открытые запросы из базы и демо-примеры (у них заполнены *Key,
+ * потому что их текст лежит в словаре и переводится).
+ */
+export interface RecipientCard {
+  id: string;
+  name: string;
+  nameKey?: string;
+  flag: string;
+  city: string;
+  cityKey?: string;
+  need: string;
+  needKey?: string;
+  bio: string;
+  bioKey?: string;
+  goal: number;
+  raised: number;
+  rating: number;
+  deals: number;
+  photo: string | null;
+  verified?: boolean;
+}
+
+// Демо-витрина: показывается ТОЛЬКО пока в базе нет ни одного открытого
+// запроса, и только с бейджем «Приклад». Это выдуманные истории — выдавать
+// их за реальных людей нельзя. Числа/флаги/фото не переводятся, текст живёт
 // в словаре (<locale>.public.json) и подтягивается по *Key.
-const recipients = [
+const demoRecipients: RecipientCard[] = [
   {
     id: "r1",
     nameKey: "home.recipients.r1.name",
@@ -159,9 +186,39 @@ export default function HomePage() {
     el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
   };
 
-  const r = recipients[ri];
-  const pct = Math.round((r.raised / r.goal) * 100);
-  const rName = t(r.nameKey, r.name);
+  // Витрина получателей: сперва пробуем настоящие открытые запросы из базы.
+  // Раздел подписан «Реальні люди» — значит там и должны быть реальные люди.
+  // Пока база пуста, показываем те же демо-карточки, но честно помеченными
+  // как пример (isDemo): бейдж «Приклад», без кнопки «Допомогти <ім'я>».
+  const { deals: liveDeals } = useDeals({ status: "active", limit: 4 });
+
+  const liveRecipients: RecipientCard[] = liveDeals
+    .filter((d) => Number(d.amount) > 0)
+    .map((d) => ({
+      id: d.id,
+      name: d.creator_name || t("common.user", "Користувач"),
+      flag: d.creator_flag || "🏳️",
+      city: d.creator_city || "",
+      need: d.title,
+      bio: d.description || "",
+      goal: Number(d.amount),
+      raised: Number(d.raised) || 0,
+      rating: Number(d.creator_rating) || 0,
+      deals: Number(d.creator_deals) || 0,
+      photo: d.creator_avatar || null,
+      verified: !!d.creator_verified,
+    }));
+
+  const isDemo = liveRecipients.length === 0;
+  const cards: RecipientCard[] = isDemo ? demoRecipients : liveRecipients;
+
+  const r = cards[Math.min(ri, cards.length - 1)];
+  const pct = r.goal > 0 ? Math.round((r.raised / r.goal) * 100) : 0;
+  // Демо-тексты живут в словаре по ключам, реальные приходят как есть из базы.
+  const rName = r.nameKey ? t(r.nameKey, r.name) : r.name;
+  const rCity = r.cityKey ? t(r.cityKey, r.city) : r.city;
+  const rNeed = r.needKey ? t(r.needKey, r.need) : r.need;
+  const rBio = r.bioKey ? t(r.bioKey, r.bio) : r.bio;
 
   // Hero title word-stagger (DESIGN.md §Animation) — split the translated line
   // so every language keeps the effect, not just Ukrainian.
@@ -390,33 +447,57 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-6 sm:px-8">
           <InView className="text-left mb-8 border-l-2 border-accent pl-4">
             <span className="text-xs font-bold uppercase tracking-widest text-accent block mb-3">
-              {t("home.recipients.eyebrow", "Реальні люди")}
+              {isDemo
+                ? t("home.recipients.eyebrowDemo", "Як виглядає профіль")
+                : t("home.recipients.eyebrow", "Реальні люди")}
             </span>
             <h2 className="font-serif text-4xl text-foreground tracking-tight">
               {t("home.recipients.titleLead", "Тобі можуть")}{" "}
               <em className="not-italic text-accent">{t("home.recipients.titleEm", "допомогти")}</em>
             </h2>
+            {/* Пока реальных запросов нет — говорим об этом прямо над витриной,
+                чтобы карточки-примеры никто не принял за живые сборы. */}
+            {isDemo && (
+              <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+                {t(
+                  "home.recipients.demoNotice",
+                  "Відкритих запитів поки немає — нижче приклади того, як виглядатиме профіль отримувача. Це вигадані історії, гроші за ними не збираються."
+                )}
+              </p>
+            )}
           </InView>
           <div className="grid lg:grid-cols-2 gap-6 items-start">
             <InView
               className={`bg-card border border-border rounded-2xl overflow-hidden ${CARD_INSET} ${CARD_SHADOW}`}
             >
-              <div className="h-36 relative overflow-hidden">
-                <img
-                  src={r.photo}
-                  alt=""
-                  loading="lazy"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
+              <div className="h-36 relative overflow-hidden bg-muted">
+                {r.photo && (
+                  <img
+                    src={r.photo}
+                    alt=""
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
                 <span className="absolute top-3 right-3 text-3xl drop-shadow">{r.flag}</span>
                 <div className="absolute bottom-3 left-3">
-                  <span
-                    className="text-xs px-2.5 py-1 rounded-full font-medium text-white backdrop-blur-md"
-                    style={{ background: "rgba(29,138,90,0.85)" }}
-                  >
-                    ✓ {t("shop.verified", "Верифіковано")}
-                  </span>
+                  {/* Бейдж верификации — только если профиль реально верифицирован.
+                      Раньше он висел на всех карточках, включая выдуманные. */}
+                  {isDemo ? (
+                    <span className="text-xs px-2.5 py-1 rounded-full font-medium text-white backdrop-blur-md bg-black/60">
+                      {t("home.recipients.demoBadge", "Приклад")}
+                    </span>
+                  ) : (
+                    r.verified && (
+                      <span
+                        className="text-xs px-2.5 py-1 rounded-full font-medium text-white backdrop-blur-md"
+                        style={{ background: "rgba(29,138,90,0.85)" }}
+                      >
+                        ✓ {t("shop.verified", "Верифіковано")}
+                      </span>
+                    )
+                  )}
                 </div>
               </div>
               <div className="p-5">
@@ -425,7 +506,7 @@ export default function HomePage() {
                     <h3 className="font-bold text-foreground text-lg">
                       {rName} {r.flag}
                     </h3>
-                    <p className="text-xs text-muted-foreground">{t(r.cityKey, r.city)}</p>
+                    <p className="text-xs text-muted-foreground">{rCity}</p>
                   </div>
                   <div className="text-right">
                     <div className="text-xs font-medium">⭐ {r.rating}</div>
@@ -434,10 +515,8 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-                <p className="text-xs font-bold uppercase tracking-wide mb-2 text-accent">
-                  {t(r.needKey, r.need)}
-                </p>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4">{t(r.bioKey, r.bio)}</p>
+                <p className="text-xs font-bold uppercase tracking-wide mb-2 text-accent">{rNeed}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4">{rBio}</p>
                 <div className="mb-4">
                   <div className="flex justify-between text-xs mb-1.5">
                     <span className="font-semibold">€{r.raised.toLocaleString()}</span>
@@ -449,18 +528,22 @@ export default function HomePage() {
                     <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
+                {/* «Допомогти <ім'я>» — только когда за именем стоит живой
+                    человек. Для примеров зовём просто зарегистрироваться. */}
                 <Link
                   to="/register"
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white transition-transform duration-150 hover:-translate-y-px min-h-[44px]"
                   style={{ background: "#e94560" }}
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  {t("home.recipients.helpCta", "Допомогти {name}", { name: rName.split(" ")[0] })}
+                  {isDemo
+                    ? t("home.recipients.joinCta", "Приєднатись до платформи")
+                    : t("home.recipients.helpCta", "Допомогти {name}", { name: rName.split(" ")[0] })}
                 </Link>
               </div>
             </InView>
             <div className="space-y-2">
-              {recipients.map((rec, i) => (
+              {cards.map((rec, i) => (
                 <button
                   key={rec.id}
                   onClick={() => setRi(i)}
@@ -469,12 +552,15 @@ export default function HomePage() {
                   <span className="text-2xl">{rec.flag}</span>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold truncate">
-                      {t(rec.nameKey, rec.name)} · {t(rec.cityKey, rec.city)}
+                      {rec.nameKey ? t(rec.nameKey, rec.name) : rec.name}
+                      {rec.city ? ` · ${rec.cityKey ? t(rec.cityKey, rec.city) : rec.city}` : ""}
                     </div>
-                    <div className="text-xs text-muted-foreground truncate">{t(rec.needKey, rec.need)}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {rec.needKey ? t(rec.needKey, rec.need) : rec.need}
+                    </div>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {Math.round((rec.raised / rec.goal) * 100)}%
+                    {rec.goal > 0 ? Math.round((rec.raised / rec.goal) * 100) : 0}%
                   </div>
                 </button>
               ))}

@@ -1,0 +1,62 @@
+# Конфигурация локального стека Supabase CLI.
+#
+# Файл был в репозитории (8b290bc), но потерялся при перестройке проекта.
+# Без него CLI поднимал стек на дефолтах и НЕ запускал edge_runtime: вызовы
+# /functions/v1/connect-status отвечали 503/404, и route-smoke падал на
+# /app/profile. Восстановлен и приведён к фактическому состоянию стека
+# (Postgres 17, как в контейнере supabase_db_bridoconnect).
+#
+# Прод/staging живут в облаке и этим файлом не управляются — он только про
+# локальный docker-стек и тесты.
+
+project_id = "bridoconnect"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:8080"
+additional_redirect_urls = ["http://127.0.0.1:8080", "http://localhost:8080"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[realtime]
+enabled = true
+
+[edge_runtime]
+enabled = true
+policy = "oneshot"
+inspector_port = 8083
+
+[analytics]
+enabled = false

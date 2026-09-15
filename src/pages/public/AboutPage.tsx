@@ -1,13 +1,17 @@
 import { Heart, Globe, Shield, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useT } from "@/i18n/useT";
 
-// Имена участников команды — собственные, не переводим (роль переводим отдельно).
-const team: { name: string; role: string; roleKey?: string; flag: string }[] = [
-  { name: "Олексій Юненко", roleKey: "about.role.founder", role: "Засновник & CEO", flag: "🇺🇦" },
-  { name: "Sophie Müller", role: "CTO", flag: "🇩🇪" },
-  { name: "Mariam Al-Rashid", role: "COO", flag: "🇯🇴" },
-  { name: "Тарас Мельник", role: "Head of Trust & Safety", flag: "🇺🇦" },
-];
+// Здесь стоял список из четырёх сотрудников (Олексій Юненко CEO, Sophie Müller
+// CTO, Mariam Al-Rashid COO, Тарас Мельник Head of Trust & Safety). Ни одного
+// из этих людей не существует, а в Impressum указан один реальный владелец —
+// Firma „Luftarbeiter“, Inh. Oleksii Kusov. Выдуманный штат на странице «Про нас»
+// расходится с обязательными выходными данными и вводит в заблуждение
+// (UWG §5). Список удалён; если появятся настоящие люди — возвращать сюда,
+// сверяя с Impressum.
+//
+// Имена участников — собственные, не переводим (роль переводим отдельно).
+const team: { name: string; role: string; roleKey?: string; flag: string }[] = [];
 
 const values = [
   {
@@ -45,10 +49,12 @@ const AboutPage = () => {
         <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">
           {t("about.title", "Про нас")}
         </h1>
+        {/* Было: «заснована у 2024 році командою людей». Проект ведёт один
+            человек и запущен в 2026-м — интро приведено к факту. */}
         <p className="text-muted-foreground mb-10 leading-relaxed">
           {t(
             "about.intro",
-            "BridoConnect заснована у 2024 році командою людей, яких торкнулась гуманітарна криза. Ми прибрали посередників між тими, хто хоче допомогти, і тими, хто цієї допомоги потребує."
+            "BridoConnect — незалежний проєкт, а не благодійний фонд. Ми прибрали посередників між тими, хто хоче допомогти, і тими, хто цієї допомоги потребує: гроші йдуть напряму отримувачу, платформа лише забезпечує перевірку, захист угоди й переказ."
           )}
         </p>
 
@@ -70,7 +76,20 @@ const AboutPage = () => {
           ))}
         </div>
 
-        <h2 className="font-semibold text-foreground text-lg mb-4">{t("about.teamTitle", "Команда")}</h2>
+        <h2 className="font-semibold text-foreground text-lg mb-4">
+          {t("about.teamTitle", "Хто за цим стоїть")}
+        </h2>
+        {team.length === 0 && (
+          <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+            {t(
+              "about.teamSolo",
+              "Платформу створює й підтримує одна людина — власник, вказаний у вихідних даних. Коли до проєкту приєднається команда, вона з’явиться тут поіменно."
+            )}{" "}
+            <Link to="/impressum" className="text-accent underline underline-offset-2">
+              {t("about.teamImpressum", "Вихідні дані")}
+            </Link>
+          </p>
+        )}
         <div className="space-y-3">
           {team.map((m) => (
             <article

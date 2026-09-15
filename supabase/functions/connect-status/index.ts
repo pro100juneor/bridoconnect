@@ -99,9 +99,15 @@ serve(async (req) => {
       { headers: { ...headers, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
+    // Сюда попадают сбои Stripe и неверная конфигурация ключей — это не вина
+    // клиента, поэтому 502, а не 400 (раньше отдавался именно 400, и наружу
+    // уходил дословный текст Stripe вида «You did not provide an API key…»,
+    // то есть подсказка о состоянии нашего бэкенда). Подробность остаётся в
+    // логах функции, клиент получает нейтральное сообщение.
     const msg = error instanceof Error ? error.message : "unknown error";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 400,
+    console.error("connect-status failed:", msg);
+    return new Response(JSON.stringify({ error: "connect_status_unavailable" }), {
+      status: 502,
       headers: { ...headers, "Content-Type": "application/json" },
     });
   }
