@@ -220,8 +220,7 @@ const PublicProfile = () => {
             className="flex-1 bg-accent hover:bg-accent/90 text-white gap-2 transition-transform duration-150 hover:-translate-y-px"
             onClick={() => {
               void tap("light");
-              if (deals[0]) navigate(`/app/chat/${deals[0].id}`);
-              else navigate(`/app/chats`);
+              if (id) navigate(`/app/dm/${id}`);
             }}
           >
             <MessageCircle className="w-4 h-4" strokeWidth={1.75} /> {t("publicProfile.message", "Написати")}

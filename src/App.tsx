@@ -51,6 +51,7 @@ import Settings from "./pages/app/Settings";
 import Admin from "./pages/app/Admin";
 import ChatList from "./pages/app/ChatList";
 import Chat from "./pages/app/Chat";
+import DirectChat from "./pages/app/DirectChat";
 import Notifications from "./pages/app/Notifications";
 import ActiveDeal from "./pages/app/ActiveDeal";
 import DealHistory from "./pages/app/DealHistory";
@@ -126,6 +127,7 @@ export default function App() {
                   <Route path="/app/promote" element={<PromoteMe />} />
                   <Route path="/app/chats" element={<ChatList />} />
                   <Route path="/app/chat/:id" element={<Chat />} />
+                  <Route path="/app/dm/:id" element={<DirectChat />} />
                   <Route path="/app/notifications" element={<Notifications />} />
                   <Route path="/app/deal/:id" element={<ActiveDeal />} />
                   <Route path="/app/deals" element={<DealHistory />} />

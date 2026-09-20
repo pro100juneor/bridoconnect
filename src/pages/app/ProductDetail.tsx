@@ -310,7 +310,7 @@ const ProductDetail = () => {
           className="flex-1 min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
           onClick={() => {
             void tap("light");
-            navigate("/app/chats");
+            navigate(`/app/dm/${product.seller_id}`);
           }}
         >
           {t("product.message", "Написати")}

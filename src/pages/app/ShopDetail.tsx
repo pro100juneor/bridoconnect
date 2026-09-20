@@ -62,11 +62,15 @@ const ShopDetail = () => {
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">{t("shop.sellerProfile", "Профіль продавця")}</h2>
+        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">
+          {t("shop.sellerProfile", "Профіль продавця")}
+        </h2>
       </div>
 
       {loading ? (
-        <div className="px-4 mt-8 text-center text-sm text-muted-foreground">{t("shop.loading", "Завантаження…")}</div>
+        <div className="px-4 mt-8 text-center text-sm text-muted-foreground">
+          {t("shop.loading", "Завантаження…")}
+        </div>
       ) : (
         <>
           <div className="px-4 pb-6 border-b border-border">
@@ -108,7 +112,8 @@ const ShopDetail = () => {
                     navigate(`/store/${storeSlug}`);
                   }}
                 >
-                  <Store className="w-4 h-4" strokeWidth={1.75} /> {t("shop.brandedStore", "Брендована вітрина")}
+                  <Store className="w-4 h-4" strokeWidth={1.75} />{" "}
+                  {t("shop.brandedStore", "Брендована вітрина")}
                 </Button>
               )}
               <Button
@@ -116,10 +121,11 @@ const ShopDetail = () => {
                 className="w-full gap-2 min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
                 onClick={() => {
                   void tap("light");
-                  navigate("/app/chats");
+                  if (id) navigate(`/app/dm/${id}`);
                 }}
               >
-                <MessageCircle className="w-4 h-4" strokeWidth={1.75} /> {t("shop.messageSeller", "Написати продавцю")}
+                <MessageCircle className="w-4 h-4" strokeWidth={1.75} />{" "}
+                {t("shop.messageSeller", "Написати продавцю")}
               </Button>
             </div>
           </div>
@@ -154,9 +160,13 @@ const ShopDetail = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground">{p.title}</p>
-                      <p className="text-xs text-muted-foreground">{p.category || t("product.categoryFallback", "Товар")}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {p.category || t("product.categoryFallback", "Товар")}
+                      </p>
                     </div>
-                    <p className="font-bold text-foreground">{convert(p.price_cents, p.currency).formatted}</p>
+                    <p className="font-bold text-foreground">
+                      {convert(p.price_cents, p.currency).formatted}
+                    </p>
                   </button>
                 ))}
               </div>

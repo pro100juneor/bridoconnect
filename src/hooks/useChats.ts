@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface ChatPreview {
-  deal_id: string;
+  kind: "deal" | "dm";
+  deal_id: string; // deal id for deal chats; thread id for DMs (used as list key only)
   deal_title: string;
   deal_status: string;
   other_id: string;
@@ -25,8 +26,7 @@ interface ChatProfileJoin {
 // хоча в рантаймі для to-one зв'язку приходить об'єкт — приймаємо обидві форми.
 type JoinResult<T> = T | T[] | null;
 
-const firstJoin = <T,>(value: JoinResult<T>): T | null =>
-  Array.isArray(value) ? (value[0] ?? null) : value;
+const firstJoin = <T>(value: JoinResult<T>): T | null => (Array.isArray(value) ? (value[0] ?? null) : value);
 
 interface ChatDealRow {
   id: string;
@@ -36,6 +36,15 @@ interface ChatDealRow {
   sponsor_id: string | null;
   creator: JoinResult<ChatProfileJoin>;
   sponsor: JoinResult<ChatProfileJoin>;
+}
+
+interface DirectThreadRow {
+  id: string;
+  user_a: string;
+  user_b: string;
+  updated_at: string;
+  a: JoinResult<ChatProfileJoin>;
+  b: JoinResult<ChatProfileJoin>;
 }
 
 export const useChats = () => {
@@ -108,6 +117,7 @@ export const useChats = () => {
         }
 
         return {
+          kind: "deal" as const,
           deal_id: d.id,
           deal_title: d.title,
           deal_status: d.status,
@@ -123,8 +133,76 @@ export const useChats = () => {
     );
 
     // тільки ті, де є хтось з іншого боку (щоб чат мав сенс)
-    const valid = previews.filter((p) => p.other_id);
-    setChats(valid);
+    const dealValid = previews.filter((p) => p.other_id);
+
+    // Direct (deal-less) chats — separate tables, merged into the same list.
+    const { data: threads } = await supabase
+      .from("direct_threads")
+      .select(
+        `id, user_a, user_b, updated_at,
+         a:profiles!user_a(name, avatar_url, country),
+         b:profiles!user_b(name, avatar_url, country)`
+      )
+      .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
+      .order("updated_at", { ascending: false });
+
+    const { data: dmReads } = await supabase
+      .from("direct_reads")
+      .select("thread_id, last_read_at")
+      .eq("user_id", user.id);
+    const dmReadMap = new Map<string, string>(
+      (dmReads ?? []).map((r: { thread_id: string; last_read_at: string }) => [r.thread_id, r.last_read_at])
+    );
+
+    const dmPreviews: ChatPreview[] = await Promise.all(
+      (threads ?? []).map(async (th: DirectThreadRow) => {
+        const meIsA = th.user_a === user.id;
+        const other = firstJoin(meIsA ? th.b : th.a);
+        const otherId = meIsA ? th.user_b : th.user_a;
+
+        const { data: lastMsg } = await supabase
+          .from("direct_messages")
+          .select("text, created_at, sender_id")
+          .eq("thread_id", th.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        let unread = 0;
+        if (lastMsg && lastMsg.sender_id !== user.id) {
+          const lastRead = dmReadMap.get(th.id);
+          let q = supabase
+            .from("direct_messages")
+            .select("id", { count: "exact", head: true })
+            .eq("thread_id", th.id)
+            .neq("sender_id", user.id);
+          if (lastRead) q = q.gt("created_at", lastRead);
+          const { count } = await q;
+          unread = count ?? 0;
+        }
+
+        return {
+          kind: "dm" as const,
+          deal_id: th.id,
+          deal_title: "",
+          deal_status: "",
+          other_id: otherId,
+          other_name: other?.name || "Користувач",
+          other_avatar: other?.avatar_url || null,
+          other_flag: other?.country === "Україна" ? "🇺🇦" : "🏳️",
+          last_message: lastMsg?.text || null,
+          last_message_at: lastMsg?.created_at || th.updated_at,
+          unread_count: unread,
+        };
+      })
+    );
+
+    const all = [...dealValid, ...dmPreviews].sort((x, y) => {
+      const tx = x.last_message_at ? Date.parse(x.last_message_at) : 0;
+      const ty = y.last_message_at ? Date.parse(y.last_message_at) : 0;
+      return ty - tx;
+    });
+    setChats(all);
     setLoading(false);
   }, [user]);
 

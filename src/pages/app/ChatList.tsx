@@ -29,15 +29,18 @@ const ChatList = () => {
   const { t, localeTag } = useT();
   const [query, setQuery] = useState("");
 
-  const filtered = chats.filter((c) =>
-    c.other_name.toLowerCase().includes(query.toLowerCase()) ||
-    (c.last_message || "").toLowerCase().includes(query.toLowerCase()),
+  const filtered = chats.filter(
+    (c) =>
+      c.other_name.toLowerCase().includes(query.toLowerCase()) ||
+      (c.last_message || "").toLowerCase().includes(query.toLowerCase())
   );
 
   return (
     <div className="pb-8">
       <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-3">
-        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">{t("chats.title", "Повідомлення")}</h1>
+        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">
+          {t("chats.title", "Повідомлення")}
+        </h1>
         <div className="flex items-center gap-2 bg-secondary rounded-2xl px-3 py-2 min-h-[44px]">
           <Search className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
           <input
@@ -59,7 +62,16 @@ const ChatList = () => {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center py-16 px-6 gap-4 text-center">
           <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center">
-            <svg viewBox="0 0 48 48" className="w-10 h-10 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              viewBox="0 0 48 48"
+              className="w-10 h-10 text-muted-foreground"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <path d="M42 23.5c0 9-7.5 16.5-17 16.5-2.4 0-4.6-.5-6.6-1.4L8 41l2.4-9.5C9.5 29.5 9 27 9 24.5 9 15.5 16.5 8 26 8s16 7.5 16 15.5z" />
             </svg>
           </div>
@@ -80,8 +92,11 @@ const ChatList = () => {
               .toUpperCase();
             return (
               <button
-                key={chat.deal_id}
-                onClick={() => { void tap("light"); navigate(`/app/chat/${chat.deal_id}`); }}
+                key={`${chat.kind}:${chat.deal_id}`}
+                onClick={() => {
+                  void tap("light");
+                  navigate(chat.kind === "dm" ? `/app/dm/${chat.other_id}` : `/app/chat/${chat.deal_id}`);
+                }}
                 className="w-full relative flex items-center gap-3 px-3 py-3 rounded-2xl min-h-[44px] hover:bg-secondary/50 hover:-translate-y-px transition-all duration-150 text-left overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8"
               >
                 <div className="relative">
@@ -96,9 +111,7 @@ const ChatList = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-semibold text-sm text-foreground truncate">
-                      {chat.other_name}
-                    </span>
+                    <span className="font-semibold text-sm text-foreground truncate">{chat.other_name}</span>
                     {chat.last_message_at && (
                       <span className="text-xs text-muted-foreground shrink-0 ml-2">
                         {formatTime(chat.last_message_at, t, localeTag)}
@@ -106,7 +119,10 @@ const ChatList = () => {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">
-                    {chat.last_message || t("chats.dealFallback", "Деал: {title}", { title: chat.deal_title })}
+                    {chat.last_message ||
+                      (chat.kind === "dm"
+                        ? t("chats.dmFallback", "Нова розмова")
+                        : t("chats.dealFallback", "Деал: {title}", { title: chat.deal_title }))}
                   </p>
                 </div>
                 {chat.unread_count > 0 && (

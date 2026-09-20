@@ -149,7 +149,7 @@ const Wishlist = () => {
                     <button
                       onClick={() => {
                         void tap("light");
-                        navigate(`/app/user/${person.target_id}`);
+                        navigate(`/app/dm/${person.target_id}`);
                       }}
                       className="min-h-[44px] min-w-[44px] bg-secondary rounded-2xl flex items-center justify-center transition-transform duration-150 hover:-translate-y-px"
                       aria-label={t("wishlist.messageAria", "Написати")}
