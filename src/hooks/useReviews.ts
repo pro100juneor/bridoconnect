@@ -46,24 +46,28 @@ export const useReviews = (userId?: string) => {
     text: string;
   }) => {
     if (!user) return { error: "Not authenticated" };
+    // The rating aggregation trigger buckets on reviews.role ('as_sponsor' |
+    // 'as_recipient') — the side the reviewee is being rated as. Without it the
+    // review never aggregates. Derive it from the deal's parties.
+    const { data: deal } = await supabase
+      .from("deals")
+      .select("creator_id, sponsor_id")
+      .eq("id", dealId)
+      .maybeSingle();
+    const role =
+      deal?.sponsor_id === revieweeId
+        ? "as_sponsor"
+        : deal?.creator_id === revieweeId
+          ? "as_recipient"
+          : null;
     const { data, error } = await supabase
       .from("reviews")
-      .insert([{ deal_id: dealId, reviewer_id: user.id, reviewee_id: revieweeId, rating, text }])
+      .insert([{ deal_id: dealId, reviewer_id: user.id, reviewee_id: revieweeId, rating, text, role }])
       .select()
       .single();
-
-    if (!error && data) {
-      // Update user rating
-      const { data: allReviews } = await supabase
-        .from("reviews")
-        .select("rating")
-        .eq("reviewee_id", revieweeId);
-      if (allReviews) {
-        const rows = allReviews as { rating: number }[];
-        const avg = rows.reduce((s, r) => s + r.rating, 0) / rows.length;
-        await supabase.from("profiles").update({ rating: avg }).eq("id", revieweeId);
-      }
-    }
+    // NB: profile rating is recomputed by an AFTER-INSERT trigger into
+    // rating_as_sponsor/_recipient — the old client-side write to the deprecated
+    // profiles.rating column was blocked by RLS and silently failed, so it's gone.
     return { data, error };
   };
 
