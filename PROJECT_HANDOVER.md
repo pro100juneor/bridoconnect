@@ -1,6 +1,6 @@
 # BridoConnect — передача проекта на аудит
 
-Дата пакета: 13.09.2026 · Версия в App Store: 1.0 (READY_FOR_SALE) · Ветка: main
+Дата пакета: 20.09.2026 · Версия в App Store: 1.0 (READY_FOR_SALE) · Ветка: main
 
 ## 1. Что это
 
@@ -25,7 +25,7 @@ USt-IdNr DE359345814.
 
 ```
 src/                  клиент: pages/ (public + app), hooks/, components/, i18n/
-supabase/migrations/  35 SQL-миграций — полная схема БД
+supabase/migrations/  41 SQL-миграция — полная схема БД
 supabase/functions/   24 edge-функции (Deno) + _shared/ хелперы
 ios/App/              Capacitor iOS-проект
 tests/e2e/            Playwright-сьюты (chromium + iphone-webkit проекты)
@@ -57,15 +57,22 @@ npm run build                    # прод-сборка
 supabase start && npx playwright test --project=chromium
 ```
 
-Тестовые аккаунты на проде (пароль `password123`):
-`buyer@brido.local` (спонсор), `seller@brido.local` (получатель, верифицирован).
-Админские учётные данные передаются отдельным защищённым каналом, не в этом пакете.
+Тестовых аккаунтов на проде больше нет: `buyer@brido.local` и
+`seller@brido.local` удалены 20.09.2026 вместе с тремя демо-товарами. Для
+проверки поведения поднимайте локальный стек — `scripts/seed-local.mjs`
+создаёт полный набор ролей. Состояние прод-базы и оставшиеся админские
+учётки описаны в `docs/PROD_STATE.md`.
 
 ## 6. Статус на дату передачи
 
 - App Review Apple пройден (6+2 замечания устранены), версия 1.0 одобрена;
   доступность включена в 173 странах 12.09, идёт пропагация в стор.
 - Stripe работает в **тестовом режиме** — реальные платежи ещё не включены.
+- 20.09.2026 в `main` слита ветка `feat/stripe-connect-p1` (три волны работы,
+  копившиеся с 12.06). До этого живой сайт показывал выдуманную статистику,
+  потому что Vercel деплоит только `main`. Сейчас публичные страницы берут
+  цифры из `public_platform_stats()` и на пустой базе показывают нули.
+- e2e: 137 passed / 0 failed (`npx playwright test --project=chromium`).
 - Полный список известных ограничений и долгов — в `KNOWN_ISSUES.md` (честный,
   без купюр — читать вместе с этим файлом).
 
