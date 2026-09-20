@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useT } from "@/i18n/useT";
 import { formatMinor } from "@/lib/money";
 import type { UserRole } from "@/integrations/supabase/types";
 
@@ -95,6 +96,7 @@ const Admin = () => {
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const { toast } = useToast();
+  const { t } = useT();
   const [sanctions, setSanctions] = useState<SanctionsRow[]>([]);
   const [disputes, setDisputes] = useState<DisputeRow[]>([]);
   const [refunds, setRefunds] = useState<RefundRow[]>([]);
@@ -183,7 +185,8 @@ const Admin = () => {
   // PromiseLike, а не Promise: postgrest-білдер — thenable без catch/finally
   const act = async (fn: () => PromiseLike<{ error: { message: string } | null }>, ok: string) => {
     const { error } = await fn();
-    if (error) toast({ title: "Помилка", description: error.message, variant: "destructive" });
+    if (error)
+      toast({ title: t("common.error", "Помилка"), description: error.message, variant: "destructive" });
     else {
       toast({ title: ok });
       load();
@@ -193,12 +196,15 @@ const Admin = () => {
   const toggleVerified = (p: ProfileRow) =>
     act(
       () => supabase.from("profiles").update({ verified: !p.verified }).eq("id", p.id),
-      p.verified ? "Верифікацію знято" : "Верифіковано"
+      p.verified ? t("admin.unverified", "Верифікацію знято") : t("admin.verified", "Верифіковано")
     );
 
   const cycleRole = (p: ProfileRow) => {
     const next: UserRole = p.role === "sponsor" ? "recipient" : p.role === "recipient" ? "admin" : "sponsor";
-    return act(() => supabase.from("profiles").update({ role: next }).eq("id", p.id), `Роль: ${next}`);
+    return act(
+      () => supabase.from("profiles").update({ role: next }).eq("id", p.id),
+      t("admin.roleSet", "Роль: {role}", { role: next })
+    );
   };
 
   const toggleProduct = (pr: ProductRow) =>
@@ -208,7 +214,9 @@ const Admin = () => {
           .from("products")
           .update({ status: pr.status === "active" ? "archived" : "active" })
           .eq("id", pr.id),
-      pr.status === "active" ? "Товар приховано" : "Товар відновлено"
+      pr.status === "active"
+        ? t("admin.productHidden", "Товар приховано")
+        : t("admin.productRestored", "Товар відновлено")
     );
 
   const endStream = (st: StreamRow) =>
@@ -218,11 +226,14 @@ const Admin = () => {
           .from("streams")
           .update({ status: "ended", ended_at: new Date().toISOString() })
           .eq("id", st.id),
-      "Ефір завершено"
+      t("admin.streamEnded", "Ефір завершено")
     );
 
   const stopPromo = (pm: PromoRow) =>
-    act(() => supabase.from("promotions").update({ status: "expired" }).eq("id", pm.id), "Промо зупинено");
+    act(
+      () => supabase.from("promotions").update({ status: "expired" }).eq("id", pm.id),
+      t("admin.promoStopped", "Промо зупинено")
+    );
 
   if (profileLoading) {
     return (
@@ -235,10 +246,14 @@ const Admin = () => {
     return (
       <main className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
         <Shield className="w-12 h-12 text-muted-foreground mb-3" strokeWidth={1.25} />
-        <h2 className="font-serif text-xl text-foreground mb-2">Доступ обмежено</h2>
-        <p className="text-sm text-muted-foreground mb-6">Тільки адміністратори.</p>
+        <h2 className="font-serif text-xl text-foreground mb-2">
+          {t("admin.denied.title", "Доступ обмежено")}
+        </h2>
+        <p className="text-sm text-muted-foreground mb-6">
+          {t("admin.denied.desc", "Тільки адміністратори.")}
+        </p>
         <Button variant="outline" onClick={() => navigate("/app")}>
-          На стрічку
+          {t("admin.denied.toFeed", "На стрічку")}
         </Button>
       </main>
     );
@@ -254,7 +269,7 @@ const Admin = () => {
       <div className="flex items-center gap-3 px-4 pt-4 pb-4 border-b border-border">
         <button
           onClick={() => navigate(-1)}
-          aria-label="Назад"
+          aria-label={t("common.back", "Назад")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
@@ -262,7 +277,7 @@ const Admin = () => {
         <h2 className="font-serif text-xl text-foreground flex-1">Admin</h2>
         <button
           onClick={load}
-          aria-label="Оновити"
+          aria-label={t("common.refresh", "Оновити")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <RefreshCw className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
@@ -270,27 +285,27 @@ const Admin = () => {
       </div>
 
       <div className="px-4 py-4 space-y-6">
-        <AdminSection title="Статистика" icon={BarChart3} loading={loading}>
+        <AdminSection title={t("admin.stats", "Статистика")} icon={BarChart3} loading={loading}>
           {stats && (
             <div className="grid grid-cols-5 gap-2 text-center">
-              <Stat label="Люди" value={stats.users} />
-              <Stat label="Товари" value={stats.products} />
-              <Stat label="Ефіри" value={stats.streams} />
-              <Stat label="Запити" value={stats.deals} />
-              <Stat label="Замовл." value={stats.orders} />
+              <Stat label={t("admin.stat.people", "Люди")} value={stats.users} />
+              <Stat label={t("admin.stat.products", "Товари")} value={stats.products} />
+              <Stat label={t("admin.stat.streams", "Ефіри")} value={stats.streams} />
+              <Stat label={t("admin.stat.deals", "Запити")} value={stats.deals} />
+              <Stat label={t("admin.stat.orders", "Замовл.")} value={stats.orders} />
             </div>
           )}
         </AdminSection>
 
-        <AdminSection title="Користувачі" icon={Users} loading={loading}>
+        <AdminSection title={t("admin.users", "Користувачі")} icon={Users} loading={loading}>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Пошук за імʼям…"
+            placeholder={t("admin.searchByName", "Пошук за імʼям…")}
             className="w-full mb-3 px-3 py-2 rounded-xl bg-secondary text-sm text-foreground placeholder:text-muted-foreground outline-none"
           />
           {filteredPeople.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Нікого не знайдено.</p>
+            <p className="text-xs text-muted-foreground">{t("admin.noneFound", "Нікого не знайдено.")}</p>
           ) : (
             filteredPeople.map((p) => (
               <div
@@ -303,13 +318,17 @@ const Admin = () => {
                 <button
                   onClick={() => cycleRole(p)}
                   className={`text-[10px] px-2 py-1 rounded-full border ${p.role === "admin" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}
-                  title="Змінити роль"
+                  title={t("admin.changeRole", "Змінити роль")}
                 >
                   {p.role}
                 </button>
                 <button
                   onClick={() => toggleVerified(p)}
-                  aria-label={p.verified ? "Зняти верифікацію" : "Верифікувати"}
+                  aria-label={
+                    p.verified
+                      ? t("admin.unverifyAria", "Зняти верифікацію")
+                      : t("admin.verifyAria", "Верифікувати")
+                  }
                   className="min-h-[32px] min-w-[32px] flex items-center justify-center"
                 >
                   <BadgeCheck
@@ -322,9 +341,9 @@ const Admin = () => {
           )}
         </AdminSection>
 
-        <AdminSection title="Товари (модерація)" icon={Package} loading={loading}>
+        <AdminSection title={t("admin.productsMod", "Товари (модерація)")} icon={Package} loading={loading}>
           {products.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Жодних товарів.</p>
+            <p className="text-xs text-muted-foreground">{t("admin.noProducts", "Жодних товарів.")}</p>
           ) : (
             products.map((pr) => (
               <div
@@ -341,7 +360,9 @@ const Admin = () => {
                 </span>
                 <button
                   onClick={() => toggleProduct(pr)}
-                  aria-label={pr.status === "active" ? "Приховати" : "Відновити"}
+                  aria-label={
+                    pr.status === "active" ? t("admin.hide", "Приховати") : t("admin.restore", "Відновити")
+                  }
                   className="min-h-[32px] min-w-[32px] flex items-center justify-center"
                 >
                   <Ban
@@ -354,9 +375,9 @@ const Admin = () => {
           )}
         </AdminSection>
 
-        <AdminSection title="Ефіри (live)" icon={Radio} loading={loading}>
+        <AdminSection title={t("admin.streamsLive", "Ефіри (live)")} icon={Radio} loading={loading}>
           {streams.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Жодних активних ефірів.</p>
+            <p className="text-xs text-muted-foreground">{t("admin.noStreams", "Жодних активних ефірів.")}</p>
           ) : (
             streams.map((st) => (
               <div
@@ -367,16 +388,16 @@ const Admin = () => {
                 <span className="text-xs truncate flex-1 text-foreground">{st.title}</span>
                 <span className="text-[10px] text-muted-foreground">{st.viewer_count} 👁</span>
                 <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => endStream(st)}>
-                  Завершити
+                  {t("admin.end", "Завершити")}
                 </Button>
               </div>
             ))
           )}
         </AdminSection>
 
-        <AdminSection title="Активні промо" icon={Megaphone} loading={loading}>
+        <AdminSection title={t("admin.activePromos", "Активні промо")} icon={Megaphone} loading={loading}>
           {promos.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Жодних активних промо.</p>
+            <p className="text-xs text-muted-foreground">{t("admin.noPromos", "Жодних активних промо.")}</p>
           ) : (
             promos.map((pm) => (
               <div
@@ -388,7 +409,7 @@ const Admin = () => {
                 </span>
                 <span className="text-[10px] text-muted-foreground">{pm.tier}</span>
                 <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => stopPromo(pm)}>
-                  Зупинити
+                  {t("admin.stop", "Зупинити")}
                 </Button>
               </div>
             ))
@@ -397,7 +418,7 @@ const Admin = () => {
 
         <AdminSection title="Sanctions Screening" icon={FileSearch} loading={loading}>
           {sanctions.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Жодних перевірок.</p>
+            <p className="text-xs text-muted-foreground">{t("admin.noScreenings", "Жодних перевірок.")}</p>
           ) : (
             sanctions.map((s) => (
               <div
