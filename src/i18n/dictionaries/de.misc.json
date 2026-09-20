@@ -1,0 +1,40 @@
+{
+  "chats.title": "Nachrichten",
+  "chats.searchPlaceholder": "Chats durchsuchen…",
+  "chats.notFound": "Nichts gefunden",
+  "chats.empty": "Noch keine Nachrichten.\nFinde jemanden und schreibe ihm.",
+  "chats.yesterday": "Gestern",
+  "chats.dealFallback": "Deal: {title}",
+
+  "notifications.title": "Benachrichtigungen",
+  "notifications.markAllRead": "Alle gelesen",
+  "notifications.emptyTitle": "Keine Benachrichtigungen",
+  "notifications.emptyLine1": "Hier erscheinen Hinweise zu Deals,",
+  "notifications.emptyLine2": "Nachrichten und Spenden.",
+  "notifications.unreadAria": "Ungelesen",
+
+  "search.title": "Suche",
+  "search.placeholder": "Name, Stadt, Bedarf…",
+  "search.filtersAria": "Filter",
+  "search.hint": "Name oder Stadt eingeben",
+  "search.notFound": "Nichts gefunden",
+  "search.profile": "Profil",
+  "search.deals": "{n} Deals",
+
+  "wishlist.title": "Favoriten",
+  "wishlist.searchAria": "Suche",
+  "wishlist.emptyTitle": "Die Liste ist leer",
+  "wishlist.emptyLine1": "Füge Menschen zu den Favoriten hinzu, um sie schnell",
+  "wishlist.emptyLine2": "zu finden und zu helfen.",
+  "wishlist.findPeople": "Menschen finden →",
+  "wishlist.removed": "Aus Favoriten entfernt",
+  "wishlist.error": "Fehler",
+  "wishlist.messageAria": "Schreiben",
+  "wishlist.removeAria": "Aus Favoriten entfernen",
+  "wishlist.deals": "{n} Deals",
+
+  "promo.badge": "Promo",
+  "promo.cardAria": "Promo: {name}",
+  "promo.slidesAria": "Promo-Slides",
+  "promo.slideAria": "Slide {n}"
+}

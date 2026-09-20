@@ -1,26 +1,28 @@
 import { Globe } from "lucide-react";
 import { useT, type Locale } from "@/i18n/useT";
 
-const LOCALES: { value: Locale; label: string; flag: string }[] = [
+const LOCALE_OPTIONS: { value: Locale; label: string; flag: string }[] = [
   { value: "uk", label: "Українська", flag: "🇺🇦" },
   { value: "en", label: "English", flag: "🇬🇧" },
   { value: "de", label: "Deutsch", flag: "🇩🇪" },
 ];
 
 /**
- * Minimal language picker. Used in Settings; clicking sets locale in localStorage
- * + updates document.documentElement.lang. Reload not required — useT re-renders.
+ * Мінімальний перемикач мови. Клік пише локаль у localStorage + модульний store,
+ * усі підписані через useT екрани перемальовуються одразу — без перезавантаження.
  */
 export const LocaleSwitcher = () => {
-  const { locale, setLocale } = useT();
+  const { t, locale, setLocale } = useT();
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 mb-2">
         <Globe className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
-        <span className="text-xs uppercase tracking-widest text-muted-foreground">Мова / Language</span>
+        <span className="text-xs uppercase tracking-widest text-muted-foreground">
+          {t("settings.language", "Мова / Language")}
+        </span>
       </div>
       <div className="flex gap-2">
-        {LOCALES.map((l) => (
+        {LOCALE_OPTIONS.map((l) => (
           <button
             key={l.value}
             data-testid={`locale-${l.value}`}

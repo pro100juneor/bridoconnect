@@ -1,11 +1,15 @@
 import { Link } from "react-router-dom";
 import { Package } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useT } from "@/i18n/useT";
 import type { BlockProps } from "../types";
 
 // Catalog: seller's products. Grid or list depending on layout.
 export default function Catalog({ products, theme }: BlockProps) {
+  // Цена товара хранится в products.currency — передаём её в convert,
+  // иначе любая сумма трактовалась бы как EUR.
   const { convert } = useCurrency();
+  const { t } = useT();
 
   const listLayout = theme.layout === "compact-list" || theme.layout === "sidebar-left";
   const cols =
@@ -22,11 +26,15 @@ export default function Catalog({ products, theme }: BlockProps) {
           margin: "0 0 1rem",
         }}
       >
-        Товари{products.length > 0 ? ` (${products.length})` : ""}
+        {products.length > 0
+          ? t("storefront.catalog.titleCount", "Товари ({n})", { n: products.length })
+          : t("storefront.catalog.title", "Товари")}
       </h2>
 
       {products.length === 0 ? (
-        <p style={{ color: "var(--sf-muted)", margin: 0 }}>Поки що немає товарів.</p>
+        <p style={{ color: "var(--sf-muted)", margin: 0 }}>
+          {t("storefront.catalog.empty", "Поки що немає товарів.")}
+        </p>
       ) : listLayout ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
           {products.map((p) => (
@@ -72,11 +80,11 @@ export default function Catalog({ products, theme }: BlockProps) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, fontWeight: 600 }}>{p.title}</p>
                 <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--sf-muted)" }}>
-                  {p.category || "Товар"}
+                  {p.category || t("storefront.catalog.itemFallback", "Товар")}
                 </p>
               </div>
               <span style={{ fontWeight: 700, color: "var(--sf-primary)" }}>
-                {convert(p.price_cents).formatted}
+                {convert(p.price_cents, p.currency).formatted}
               </span>
             </Link>
           ))}
@@ -120,11 +128,11 @@ export default function Catalog({ products, theme }: BlockProps) {
               </div>
               <div style={{ padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
                 <p style={{ margin: 0, fontSize: "0.72rem", color: "var(--sf-muted)" }}>
-                  {p.category || "Товар"}
+                  {p.category || t("storefront.catalog.itemFallback", "Товар")}
                 </p>
                 <p style={{ margin: 0, fontWeight: 600, lineHeight: 1.25 }}>{p.title}</p>
                 <span style={{ fontWeight: 700, color: "var(--sf-primary)" }}>
-                  {convert(p.price_cents).formatted}
+                  {convert(p.price_cents, p.currency).formatted}
                 </span>
               </div>
             </Link>

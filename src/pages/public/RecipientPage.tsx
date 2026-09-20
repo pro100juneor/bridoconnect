@@ -8,6 +8,7 @@ import {
   type WishlistItem,
 } from "@/hooks/useRecipientPage";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useT } from "@/i18n/useT";
 
 type LoadState = "loading" | "notfound" | "closed" | "ready";
 
@@ -22,6 +23,7 @@ function initialsOf(name: string): string {
 
 const WishlistCard = ({ item }: { item: WishlistItem }) => {
   const { convert } = useCurrency();
+  const { t } = useT();
   const p = item.product;
 
   if (p) {
@@ -42,7 +44,9 @@ const WishlistCard = ({ item }: { item: WishlistItem }) => {
         </div>
         <div className="p-3">
           <p className="text-sm font-medium text-foreground line-clamp-2">{p.title}</p>
-          <p className="text-sm font-semibold text-accent mt-1">{convert(p.price_cents).formatted}</p>
+          <p className="text-sm font-semibold text-accent mt-1">
+            {convert(p.price_cents, p.currency).formatted}
+          </p>
           {item.note && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.note}</p>}
         </div>
       </Link>
@@ -56,7 +60,9 @@ const WishlistCard = ({ item }: { item: WishlistItem }) => {
         <Heart className="w-8 h-8" strokeWidth={1.5} />
       </div>
       <div className="p-3">
-        <p className="text-sm font-medium text-foreground line-clamp-2">{item.title || "Побажання"}</p>
+        <p className="text-sm font-medium text-foreground line-clamp-2">
+          {item.title || t("recipient.wish.fallbackTitle", "Побажання")}
+        </p>
         {item.note && <p className="text-xs text-muted-foreground mt-1 line-clamp-3">{item.note}</p>}
       </div>
     </div>
@@ -66,6 +72,7 @@ const WishlistCard = ({ item }: { item: WishlistItem }) => {
 export default function RecipientPage() {
   const { slug } = useParams();
   const { getBySlug } = useRecipientPage();
+  const { t, localeTag } = useT();
 
   const [state, setState] = useState<LoadState>("loading");
   const [data, setData] = useState<RecipientPageData | null>(null);
@@ -97,14 +104,18 @@ export default function RecipientPage() {
   }, [slug]);
 
   useEffect(() => {
-    if (data?.profile) document.title = `${data.profile.name} — сторінка отримувача`;
-  }, [data]);
+    if (data?.profile) {
+      document.title = t("recipient.docTitle", "{name} — сторінка отримувача", {
+        name: data.profile.name,
+      });
+    }
+  }, [data, t]);
 
   if (state === "loading") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background">
         <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">Завантаження сторінки…</p>
+        <p className="text-sm text-muted-foreground">{t("recipient.loading", "Завантаження сторінки…")}</p>
       </div>
     );
   }
@@ -112,12 +123,14 @@ export default function RecipientPage() {
   if (state === "notfound" || !data) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-background px-6 text-center">
-        <h1 className="font-serif text-3xl text-foreground">Сторінку не знайдено</h1>
+        <h1 className="font-serif text-3xl text-foreground">{t("notfound.title", "Сторінку не знайдено")}</h1>
         <p className="text-sm text-muted-foreground max-w-sm">
-          Сторінка за адресою «{slug}» не існує або була прихована.
+          {t("recipient.notFound.desc", "Сторінка за адресою «{slug}» не існує або була прихована.", {
+            slug: slug ?? "",
+          })}
         </p>
         <Link to="/" className="mt-2 text-sm font-medium text-accent underline underline-offset-4">
-          На головну
+          {t("notfound.home", "На головну")}
         </Link>
       </div>
     );
@@ -126,12 +139,16 @@ export default function RecipientPage() {
   if (state === "closed") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-background px-6 text-center">
-        <h1 className="font-serif text-3xl text-foreground">Сторінка прихована</h1>
+        <h1 className="font-serif text-3xl text-foreground">
+          {t("recipient.closed.title", "Сторінка прихована")}
+        </h1>
         <p className="text-sm text-muted-foreground max-w-sm">
-          {data.profile.name} тимчасово закрив(ла) свою публічну сторінку.
+          {t("recipient.closed.desc", "{name} тимчасово закрив(ла) свою публічну сторінку.", {
+            name: data.profile.name,
+          })}
         </p>
         <Link to="/" className="mt-2 text-sm font-medium text-accent underline underline-offset-4">
-          На головну
+          {t("notfound.home", "На головну")}
         </Link>
       </div>
     );
@@ -166,8 +183,8 @@ export default function RecipientPage() {
               {isVerified && (
                 <span
                   className="inline-flex items-center shrink-0 text-accent"
-                  title="Верифіковано"
-                  aria-label="Верифіковано"
+                  title={t("shop.verified", "Верифіковано")}
+                  aria-label={t("shop.verified", "Верифіковано")}
                 >
                   <BadgeCheck className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.75} />
                 </span>
@@ -183,7 +200,7 @@ export default function RecipientPage() {
             to={`/app/user/${profile.id}`}
             className="shrink-0 inline-flex items-center gap-2 rounded-full bg-accent hover:bg-accent/90 text-white text-sm font-medium px-4 py-2.5 min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
           >
-            <Heart className="w-4 h-4" strokeWidth={1.75} /> Підтримати
+            <Heart className="w-4 h-4" strokeWidth={1.75} /> {t("deal.support.cta", "Підтримати")}
           </Link>
         </div>
 
@@ -194,7 +211,9 @@ export default function RecipientPage() {
         {/* Wishlist */}
         {isVisible(fv, "wishlist") && (
           <section className="mb-10">
-            <h2 className="font-serif text-xl text-foreground mb-3">Що потрібно</h2>
+            <h2 className="font-serif text-xl text-foreground mb-3">
+              {t("recipient.wishlist.title", "Що потрібно")}
+            </h2>
             {wishlist.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {wishlist.map((item) => (
@@ -202,7 +221,9 @@ export default function RecipientPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground py-6 text-center">Список побажань поки порожній.</p>
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                {t("recipient.wishlist.empty", "Список побажань поки порожній.")}
+              </p>
             )}
           </section>
         )}
@@ -210,14 +231,16 @@ export default function RecipientPage() {
         {/* Photo gallery */}
         {isVisible(fv, "photos") && photos.length > 0 && (
           <section className="mb-10">
-            <h2 className="font-serif text-xl text-foreground mb-3">Фотографії</h2>
+            <h2 className="font-serif text-xl text-foreground mb-3">
+              {t("recipient.photos.title", "Фотографії")}
+            </h2>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {photos.map((ph) => (
                 <button
                   key={ph.id}
                   onClick={() => setLightbox(ph.url)}
                   className="aspect-square rounded-xl overflow-hidden bg-secondary hover:-translate-y-px transition-transform duration-150"
-                  aria-label="Відкрити фото"
+                  aria-label={t("recipient.photos.openAria", "Відкрити фото")}
                 >
                   <img src={ph.url} alt="" className="w-full h-full object-cover" loading="lazy" />
                 </button>
@@ -229,7 +252,7 @@ export default function RecipientPage() {
         {/* Wall */}
         {isVisible(fv, "wall") && (
           <section>
-            <h2 className="font-serif text-xl text-foreground mb-3">Стіна</h2>
+            <h2 className="font-serif text-xl text-foreground mb-3">{t("recipient.wall.title", "Стіна")}</h2>
             {posts.length > 0 ? (
               <div className="space-y-4">
                 {posts.map((post) => (
@@ -238,7 +261,7 @@ export default function RecipientPage() {
                     className="relative rounded-2xl border border-border p-4 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8"
                   >
                     <p className="text-xs text-muted-foreground mb-2">
-                      {new Date(post.created_at).toLocaleDateString("uk", {
+                      {new Date(post.created_at).toLocaleDateString(localeTag, {
                         day: "numeric",
                         month: "long",
                         year: "numeric",
@@ -252,7 +275,7 @@ export default function RecipientPage() {
                             key={m}
                             onClick={() => setLightbox(m)}
                             className="aspect-video rounded-xl overflow-hidden bg-secondary"
-                            aria-label="Відкрити зображення"
+                            aria-label={t("recipient.wall.openImageAria", "Відкрити зображення")}
                           >
                             <img src={m} alt="" className="w-full h-full object-cover" loading="lazy" />
                           </button>
@@ -263,7 +286,9 @@ export default function RecipientPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground py-6 text-center">Записів поки немає.</p>
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                {t("recipient.wall.empty", "Записів поки немає.")}
+              </p>
             )}
           </section>
         )}
@@ -279,7 +304,7 @@ export default function RecipientPage() {
         >
           <button
             onClick={() => setLightbox(null)}
-            aria-label="Закрити"
+            aria-label={t("common.close", "Закрити")}
             className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white"
           >
             <X className="w-5 h-5" strokeWidth={2} />

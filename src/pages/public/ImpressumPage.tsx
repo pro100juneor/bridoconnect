@@ -1,16 +1,19 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { useT } from "@/i18n/useT";
 
+// Імпресум за § 5 TMG — обов'язкові відомості німецькою. Не перекладається.
 const ImpressumPage = () => {
   const navigate = useNavigate();
+  const { t } = useT();
   return (
     <main className="min-h-screen bg-background px-6 py-10 max-w-2xl mx-auto">
       <button
         onClick={() => navigate(-1)}
-        aria-label="Назад"
+        aria-label={t("common.back", "Назад")}
         className="flex items-center gap-2 text-muted-foreground mb-8 text-sm min-h-[44px]"
       >
-        <ArrowLeft className="w-4 h-4" strokeWidth={1.75} /> Назад
+        <ArrowLeft className="w-4 h-4" strokeWidth={1.75} /> {t("common.back", "Назад")}
       </button>
       <h1 className="font-serif text-4xl tracking-tight text-foreground mb-8 animate-fade-in">Impressum</h1>
 

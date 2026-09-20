@@ -57,23 +57,39 @@ let originState: Array<{ name: string; value: string }> | null = null;
 // quickly to the fake-token path instead of timing out the whole hook (30 s
 // default → 47 dependent tests get marked "did not run").
 test.beforeAll(async ({ browser, baseURL }) => {
+  // Шаги ниже уложены в ~25 с, но к ним добавляется холодный старт WebKit.
+  // Запас берём с потолком, чтобы хук не срезало на ровном месте: его падение
+  // уводит в "did not run" сразу все 42 теста файла.
+  test.setTimeout(60_000);
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   try {
     await page.goto("/auth", { waitUntil: "domcontentloaded", timeout: 5000 });
     const email = page.getByTestId("login-email");
     await email.waitFor({ state: "visible", timeout: 2000 });
-    await email.fill("sponsor1@brido.local");
-    await page.getByTestId("login-password").fill("password123");
-    await page.getByTestId("login-submit").click();
-    await page.waitForURL("**/app", { timeout: 5000 });
+    // Баннер cookies перекрывает кнопку входа. У fill/click таймаут действия по
+    // умолчанию бесконечный, поэтому клик по перекрытой кнопке не падал, а ждал
+    // вечно: хук выедал весь свой таймаут, и 42 теста уходили в "did not run".
+    // Убираем баннер и всем действиям ставим явную границу — тогда при любой
+    // заминке хук честно сваливается в ветку с подставной сессией.
+    const cookieBtn = page.getByRole("button", { name: /Тільки необхідні|Прийняти все/ }).first();
+    if (await cookieBtn.count()) await cookieBtn.click({ timeout: 3000 }).catch(() => {});
+    await email.fill("sponsor1@brido.local", { timeout: 3000 });
+    await page.getByTestId("login-password").fill("password123", { timeout: 3000 });
+    await page.getByTestId("login-submit").click({ timeout: 3000 });
+    await page.waitForURL("**/app", { timeout: 10_000 });
     const state = await ctx.storageState();
     const origin = state.origins.find((o) => baseURL?.startsWith(o.origin));
     if (origin) originState = origin.localStorage;
   } catch {
     /* fall back to fake */
   } finally {
-    await ctx.close();
+    // WebKit регулярно зависает на ctx.close(), если в контексте осталась
+    // незавершённая навигация: вызов просто не возвращается, хук доедает свой
+    // таймаут — и все зависимые тесты помечаются "did not run". Сессию мы к
+    // этому моменту уже сняли, поэтому ждём закрытия ограниченно; контекст
+    // всё равно уйдёт вместе с браузером в конце прогона.
+    await Promise.race([ctx.close().catch(() => {}), new Promise((resolve) => setTimeout(resolve, 5_000))]);
   }
 });
 
@@ -239,4 +255,3 @@ test.afterAll(async () => {
     console.log("\n=== IPHONE AUDIT: 0 bugs ===\n");
   }
 });
-

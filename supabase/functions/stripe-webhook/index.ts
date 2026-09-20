@@ -65,6 +65,52 @@ async function recordTransaction(row: {
   return true;
 }
 
+// Резервации товара (миграция 039): сток списывается при создании checkout,
+// поэтому после оплаты резерв лишь подтверждается, а при отмене — возвращается.
+// Легаси-сессии без reservationIds в метаданных списывают сток по-старому.
+async function consumeReservations(
+  raw: string | undefined,
+  sessionId: string,
+  legacyProductIds: string[]
+): Promise<void> {
+  // Без инициализатора: обе ветки ниже присваивают значение, а лишний `= []`
+  // читался бы как «есть дефолт» и ронял eslint (no-useless-assignment).
+  let ids: string[];
+  try {
+    ids = raw ? JSON.parse(raw) : [];
+  } catch {
+    ids = [];
+  }
+  if (ids.length === 0) {
+    for (const pid of legacyProductIds) {
+      const { error } = await supabase.rpc("decrement_stock", { p_product_id: pid });
+      if (error) console.error("decrement_stock (legacy):", error);
+    }
+    return;
+  }
+  for (const rid of ids) {
+    const { error } = await supabase.rpc("consume_reservation", {
+      p_reservation_id: rid,
+      p_session_id: sessionId,
+    });
+    if (error) console.error("consume_reservation:", error);
+  }
+}
+
+async function releaseReservationsForSession(sessionId: string): Promise<void> {
+  const { data } = await supabase
+    .from("product_reservations")
+    .select("id")
+    .eq("stripe_session_id", sessionId)
+    .eq("status", "held");
+  for (const row of data || []) {
+    const { error } = await supabase.rpc("release_reservation", {
+      p_reservation_id: (row as { id: string }).id,
+    });
+    if (error) console.error("release_reservation:", error);
+  }
+}
+
 serve(async (req) => {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature") || "";
@@ -151,10 +197,9 @@ serve(async (req) => {
             if (orderErr) {
               console.error("order insert:", orderErr);
             } else {
-              const { error: decErr } = await supabase.rpc("decrement_stock", {
-                p_product_id: productId,
-              });
-              if (decErr) console.error("decrement_stock:", decErr);
+              // Сток списан ещё при резервации в create-checkout — здесь только
+              // помечаем резерв использованным. Списывать повторно нельзя.
+              await consumeReservations(md.reservationIds, session.id, [productId]);
               // Первичная обработка (order вставлен) — уведомляем продавца.
               await notifyUser(recipientId, "payment_received", {
                 amount,
@@ -212,11 +257,9 @@ serve(async (req) => {
                     price_cents: priceMap.get(pid) ?? 0,
                   });
                   if (itemErr) console.error("order_items insert:", itemErr);
-                  const { error: decErr } = await supabase.rpc("decrement_stock", {
-                    p_product_id: pid,
-                  });
-                  if (decErr) console.error("decrement_stock:", decErr);
                 }
+                // Сток списан при резервации — подтверждаем резервы разом.
+                await consumeReservations(md.reservationIds, session.id, ids);
               }
             }
           }
@@ -354,11 +397,33 @@ serve(async (req) => {
         break;
       }
 
+      // Покупатель закрыл страницу оплаты / сессия протухла — товар обратно в продажу.
+      case "checkout.session.expired": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        await releaseReservationsForSession(session.id);
+        break;
+      }
+
       case "charge.refunded": {
         const charge = event.data.object as Stripe.Charge;
         const paymentIntentId =
           typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
         if (!paymentIntentId) break;
+
+        // Рефанд покупки в магазине: помечаем заказ и возвращаем товар в
+        // продажу. Раньше orders при возврате не обрабатывались вовсе —
+        // заказ навсегда оставался «paid», а товар не возвращался на витрину.
+        const { data: orders } = await supabase
+          .from("orders")
+          .select("id, status")
+          .eq("stripe_payment_intent_id", paymentIntentId);
+        for (const o of orders || []) {
+          const row = o as { id: string; status: string };
+          if (row.status === "refunded") continue;
+          const { error: refErr } = await supabase.rpc("refund_order", { p_order_id: row.id });
+          if (refErr) console.error("refund_order:", refErr);
+        }
+
         const { data: deal } = await supabase
           .from("deals")
           .select("id, creator_id, sponsor_id, amount_cents")
@@ -418,6 +483,16 @@ serve(async (req) => {
       case "transfer.created": {
         const transfer = event.data.object as Stripe.Transfer;
         const sourceTx = transfer.source_transaction;
+        // Эскроу-релиз помечает transfer метаданными сделки — это надёжнее,
+        // чем обратный путь через charge, и работает даже без source_transaction.
+        const metaDealId = (transfer.metadata as Record<string, string> | null)?.deal_id;
+        if (metaDealId) {
+          await supabase
+            .from("deals")
+            .update({ stripe_transfer_id: transfer.id })
+            .eq("id", metaDealId);
+          break;
+        }
         if (sourceTx) {
           const charge = await stripe.charges.retrieve(typeof sourceTx === "string" ? sourceTx : sourceTx.id);
           const piId =

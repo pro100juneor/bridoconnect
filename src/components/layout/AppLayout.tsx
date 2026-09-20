@@ -1,18 +1,22 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { Home, Radio, Plus, ShoppingBag, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/i18n/useT";
 
+// labelKey замість готового рядка — підпис береться зі словника на кожному рендері,
+// тому нижня навігація перемальовується разом зі зміною мови.
 const tabs = [
-  { to: "/app", icon: Home, label: "Стрічка", exact: true },
-  { to: "/app/live", icon: Radio, label: "Ефіри", exact: false },
-  { to: "/app/create-deal", icon: Plus, label: "", exact: false },
-  { to: "/app/shop", icon: ShoppingBag, label: "Магазин", exact: false },
-  { to: "/app/profile", icon: User, label: "Профіль", exact: false },
+  { to: "/app", icon: Home, labelKey: "nav.feed", fallback: "Стрічка", exact: true },
+  { to: "/app/live", icon: Radio, labelKey: "nav.live", fallback: "Ефіри", exact: false },
+  { to: "/app/create-deal", icon: Plus, labelKey: "nav.create", fallback: "", exact: false },
+  { to: "/app/shop", icon: ShoppingBag, labelKey: "nav.shop", fallback: "Магазин", exact: false },
+  { to: "/app/profile", icon: User, labelKey: "nav.profile", fallback: "Профіль", exact: false },
 ];
 
 export default function AppLayout() {
   const { pathname } = useLocation();
   const { user } = useAuth();
+  const { t } = useT();
 
   if (!user) return null;
 
@@ -28,17 +32,18 @@ export default function AppLayout() {
         href="#app-main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-accent focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg"
       >
-        Перейти до основного вмісту
+        {t("nav.skipToContent", "Перейти до основного вмісту")}
       </a>
       <main id="app-main" className="flex-1 pb-20 overflow-y-auto" tabIndex={-1}>
         <Outlet />
       </main>
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-screen-sm bg-background border-t border-border z-50 safe-area-bottom">
         <div className="flex items-center justify-around px-2 py-1.5">
-          {tabs.map(({ to, icon: Icon, label, exact }) => {
-            const active = isActive({ to, icon: Icon, label, exact });
+          {tabs.map(({ to, icon: Icon, labelKey, fallback, exact }) => {
+            const active = isActive({ to, icon: Icon, labelKey, fallback, exact });
+            const label = to === "/app/create-deal" ? "" : t(labelKey, fallback);
             return (
-              <Link key={to} to={to}
+              <Link key={to} to={to} aria-label={t(labelKey, fallback)}
                 className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
                   active ? "text-accent" : "text-muted-foreground hover:text-foreground"
                 }`}>

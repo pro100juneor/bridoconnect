@@ -25,9 +25,12 @@ test("capture App Store screenshots", async ({ page }) => {
   await page.waitForLoadState("networkidle");
   await shot("06-login");
 
-  // Логин спонсором
-  await page.fill('input[type="email"]', "buyer@brido.local");
-  await page.fill('input[type="password"]', "password123");
+  // Логин спонсором. Учётка берётся из локального сида (seed-local.mjs):
+  // раньше здесь стоял buyer@brido.local — он есть только на staging, а прогон
+  // ходит в локальный стек, поэтому вход молча не проходил и тест падал на
+  // waitForURL. Для съёмки на другой базе — переопределить через env.
+  await page.fill('input[type="email"]', process.env.SHOTS_EMAIL ?? "sponsor1@brido.local");
+  await page.fill('input[type="password"]', process.env.SHOTS_PASSWORD ?? "password123");
   await page.locator('button[type="submit"]').click();
   await page.waitForURL(/\/app/, { timeout: 20_000 });
   await page.waitForLoadState("networkidle");

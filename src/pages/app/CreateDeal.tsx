@@ -4,20 +4,38 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDeals } from "@/hooks/useDeals";
+import { useT } from "@/i18n/useT";
+import { SUPPORTED_CURRENCIES } from "@/lib/money";
 import { useAuth } from "@/contexts/AuthContext";
 import { Confetti } from "@/components/Confetti";
 import { tap, notify } from "@/lib/native";
+
+// Стабільні ключі для назв категорій (у БД вони лишаються українськими).
+const categoryKeys: Record<string, string> = {
+  "Житло та оренда": "housing",
+  "Їжа та продукти": "food",
+  "Ліки та медицина": "meds",
+  "Одяг та речі": "clothes",
+  Транспорт: "transport",
+  Освіта: "education",
+  "Завдання/послуги": "tasks",
+  Інше: "other",
+};
 
 const CreateDeal = () => {
   const navigate = useNavigate();
   const reduced = useReducedMotion();
   const { user } = useAuth();
   const { createDeal } = useDeals();
+  const { t } = useT();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [form, setForm] = useState({ title: "", category: "", amount: "", currency: "EUR", description: "", urgent: false });
+  // Категорія зберігається в БД українською (так її читають фільтри стрічки),
+  // а підпис у формі перекладається на льоту.
   const categories = ["Житло та оренда", "Їжа та продукти", "Ліки та медицина", "Одяг та речі", "Транспорт", "Освіта", "Завдання/послуги", "Інше"];
+  const categoryLabel = (cat: string) => t(`deals.create.category.${categoryKeys[cat] ?? "other"}`, cat);
 
   const handlePublish = async () => {
     if (!user) return;
@@ -60,12 +78,12 @@ const CreateDeal = () => {
       <div className="flex items-center gap-3 px-4 pt-4 pb-4 border-b border-border">
         <button
           onClick={() => (step > 1 ? setStep((s) => s - 1) : navigate(-1))}
-          aria-label="Назад"
+          aria-label={t("common.back", "Назад")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-xl text-foreground flex-1">Нова угода</h2>
+        <h2 className="font-serif text-xl text-foreground flex-1">{t("deals.create.title", "Нова угода")}</h2>
         <span className="text-xs text-muted-foreground">{step}/3</span>
       </div>
 
@@ -95,16 +113,20 @@ const CreateDeal = () => {
               className="space-y-4"
             >
               <div>
-                <label className="text-sm font-medium text-foreground block mb-2">Назва запиту *</label>
+                <label className="text-sm font-medium text-foreground block mb-2">
+                  {t("deals.create.name", "Назва запиту")} *
+                </label>
                 <input
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="Наприклад: Допомога з орендою квартири"
+                  placeholder={t("deals.create.namePlaceholder", "Наприклад: Допомога з орендою квартири")}
                   className="w-full bg-secondary rounded-xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-foreground block mb-2">Категорія *</label>
+                <label className="text-sm font-medium text-foreground block mb-2">
+                  {t("deals.create.category", "Категорія")} *
+                </label>
                 {/* DESIGN.md §Anti-patterns: break symmetric 2-col — first category spans full width as featured. */}
                 <div className="grid grid-cols-2 gap-2">
                   {categories.map((cat, idx) => (
@@ -119,7 +141,7 @@ const CreateDeal = () => {
                           : "border-border text-foreground"
                       }`}
                     >
-                      {cat}
+                      {categoryLabel(cat)}
                     </button>
                   ))}
                 </div>
@@ -134,9 +156,11 @@ const CreateDeal = () => {
                 <div>
                   <p className="text-sm font-medium text-foreground flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-red-500 inline-block" aria-hidden="true" />
-                    Терміново
+                    {t("deals.create.urgent", "Терміново")}
                   </p>
-                  <p className="text-xs text-muted-foreground">Запит буде виділено на стрічці</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("deals.create.urgentHint", "Запит буде виділено на стрічці")}
+                  </p>
                 </div>
               </label>
             </motion.div>
@@ -152,7 +176,9 @@ const CreateDeal = () => {
               className="space-y-4"
             >
               <div>
-                <label className="text-sm font-medium text-foreground block mb-2">Сума потреби *</label>
+                <label className="text-sm font-medium text-foreground block mb-2">
+                  {t("deals.create.amount", "Сума потреби")} *
+                </label>
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -166,16 +192,27 @@ const CreateDeal = () => {
                     onChange={(e) => setForm({ ...form, currency: e.target.value })}
                     className="bg-secondary rounded-xl px-3 text-sm outline-none text-foreground"
                   >
-                    <option>EUR</option><option>USD</option><option>UAH</option>
+                    {/* Валюта заявки зберігається в deals.currency і враховується
+                        при відображенні (конвертація за курсом з currency_rates). */}
+                    {SUPPORTED_CURRENCIES.map((c) => (
+                      <option key={c.code} value={c.code.toUpperCase()}>
+                        {c.code.toUpperCase()}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-foreground block mb-2">Опис ситуації *</label>
+                <label className="text-sm font-medium text-foreground block mb-2">
+                  {t("deals.create.description", "Опис ситуації")} *
+                </label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Розкажіть про свою ситуацію. Чим більше деталей — тим більше довіри."
+                  placeholder={t(
+                    "deals.create.descriptionPlaceholder",
+                    "Розкажіть про свою ситуацію. Чим більше деталей — тим більше довіри."
+                  )}
                   rows={5}
                   className="w-full bg-secondary rounded-xl px-4 py-3 text-sm outline-none text-foreground resize-none focus:ring-2 focus:ring-accent/30"
                 />
@@ -192,12 +229,15 @@ const CreateDeal = () => {
               transition={stepTransition}
             >
               <div className="p-4 rounded-2xl bg-secondary border border-border">
-                <h3 className="font-semibold text-foreground mb-3">Перевірте запит</h3>
+                <h3 className="font-semibold text-foreground mb-3">{t("deals.create.review", "Перевірте запит")}</h3>
                 <div className="space-y-2 text-sm">
                   {[
-                    ["Назва", form.title || "—"],
-                    ["Категорія", form.category || "—"],
-                    ["Сума", form.amount ? `${form.amount} ${form.currency}` : "—"],
+                    [t("deals.create.shortName", "Назва"), form.title || "—"],
+                    [t("deals.create.category", "Категорія"), form.category ? categoryLabel(form.category) : "—"],
+                    [
+                      t("deals.create.shortAmount", "Сума"),
+                      form.amount ? `${form.amount} ${form.currency.toUpperCase()}` : "—",
+                    ],
                   ].map(([k, v]) => (
                     <div key={k} className="flex justify-between">
                       <span className="text-muted-foreground">{k}:</span>
@@ -206,15 +246,17 @@ const CreateDeal = () => {
                   ))}
                   {form.urgent && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Пріоритет:</span>
+                      <span className="text-muted-foreground">{t("deals.create.priority", "Пріоритет")}:</span>
                       <span className="text-foreground font-medium flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-red-500 inline-block" aria-hidden="true" />
-                        Терміново
+                        {t("deals.create.urgent", "Терміново")}
                       </span>
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-4">Запит буде перевірено модератором протягом 24 годин</p>
+                <p className="text-xs text-muted-foreground mt-4">
+                  {t("deals.create.moderation", "Запит буде перевірено модератором протягом 24 годин")}
+                </p>
               </div>
             </motion.div>
           )}
@@ -227,7 +269,7 @@ const CreateDeal = () => {
               className="flex-1 transition-transform duration-150 hover:-translate-y-px"
               onClick={() => setStep((s) => s - 1)}
             >
-              Назад
+              {t("common.back", "Назад")}
             </Button>
           )}
           <Button
@@ -235,7 +277,13 @@ const CreateDeal = () => {
             disabled={saving || done || (step === 1 && (!form.title || !form.category))}
             onClick={() => (step < 3 ? setStep((s) => s + 1) : handlePublish())}
           >
-            {done ? "Опубліковано ✓" : saving ? "Публікуємо…" : step === 3 ? "Опублікувати" : "Далі →"}
+            {done
+              ? `${t("deals.create.published", "Опубліковано")} ✓`
+              : saving
+                ? t("deals.create.publishing", "Публікуємо…")
+                : step === 3
+                  ? t("deals.create.publish", "Опублікувати")
+                  : `${t("common.next", "Далі")} →`}
           </Button>
         </div>
       </div>

@@ -7,6 +7,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/i18n/useT";
 import { tap, notify } from "@/lib/native";
 
 type FormState = {
@@ -20,6 +21,7 @@ const EditProfile = () => {
   const navigate = useNavigate();
   const { profile, updateProfile } = useProfile();
   const { user } = useAuth();
+  const { t } = useT();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState<FormState>({ name: "", city: "", country: "", bio: "" });
@@ -41,9 +43,12 @@ const EditProfile = () => {
     await updateProfile({ name: form.name, city: form.city, country: form.country, bio: form.bio });
     setSaving(false);
     void notify("success");
-    toast({ title: "Профіль збережено" });
+    toast({ title: t("editProfile.saved", "Профіль збережено") });
     setSaved(true);
-    setTimeout(() => { setSaved(false); navigate("/app/profile"); }, 1200);
+    setTimeout(() => {
+      setSaved(false);
+      navigate("/app/profile");
+    }, 1200);
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,15 +67,17 @@ const EditProfile = () => {
       <div className="flex items-center gap-3 px-4 pt-4 pb-4 border-b border-border bg-background/85 backdrop-blur-md sticky top-0 z-10">
         <button
           onClick={() => navigate(-1)}
-          aria-label="Назад"
+          aria-label={t("common.back", "Назад")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">Редагувати профіль</h2>
+        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">
+          {t("editProfile.title", "Редагувати профіль")}
+        </h2>
         <button
           onClick={handleSave}
-          aria-label="Зберегти"
+          aria-label={t("common.save", "Зберегти")}
           className={`min-h-[44px] min-w-[44px] flex items-center justify-center text-sm font-semibold transition-transform duration-150 hover:-translate-y-px ${saved ? "text-success" : "text-accent"}`}
         >
           {saved ? (
@@ -82,35 +89,56 @@ const EditProfile = () => {
             >
               <Check className="w-5 h-5" strokeWidth={2} />
             </motion.span>
-          ) : "Зберегти"}
+          ) : (
+            t("common.save", "Зберегти")
+          )}
         </button>
       </div>
 
       <div className="flex flex-col items-center py-6 border-b border-border">
         <div className="relative">
           <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-semibold text-primary overflow-hidden">
-            {profile?.avatar_url ? <img src={profile.avatar_url} className="w-full h-full object-cover" alt="" /> :
-              (form.name.slice(0, 2).toUpperCase() || "BC")}
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} className="w-full h-full object-cover" alt="" />
+            ) : (
+              form.name.slice(0, 2).toUpperCase() || "BC"
+            )}
           </div>
           <label
             className="absolute -bottom-1 -right-1 w-9 h-9 bg-accent rounded-full flex items-center justify-center cursor-pointer transition-transform duration-150 hover:-translate-y-px"
-            aria-label="Завантажити фото"
+            aria-label={t("editProfile.uploadPhotoAria", "Завантажити фото")}
           >
             <Camera className="w-4 h-4 text-white" strokeWidth={1.75} />
             <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
           </label>
         </div>
-        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">Натисніть, щоб змінити фото</p>
+        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+          {t("editProfile.changePhotoHint", "Натисніть, щоб змінити фото")}
+        </p>
       </div>
 
       <div className="px-4 py-4 space-y-4">
         {[
-          { label: "Ім'я", key: "name" as const, placeholder: "Ваше ім'я" },
-          { label: "Місто", key: "city" as const, placeholder: "Місто" },
-          { label: "Країна", key: "country" as const, placeholder: "Країна" },
+          {
+            label: t("editProfile.name", "Ім'я"),
+            key: "name" as const,
+            placeholder: t("editProfile.namePlaceholder", "Ваше ім'я"),
+          },
+          {
+            label: t("editProfile.city", "Місто"),
+            key: "city" as const,
+            placeholder: t("editProfile.cityPlaceholder", "Місто"),
+          },
+          {
+            label: t("editProfile.country", "Країна"),
+            key: "country" as const,
+            placeholder: t("editProfile.countryPlaceholder", "Країна"),
+          },
         ].map((field) => (
           <div key={field.key}>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">{field.label}</label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+              {field.label}
+            </label>
             <input
               value={form[field.key]}
               onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
@@ -120,7 +148,9 @@ const EditProfile = () => {
           </div>
         ))}
         <div>
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Про себе</label>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+            {t("editProfile.bio", "Про себе")}
+          </label>
           <textarea
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
@@ -134,13 +164,12 @@ const EditProfile = () => {
           disabled={saving}
         >
           {saving ? (
-            <motion.span
-              animate={{ opacity: [1, 0.4, 1] }}
-              transition={{ repeat: Infinity, duration: 0.9 }}
-            >
-              Зберігаємо…
+            <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 0.9 }}>
+              {t("common.saving", "Зберігаємо…")}
             </motion.span>
-          ) : "Зберегти зміни"}
+          ) : (
+            t("editProfile.saveChanges", "Зберегти зміни")
+          )}
         </Button>
       </div>
     </main>

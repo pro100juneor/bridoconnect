@@ -1,7 +1,9 @@
+import { useT } from "@/i18n/useT";
 import type { BlockProps } from "../types";
 
 // About: free-text shop description. Renders nothing if empty.
 export default function About({ profile }: BlockProps) {
+  const { t } = useT();
   const about = profile.brand.about?.trim();
   if (!about) return null;
 
@@ -23,7 +25,7 @@ export default function About({ profile }: BlockProps) {
           margin: "0 0 0.75rem",
         }}
       >
-        Про магазин
+        {t("storefront.about.title", "Про магазин")}
       </h2>
       <p
         style={{

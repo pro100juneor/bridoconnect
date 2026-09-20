@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import type { PromotedProfile } from "@/hooks/usePromotions";
+import { useT } from "@/i18n/useT";
 
 // Route to the promoted profile. The promoted user's role is the OPPOSITE of the
 // audience (a recipient is promoted TO sponsors, and vice-versa):
@@ -47,6 +48,7 @@ interface PromoCarouselProps {
 export default function PromoCarousel({ items }: PromoCarouselProps) {
   const navigate = useNavigate();
   const reduced = usePrefersReducedMotion();
+  const { t } = useT();
   const [index, setIndex] = useState(0);
   const count = items.length;
 
@@ -86,7 +88,7 @@ export default function PromoCarousel({ items }: PromoCarouselProps) {
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") navigate(promoHref(current));
         }}
-        aria-label={`Промо: ${current.name}`}
+        aria-label={t("promo.cardAria", "Промо: {name}", { name: current.name })}
         className="relative h-[200px] rounded-2xl overflow-hidden cursor-pointer border border-border bg-primary/5 transition-all duration-200 hover:-translate-y-px active:scale-[0.99] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 before:z-20"
       >
         {img ? (
@@ -109,7 +111,7 @@ export default function PromoCarousel({ items }: PromoCarouselProps) {
 
         <span className="absolute top-3 left-3 z-20 flex items-center gap-1 bg-accent text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
           <Sparkles className="w-3 h-3" aria-hidden="true" />
-          Промо
+          {t("promo.badge", "Промо")}
         </span>
 
         <div className="absolute inset-x-0 bottom-0 z-20 p-4">
@@ -123,14 +125,14 @@ export default function PromoCarousel({ items }: PromoCarouselProps) {
 
       {/* Dot indicators — click to jump to a slide. */}
       {count > 1 && (
-        <div className="flex justify-center gap-1.5 mt-2" role="tablist" aria-label="Промо-слайди">
+        <div className="flex justify-center gap-1.5 mt-2" role="tablist" aria-label={t("promo.slidesAria", "Промо-слайди")}>
           {items.map((it, i) => (
             <button
               key={it.id}
               onClick={() => setIndex(i)}
               role="tab"
               aria-selected={i === active}
-              aria-label={`Слайд ${i + 1}`}
+              aria-label={t("promo.slideAria", "Слайд {n}", { n: i + 1 })}
               className={`h-1.5 rounded-full transition-all ${
                 i === active ? "w-4 bg-accent" : "w-1.5 bg-muted-foreground/30"
               }`}

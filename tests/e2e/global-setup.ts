@@ -26,7 +26,17 @@ export default async function globalSetup() {
     return;
   }
   console.log("[global-setup] supabase db reset...");
-  execFileSync("supabase", ["db", "reset"], { stdio: "inherit" });
+  // `db reset` в конце перезапускает контейнеры и сразу дёргает
+  // /storage/v1/bucket. Storage поднимается не мгновенно, и запрос иногда
+  // ловит 502 от kong — миграции при этом уже применены, падает только
+  // финальная проверка. Одна повторная попытка снимает эту флейковость,
+  // вместо того чтобы валить весь прогон на ровном месте.
+  try {
+    execFileSync("supabase", ["db", "reset"], { stdio: "inherit" });
+  } catch {
+    console.log("[global-setup] db reset failed (likely storage not ready yet) — retrying once...");
+    execFileSync("supabase", ["db", "reset"], { stdio: "inherit" });
+  }
   console.log("[global-setup] seed-local.mjs...");
   const extra = deriveSupabaseEnv();
   execFileSync("node", ["scripts/seed-local.mjs"], {

@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { Notification } from "@/integrations/supabase/types";
 import { PullToRefresh } from "@/components/PullToRefresh";
+import { useT } from "@/i18n/useT";
 import { tap } from "@/lib/native";
 
 const TYPE_ICON: Record<string, LucideIcon> = {
@@ -30,6 +31,7 @@ const Notifications = () => {
   const navigate = useNavigate();
   const reduced = useReducedMotion();
   const { user } = useAuth();
+  const { t, localeTag } = useT();
   const [notifs, setNotifs] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -93,7 +95,7 @@ const Notifications = () => {
     <div className="pb-8">
       <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">Сповіщення</h2>
+          <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">{t("notifications.title", "Сповіщення")}</h2>
           {unreadCount > 0 && (
             <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">
               {unreadCount}
@@ -105,7 +107,7 @@ const Notifications = () => {
             onClick={markAllRead}
             className="text-xs text-accent font-medium min-h-[44px] px-2 transition-transform duration-150 hover:-translate-y-px"
           >
-            Всі прочитано
+            {t("notifications.markAllRead", "Всі прочитано")}
           </button>
         )}
       </div>
@@ -138,11 +140,11 @@ const Notifications = () => {
               <path d="M34 12h8M36 18h6M37 24h5" />
             </svg>
           </div>
-          <p className="font-semibold text-foreground mb-2">Сповіщень немає</p>
+          <p className="font-semibold text-foreground mb-2">{t("notifications.emptyTitle", "Сповіщень немає")}</p>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Тут з'являться сповіщення про угоди,
+            {t("notifications.emptyLine1", "Тут з'являться сповіщення про угоди,")}
             <br />
-            повідомлення та донати.
+            {t("notifications.emptyLine2", "повідомлення та донати.")}
           </p>
         </div>
       )}
@@ -176,7 +178,7 @@ const Notifications = () => {
                   </p>
                   {n.body && <p className="text-xs text-muted-foreground mt-0.5 truncate">{n.body}</p>}
                   <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(n.created_at).toLocaleDateString("uk", {
+                    {new Date(n.created_at).toLocaleDateString(localeTag, {
                       day: "numeric",
                       month: "short",
                       hour: "2-digit",
@@ -185,7 +187,7 @@ const Notifications = () => {
                   </p>
                 </div>
                 {!n.read && (
-                  <div className="w-2 h-2 rounded-full bg-accent shrink-0 mt-2" aria-label="Непрочитано" />
+                  <div className="w-2 h-2 rounded-full bg-accent shrink-0 mt-2" aria-label={t("notifications.unreadAria", "Непрочитано")} />
                 )}
               </motion.div>
             );

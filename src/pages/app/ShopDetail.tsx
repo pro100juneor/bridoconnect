@@ -6,6 +6,7 @@ import { tap } from "@/lib/native";
 import { supabase } from "@/integrations/supabase/client";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useT } from "@/i18n/useT";
 
 interface SellerInfo {
   name: string;
@@ -22,6 +23,7 @@ const ShopDetail = () => {
   const { id } = useParams();
   const { productsBySeller } = useProducts();
   const { convert } = useCurrency();
+  const { t } = useT();
   const [seller, setSeller] = useState<SellerInfo | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [storeSlug, setStoreSlug] = useState<string | null>(null);
@@ -55,16 +57,16 @@ const ShopDetail = () => {
       <div className="flex items-center gap-3 px-4 pt-4 pb-4">
         <button
           onClick={() => navigate(-1)}
-          aria-label="Назад"
+          aria-label={t("shop.back", "Назад")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">Профіль продавця</h2>
+        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">{t("shop.sellerProfile", "Профіль продавця")}</h2>
       </div>
 
       {loading ? (
-        <div className="px-4 mt-8 text-center text-sm text-muted-foreground">Завантаження…</div>
+        <div className="px-4 mt-8 text-center text-sm text-muted-foreground">{t("shop.loading", "Завантаження…")}</div>
       ) : (
         <>
           <div className="px-4 pb-6 border-b border-border">
@@ -74,7 +76,7 @@ const ShopDetail = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-lg text-foreground">
-                  {seller?.name || "Продавець"} {flagFor(seller?.country)}
+                  {seller?.name || t("shop.sellerFallback", "Продавець")} {flagFor(seller?.country)}
                 </h3>
                 {(seller?.city || seller?.country) && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
@@ -87,11 +89,11 @@ const ShopDetail = () => {
                     <Star className="w-3 h-3 fill-warning text-warning" strokeWidth={1.75} />
                     {(seller?.rating ?? 0).toFixed(1)}
                   </span>
-                  <span>{products.length} товарів</span>
+                  <span>{t("shop.productsCount", "{n} товарів", { n: products.length })}</span>
                   {seller?.verified && (
                     <span className="flex items-center gap-1 text-success">
                       <Shield className="w-3 h-3" strokeWidth={1.75} />
-                      Верифіковано
+                      {t("shop.verified", "Верифіковано")}
                     </span>
                   )}
                 </div>
@@ -106,7 +108,7 @@ const ShopDetail = () => {
                     navigate(`/store/${storeSlug}`);
                   }}
                 >
-                  <Store className="w-4 h-4" strokeWidth={1.75} /> Брендована вітрина
+                  <Store className="w-4 h-4" strokeWidth={1.75} /> {t("shop.brandedStore", "Брендована вітрина")}
                 </Button>
               )}
               <Button
@@ -117,15 +119,17 @@ const ShopDetail = () => {
                   navigate("/app/chats");
                 }}
               >
-                <MessageCircle className="w-4 h-4" strokeWidth={1.75} /> Написати продавцю
+                <MessageCircle className="w-4 h-4" strokeWidth={1.75} /> {t("shop.messageSeller", "Написати продавцю")}
               </Button>
             </div>
           </div>
 
           <div className="px-4 pt-4">
-            <h3 className="font-semibold text-foreground mb-3">Товари продавця ({products.length})</h3>
+            <h3 className="font-semibold text-foreground mb-3">
+              {t("shop.sellerProducts", "Товари продавця ({n})", { n: products.length })}
+            </h3>
             {products.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Поки що немає товарів</p>
+              <p className="text-sm text-muted-foreground">{t("shop.noProducts", "Поки що немає товарів")}</p>
             ) : (
               <div className="space-y-3">
                 {products.map((p) => (
@@ -150,9 +154,9 @@ const ShopDetail = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground">{p.title}</p>
-                      <p className="text-xs text-muted-foreground">{p.category || "Товар"}</p>
+                      <p className="text-xs text-muted-foreground">{p.category || t("product.categoryFallback", "Товар")}</p>
                     </div>
-                    <p className="font-bold text-foreground">{convert(p.price_cents).formatted}</p>
+                    <p className="font-bold text-foreground">{convert(p.price_cents, p.currency).formatted}</p>
                   </button>
                 ))}
               </div>

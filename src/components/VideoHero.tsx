@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Play, Pause, Volume2, VolumeX, Globe } from "lucide-react";
+import { useT } from "@/i18n/useT";
 
 // 48 наиболее распространённых языков мира + UA. Каждому соответствует
 // public/audio/narration/{code}.mp3 (ElevenLabs multilingual_v2, ~55 sec
@@ -91,6 +92,7 @@ const VIDEO_SRC: Record<"hero" | "explainer" | "trust" | "direct" | "hope" | "pe
 };
 
 export const VideoHero = ({ variant = "hero" }: { variant?: keyof typeof VIDEO_SRC }) => {
+  const { t } = useT();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [lang, setLang] = useState<string>(() => detectInitialLang());
@@ -150,7 +152,7 @@ export const VideoHero = ({ variant = "hero" }: { variant?: keyof typeof VIDEO_S
   return (
     <section
       className="relative w-full overflow-hidden rounded-3xl aspect-[16/9]"
-      aria-label="BridoConnect explainer"
+      aria-label={t("videoHero.aria", "BridoConnect explainer")}
     >
       {!videoFailed && (
         <video
@@ -218,7 +220,7 @@ export const VideoHero = ({ variant = "hero" }: { variant?: keyof typeof VIDEO_S
             data-testid="video-lang-picker"
             onClick={() => setPickerOpen((v) => !v)}
             className="bg-black/30 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-2 text-white text-xs hover:bg-black/40 transition-colors"
-            aria-label="Choose language"
+            aria-label={t("videoHero.chooseLanguage", "Choose language")}
           >
             <Globe className="w-3.5 h-3.5" strokeWidth={2} />
             <span>{currentLang.flag}</span>
@@ -235,13 +237,13 @@ export const VideoHero = ({ variant = "hero" }: { variant?: keyof typeof VIDEO_S
               type="text"
               value={pickerQuery}
               onChange={(e) => setPickerQuery(e.target.value)}
-              placeholder="Search 48 languages…"
+              placeholder={t("videoHero.searchLanguages", "Search 48 languages…")}
               className="w-full bg-white/10 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-xs mb-1.5 outline-none focus:bg-white/20"
               autoFocus
             />
             <div className="overflow-y-auto flex-1 -mr-1 pr-1">
               {filteredLangs.length === 0 ? (
-                <p className="text-white/50 text-xs px-3 py-2">No match</p>
+                <p className="text-white/50 text-xs px-3 py-2">{t("videoHero.noMatch", "No match")}</p>
               ) : (
                 filteredLangs.map((l) => (
                   <button
@@ -270,10 +272,13 @@ export const VideoHero = ({ variant = "hero" }: { variant?: keyof typeof VIDEO_S
         <div className="flex items-end justify-between gap-3">
           <div className="text-white max-w-md">
             <p className="text-[10px] uppercase tracking-widest text-white/60 mb-2">
-              {isExplainer ? "How it works" : "Listen to the story"}
+              {isExplainer
+                ? t("nav.howItWorks", "Як це працює")
+                : t("videoHero.listen", "Listen to the story")}
             </p>
             <p className="font-serif text-2xl sm:text-3xl leading-tight">
-              Один крок — і чиєсь життя <em className="not-italic text-accent">зміниться</em>
+              {t("videoHero.captionLead", "Один крок — і чиєсь життя")}{" "}
+              <em className="not-italic text-accent">{t("videoHero.captionEm", "зміниться")}</em>
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -284,7 +289,7 @@ export const VideoHero = ({ variant = "hero" }: { variant?: keyof typeof VIDEO_S
                 setMuted((v) => !v);
               }}
               className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-md hover:bg-black/40 flex items-center justify-center text-white transition-colors"
-              aria-label={muted ? "Unmute" : "Mute"}
+              aria-label={muted ? t("videoHero.unmute", "Unmute") : t("videoHero.mute", "Mute")}
             >
               {muted ? (
                 <VolumeX className="w-4 h-4" strokeWidth={2} />
@@ -296,7 +301,7 @@ export const VideoHero = ({ variant = "hero" }: { variant?: keyof typeof VIDEO_S
               data-testid="video-play"
               onClick={toggle}
               className="w-14 h-14 rounded-full bg-white text-foreground hover:scale-105 flex items-center justify-center transition-transform shadow-2xl"
-              aria-label={playing ? "Pause" : "Play"}
+              aria-label={playing ? t("videoHero.pause", "Pause") : t("videoHero.play", "Play")}
             >
               {playing ? (
                 <Pause className="w-5 h-5" strokeWidth={2} />

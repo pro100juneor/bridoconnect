@@ -1,0 +1,32 @@
+{
+  "mfa.enroll.title": "Enable two-factor authentication",
+  "mfa.enroll.desc": "Scan the QR code in Google Authenticator, 1Password, Aegis or any other TOTP app and enter the code it shows.",
+  "mfa.disable.title": "Disable two-factor authentication",
+  "mfa.disable.desc": "Confirm with a code from your app — it can't be turned off without one.",
+  "mfa.disableCta": "Disable",
+  "mfa.qrAlt": "QR code for your TOTP app",
+  "mfa.manualKey": "Or enter the key manually:",
+  "mfa.preparingKey": "Preparing the key…",
+  "mfa.codeLabel": "Code from your app",
+  "mfa.copyFailed": "Couldn't copy",
+  "mfa.verifying": "Verifying…",
+  "mfa.enabled.title": "Two-factor authentication enabled",
+  "mfa.enabled.desc": "Next time you sign in you'll need a code from your app.",
+  "mfa.disabled.title": "Two-factor authentication disabled",
+  "mfa.disabled.desc": "Signing in now only requires your password.",
+
+  "mfa.challenge.title": "Confirm your sign-in",
+  "mfa.challenge.desc": "Enter the six-digit code from your TOTP app.",
+  "mfa.challenge.codeLabel": "Code",
+  "mfa.challenge.submit": "Sign in",
+  "mfa.challenge.signOut": "Sign out",
+  "mfa.challenge.factorsFailed": "Couldn't load your factors. Please sign in again.",
+  "mfa.challenge.invalidCode": "Invalid or expired code",
+
+  "errorBoundary.desc": "Something went wrong. Reloading the page usually helps.",
+  "errorBoundary.reload": "Reload",
+
+  "pullToRefresh.refreshing": "Refreshing…",
+  "pullToRefresh.release": "Release to refresh",
+  "pullToRefresh.pull": "Pull down"
+}

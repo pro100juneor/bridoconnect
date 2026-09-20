@@ -1,0 +1,13 @@
+{
+  "shop.designAria": "Customise the shop",
+  "shop.beFirst": "Be the first — add a product",
+  "shop.addProduct": "Add product",
+  "shop.orderPlacedDesc": "Order placed, the seller has been notified.",
+  "shop.orderPendingDesc": "The order is still being processed — it will show up in a minute.",
+
+  "cart.title": "Cart",
+  "cart.empty": "Your cart is empty",
+  "cart.removeItem": "Remove from cart",
+  "cart.total": "Total",
+  "cart.checkout": "Check out"
+}

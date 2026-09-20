@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Home, ArrowLeft } from "lucide-react";
+import { useT } from "@/i18n/useT";
 
 const NotFound = () => {
   const navigate = useNavigate();
+  const { t } = useT();
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center bg-background">
       {/* SVG compass illustration per DESIGN.md §States */}
@@ -16,9 +18,11 @@ const NotFound = () => {
       </div>
       <div className="mb-6">
         <p className="text-8xl font-serif font-bold text-foreground/10 animate-fade-in">404</p>
-        <h1 className="text-4xl font-serif tracking-tight text-foreground mt-2 animate-fade-in">Сторінку не знайдено</h1>
+        <h1 className="text-4xl font-serif tracking-tight text-foreground mt-2 animate-fade-in">
+          {t("notfound.title", "Сторінку не знайдено")}
+        </h1>
         <p className="text-muted-foreground text-sm mt-2 leading-relaxed">
-          Можливо, посилання застаріло або сторінки більше не існує.
+          {t("notfound.desc", "Можливо, посилання застаріло або сторінки більше не існує.")}
         </p>
       </div>
       <div className="flex gap-3">
@@ -27,13 +31,13 @@ const NotFound = () => {
           onClick={() => navigate(-1)}
           className="gap-2 min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
         >
-          <ArrowLeft className="w-4 h-4" strokeWidth={1.75} /> Назад
+          <ArrowLeft className="w-4 h-4" strokeWidth={1.75} /> {t("notfound.back", "Назад")}
         </Button>
         <Button
           className="bg-accent hover:bg-accent/90 text-white gap-2 min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
           onClick={() => navigate("/")}
         >
-          <Home className="w-4 h-4" strokeWidth={1.75} /> На головну
+          <Home className="w-4 h-4" strokeWidth={1.75} /> {t("notfound.home", "На головну")}
         </Button>
       </div>
     </main>

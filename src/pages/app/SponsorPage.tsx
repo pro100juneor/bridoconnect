@@ -10,20 +10,27 @@ import {
   type SponsorReveal,
 } from "@/hooks/useSponsorAccess";
 import { toast } from "@/hooks/use-toast";
+import { useT } from "@/i18n/useT";
 import { tap, notify } from "@/lib/native";
 
 // Human-readable labels for the revealed questionnaire fields.
-const REVEAL_LABELS: Record<string, string> = {
-  about: "Про себе",
-  city: "Місто",
-  occupation: "Рід занять",
-  languages: "Мови",
+// The object keys are the jsonb field names — only the labels are translated.
+const REVEAL_LABELS: Record<string, { key: string; uk: string }> = {
+  about: { key: "sponsor.field.about", uk: "Про себе" },
+  city: { key: "sponsor.field.city", uk: "Місто" },
+  occupation: { key: "sponsor.field.occupation", uk: "Рід занять" },
+  languages: { key: "sponsor.field.languages", uk: "Мови" },
 };
 
 const RevealFields = ({ reveal }: { reveal: SponsorReveal }) => {
+  const { t } = useT();
   const entries = Object.entries(reveal).filter(([, v]) => v && String(v).trim());
   if (entries.length === 0) {
-    return <p className="text-sm text-muted-foreground text-center py-6">Власник ще не додав інформацію.</p>;
+    return (
+      <p className="text-sm text-muted-foreground text-center py-6">
+        {t("sponsor.noInfo", "Власник ще не додав інформацію.")}
+      </p>
+    );
   }
   return (
     <div className="space-y-2">
@@ -33,7 +40,7 @@ const RevealFields = ({ reveal }: { reveal: SponsorReveal }) => {
           className="relative bg-secondary rounded-2xl px-4 py-3 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8"
         >
           <span className="text-[10px] uppercase tracking-widest text-muted-foreground block mb-1">
-            {REVEAL_LABELS[key] || key}
+            {REVEAL_LABELS[key] ? t(REVEAL_LABELS[key].key, REVEAL_LABELS[key].uk) : key}
           </span>
           <span className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{value}</span>
         </div>
@@ -48,6 +55,7 @@ const SponsorPage = () => {
   const [searchParams] = useSearchParams();
   const context = searchParams.get("context") || "general";
   const { user } = useAuth();
+  const { t } = useT();
   const { getSponsorProfile, requestAccess, outgoingRequests } = useSponsorAccess();
 
   const [sponsor, setSponsor] = useState<SponsorProfile | null>(null);
@@ -82,14 +90,19 @@ const SponsorPage = () => {
     setSending(false);
     if (error) {
       toast({
-        title: "Помилка",
-        description: (typeof error === "string" ? error : error?.message) || "Не вдалося надіслати запит",
+        title: t("sponsor.error", "Помилка"),
+        description:
+          (typeof error === "string" ? error : error?.message) ||
+          t("sponsor.requestFailed", "Не вдалося надіслати запит"),
         variant: "destructive",
       });
       return;
     }
     void notify("success");
-    toast({ title: "Запит надіслано", description: "Очікує згоди власника." });
+    toast({
+      title: t("sponsor.requestSent", "Запит надіслано"),
+      description: t("sponsor.requestSentDesc", "Очікує згоди власника."),
+    });
     setMessage("");
     await load();
   };
@@ -122,12 +135,12 @@ const SponsorPage = () => {
       <div className="text-center py-16 px-6">
         <button
           onClick={() => navigate(-1)}
-          aria-label="Назад"
+          aria-label={t("sponsor.back", "Назад")}
           className="inline-flex items-center gap-2 text-muted-foreground mb-6 text-sm min-h-[44px]"
         >
-          <ArrowLeft className="w-4 h-4" strokeWidth={1.75} /> Назад
+          <ArrowLeft className="w-4 h-4" strokeWidth={1.75} /> {t("sponsor.back", "Назад")}
         </button>
-        <p className="text-muted-foreground">Профіль не знайдено</p>
+        <p className="text-muted-foreground">{t("sponsor.notFound", "Профіль не знайдено")}</p>
       </div>
     );
   }
@@ -139,12 +152,14 @@ const SponsorPage = () => {
       <div className="px-4 pt-4 pb-2 flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
-          aria-label="Назад"
+          aria-label={t("sponsor.back", "Назад")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-lg text-foreground animate-fade-in">Сторінка спонсора</h2>
+        <h2 className="font-serif text-lg text-foreground animate-fade-in">
+          {t("sponsor.title", "Сторінка спонсора")}
+        </h2>
       </div>
 
       <div className="px-4 py-6 text-center">
@@ -156,18 +171,18 @@ const SponsorPage = () => {
           )}
         </div>
         <h3 className="font-semibold text-lg text-foreground inline-flex items-center gap-1.5">
-          {sponsor.name || "Спонсор"}
+          {sponsor.name || t("sponsor.nameFallback", "Спонсор")}
           {sponsor.verification_status === "verified" && (
             <BadgeCheck
               className="w-5 h-5 text-accent shrink-0"
               strokeWidth={1.75}
-              aria-label="Верифіковано"
+              aria-label={t("sponsor.verified", "Верифіковано")}
             />
           )}
         </h3>
         {!canView && (
           <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
-            <Lock className="w-3.5 h-3.5" strokeWidth={1.75} /> Закритий профіль
+            <Lock className="w-3.5 h-3.5" strokeWidth={1.75} /> {t("sponsor.private", "Закритий профіль")}
           </p>
         )}
       </div>
@@ -176,9 +191,14 @@ const SponsorPage = () => {
       {isOwner && (
         <div className="px-4 space-y-4">
           <div className="relative bg-accent/5 border border-accent/20 rounded-2xl p-4">
-            <p className="text-sm text-foreground font-medium mb-1">Це ваша сторінка спонсора</p>
+            <p className="text-sm text-foreground font-medium mb-1">
+              {t("sponsor.ownerTitle", "Це ваша сторінка спонсора")}
+            </p>
             <p className="text-xs text-muted-foreground">
-              За замовчуванням вона закрита. Доступ надається лише за вашою згодою під конкретний запит.
+              {t(
+                "sponsor.ownerDesc",
+                "За замовчуванням вона закрита. Доступ надається лише за вашою згодою під конкретний запит."
+              )}
             </p>
           </div>
           <RevealFields reveal={sponsor.reveal} />
@@ -189,7 +209,7 @@ const SponsorPage = () => {
               navigate("/app/sponsor-privacy");
             }}
           >
-            <Edit2 className="w-4 h-4" strokeWidth={1.75} /> Редагувати анкету
+            <Edit2 className="w-4 h-4" strokeWidth={1.75} /> {t("sponsor.editForm", "Редагувати анкету")}
           </Button>
         </div>
       )}
@@ -198,7 +218,8 @@ const SponsorPage = () => {
       {!isOwner && canView && (
         <div className="px-4 space-y-3">
           <p className="inline-flex items-center gap-1.5 text-xs text-success">
-            <ShieldCheck className="w-4 h-4" strokeWidth={1.75} /> Доступ надано власником
+            <ShieldCheck className="w-4 h-4" strokeWidth={1.75} />{" "}
+            {t("sponsor.accessGranted", "Доступ надано власником")}
           </p>
           <RevealFields reveal={sponsor.reveal} />
         </div>
@@ -209,28 +230,36 @@ const SponsorPage = () => {
         <div className="px-4 space-y-4">
           <div className="relative bg-secondary rounded-2xl p-5 text-center overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
             <Lock className="w-8 h-8 text-muted-foreground mx-auto mb-3" strokeWidth={1.5} />
-            <p className="text-sm font-medium text-foreground mb-1">Профіль закритий</p>
+            <p className="text-sm font-medium text-foreground mb-1">
+              {t("sponsor.closedTitle", "Профіль закритий")}
+            </p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Доступ надається лише за згодою власника під конкретний запит.
+              {t("sponsor.closedDesc", "Доступ надається лише за згодою власника під конкретний запит.")}
             </p>
           </div>
 
           {grant?.status === "pending" && (
             <div className="relative bg-warning/5 border border-warning/20 rounded-2xl p-4 flex items-center gap-3">
               <Clock className="w-5 h-5 text-warning shrink-0" strokeWidth={1.75} />
-              <p className="text-xs text-foreground">Запит надіслано, очікує згоди власника.</p>
+              <p className="text-xs text-foreground">
+                {t("sponsor.pendingNote", "Запит надіслано, очікує згоди власника.")}
+              </p>
             </div>
           )}
 
           {grant?.status === "denied" && (
             <div className="relative bg-destructive/5 border border-destructive/20 rounded-2xl p-4">
-              <p className="text-xs text-destructive">Власник відхилив ваш запит на доступ.</p>
+              <p className="text-xs text-destructive">
+                {t("sponsor.deniedNote", "Власник відхилив ваш запит на доступ.")}
+              </p>
             </div>
           )}
 
           {grant?.status === "revoked" && (
             <div className="relative bg-destructive/5 border border-destructive/20 rounded-2xl p-4">
-              <p className="text-xs text-destructive">Доступ було відкликано власником.</p>
+              <p className="text-xs text-destructive">
+                {t("sponsor.revokedNote", "Доступ було відкликано власником.")}
+              </p>
             </div>
           )}
 
@@ -240,18 +269,23 @@ const SponsorPage = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={3}
-                placeholder="Повідомлення власнику (навіщо потрібен доступ)"
+                placeholder={t(
+                  "sponsor.messagePlaceholder",
+                  "Повідомлення власнику (навіщо потрібен доступ)"
+                )}
                 className="w-full bg-secondary rounded-xl px-3 py-2 text-sm outline-none text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent/30 resize-none"
               />
               <p className="text-[10px] text-muted-foreground">
-                Контекст запиту: <span className="text-foreground">{context}</span>
+                {t("sponsor.contextLabel", "Контекст запиту:")}{" "}
+                <span className="text-foreground">{context}</span>
               </p>
               <Button
                 className="w-full bg-accent hover:bg-accent/90 text-white gap-2 transition-transform duration-150 hover:-translate-y-px"
                 disabled={sending}
                 onClick={handleRequest}
               >
-                <Send className="w-4 h-4" strokeWidth={1.75} /> Запросити доступ
+                <Send className="w-4 h-4" strokeWidth={1.75} />{" "}
+                {t("sponsor.requestAccess", "Запросити доступ")}
               </Button>
             </div>
           )}

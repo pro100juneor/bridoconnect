@@ -7,9 +7,11 @@ import { Eye, EyeOff, UserPlus, CheckCircle, HandHeart, HandHelping } from "luci
 import { toast } from "@/hooks/use-toast";
 import { Confetti } from "@/components/Confetti";
 import { isNative } from "@/lib/native";
+import { useT } from "@/i18n/useT";
 
 const Register = () => {
   const navigate = useNavigate();
+  const { t } = useT();
   const reduced = useReducedMotion();
   const [step, setStep] = useState<"form" | "success">("form");
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "", role: "sponsor" });
@@ -20,18 +22,19 @@ const Register = () => {
   useEffect(() => {
     if (step !== "success") return;
     setCelebrate(true);
-    const t = setTimeout(() => setCelebrate(false), 3000);
-    return () => clearTimeout(t);
+    // Переименован из t — чтобы не затенять функцию перевода t() из useT().
+    const timer = setTimeout(() => setCelebrate(false), 3000);
+    return () => clearTimeout(timer);
   }, [step]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (form.password !== form.confirm) {
-      toast({ title: "Паролі не збігаються", variant: "destructive" });
+      toast({ title: t("auth.register.mismatch", "Паролі не збігаються"), variant: "destructive" });
       return;
     }
     if (form.password.length < 6) {
-      toast({ title: "Пароль мінімум 6 символів", variant: "destructive" });
+      toast({ title: t("auth.register.tooShort", "Пароль мінімум 6 символів"), variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -46,9 +49,12 @@ const Register = () => {
     setLoading(false);
     if (error) {
       toast({
-        title: "Помилка реєстрації",
+        title: t("auth.register.error.title", "Помилка реєстрації"),
         description:
-          error.message === "User already registered" ? "Цей email вже зареєстровано" : error.message,
+          // Сообщение от Supabase приходит на английском — переводим только известный кейс.
+          error.message === "User already registered"
+            ? t("auth.register.error.exists", "Цей email вже зареєстровано")
+            : error.message,
         variant: "destructive",
       });
       return;
@@ -80,8 +86,11 @@ const Register = () => {
     });
     if (error) {
       toast({
-        title: "Google OAuth не налаштовано",
-        description: "Адміністратор скоро це підключить. Поки що зареєструйтесь через email.",
+        title: t("auth.google.notConfigured.title", "Google OAuth не налаштовано"),
+        description: t(
+          "auth.google.notConfigured.register",
+          "Адміністратор скоро це підключить. Поки що зареєструйтесь через email."
+        ),
         variant: "destructive",
       });
     }
@@ -99,15 +108,21 @@ const Register = () => {
         >
           <CheckCircle className="w-8 h-8 text-success" strokeWidth={1.75} />
         </motion.div>
-        <h2 className="font-serif text-2xl text-foreground mb-2">Майже готово!</h2>
-        <p className="text-muted-foreground text-sm mb-2">Ми надіслали лист підтвердження на:</p>
+        <h2 className="font-serif text-2xl text-foreground mb-2">
+          {t("auth.register.success.title", "Майже готово!")}
+        </h2>
+        <p className="text-muted-foreground text-sm mb-2">
+          {t("auth.register.success.sentTo", "Ми надіслали лист підтвердження на:")}
+        </p>
         <p className="font-semibold text-foreground mb-6">{form.email}</p>
-        <p className="text-xs text-muted-foreground mb-6">Підтвердіть email і потім увійдіть в акаунт.</p>
+        <p className="text-xs text-muted-foreground mb-6">
+          {t("auth.register.success.hint", "Підтвердіть email і потім увійдіть в акаунт.")}
+        </p>
         <Button
           className="w-full bg-accent hover:bg-accent/90 text-white h-12 transition-transform duration-150 hover:-translate-y-px"
           onClick={() => navigate("/auth")}
         >
-          До входу →
+          {t("auth.register.success.cta", "До входу →")}
         </Button>
       </div>
     );
@@ -126,29 +141,34 @@ const Register = () => {
   return (
     <div className="min-h-screen flex flex-col px-6 pt-12 pb-8 bg-background">
       <div className="mb-6">
-        <h1 className="font-serif text-3xl text-foreground mb-2">Реєстрація</h1>
-        <p className="text-muted-foreground text-sm">Приєднатись до BridoConnect</p>
+        <h1 className="font-serif text-3xl text-foreground mb-2">
+          {t("auth.register.title", "Реєстрація")}
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          {t("auth.register.subtitle", "Приєднатись до BridoConnect")}
+        </p>
       </div>
 
       <form onSubmit={handleRegister} className="space-y-4">
         <motion.div {...fieldEnter(0.0)}>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-            Я хочу
+            {t("auth.register.roleLabel", "Я хочу")}
           </label>
           {/* DESIGN.md §Banned: 50/50 grid → vertical stack, taller editorial anchor */}
           <div className="flex flex-col gap-2">
             {[
+              // value уходит в БД (profiles.role) — не переводится, переводятся только подписи.
               {
                 value: "sponsor",
-                label: "Допомагати",
-                caption: "Спонсор · Донор",
+                label: t("auth.register.role.sponsor", "Допомагати"),
+                caption: t("auth.register.role.sponsorCaption", "Спонсор · Донор"),
                 Icon: HandHeart,
                 tall: true,
               },
               {
                 value: "recipient",
-                label: "Отримати допомогу",
-                caption: "Виконавець · Отримувач",
+                label: t("auth.register.role.recipient", "Отримати допомогу"),
+                caption: t("auth.register.role.recipientCaption", "Виконавець · Отримувач"),
                 Icon: HandHelping,
               },
             ].map((r) => (
@@ -170,13 +190,13 @@ const Register = () => {
 
         <motion.div {...fieldEnter(0.05)}>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-            Ім'я
+            {t("auth.register.name", "Ім'я")}
           </label>
           <input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
-            placeholder="Ваше ім'я"
+            placeholder={t("auth.register.namePlaceholder", "Ваше ім'я")}
             autoComplete="name"
             className="w-full bg-secondary rounded-xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
           />
@@ -184,7 +204,7 @@ const Register = () => {
 
         <motion.div {...fieldEnter(0.1)}>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-            Email
+            {t("auth.register.email", "Email")}
           </label>
           <input
             type="email"
@@ -199,7 +219,7 @@ const Register = () => {
 
         <motion.div {...fieldEnter(0.15)}>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-            Пароль
+            {t("auth.register.password", "Пароль")}
           </label>
           <div className="relative">
             <input
@@ -207,14 +227,18 @@ const Register = () => {
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               required
-              placeholder="Мінімум 6 символів"
+              placeholder={t("auth.register.passwordPlaceholder", "Мінімум 6 символів")}
               autoComplete="new-password"
               className="w-full bg-secondary rounded-xl px-4 py-3 pr-12 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
             />
             <button
               type="button"
               onClick={() => setShowPass((s) => !s)}
-              aria-label={showPass ? "Сховати пароль" : "Показати пароль"}
+              aria-label={
+                showPass
+                  ? t("auth.password.hide", "Сховати пароль")
+                  : t("auth.password.show", "Показати пароль")
+              }
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground p-1"
             >
               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -224,19 +248,21 @@ const Register = () => {
 
         <motion.div {...fieldEnter(0.2)}>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-            Підтвердіть пароль
+            {t("auth.register.confirm", "Підтвердіть пароль")}
           </label>
           <input
             type="password"
             value={form.confirm}
             onChange={(e) => setForm({ ...form, confirm: e.target.value })}
             required
-            placeholder="Повторіть пароль"
+            placeholder={t("auth.register.confirmPlaceholder", "Повторіть пароль")}
             autoComplete="new-password"
             className="w-full bg-secondary rounded-xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
           />
           {form.confirm && form.password !== form.confirm && (
-            <p className="text-xs text-destructive mt-1">Паролі не збігаються</p>
+            <p className="text-xs text-destructive mt-1">
+              {t("auth.register.mismatch", "Паролі не збігаються")}
+            </p>
           )}
         </motion.div>
 
@@ -253,12 +279,12 @@ const Register = () => {
                 transition={{ repeat: Infinity, duration: 0.9 }}
                 className="text-sm"
               >
-                Реєструємо…
+                {t("auth.register.submitting", "Реєструємо…")}
               </motion.span>
             ) : (
               <>
                 <UserPlus className="w-4 h-4" strokeWidth={1.75} />
-                Зареєструватись
+                {t("auth.register.submit", "Зареєструватись")}
               </>
             )}
           </Button>
@@ -270,7 +296,7 @@ const Register = () => {
         <div className="mt-5">
           <div className="relative flex items-center gap-3 mb-4">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-muted-foreground">або</span>
+            <span className="text-xs text-muted-foreground">{t("auth.or", "або")}</span>
             <div className="flex-1 h-px bg-border" />
           </div>
           <Button variant="outline" className="w-full h-12" onClick={handleGoogle}>
@@ -292,15 +318,15 @@ const Register = () => {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Зареєструватись через Google
+            {t("auth.register.google", "Зареєструватись через Google")}
           </Button>
         </div>
       )}
 
       <p className="text-center text-sm text-muted-foreground mt-5">
-        Вже є акаунт?{" "}
+        {t("auth.register.haveAccount", "Вже є акаунт?")}{" "}
         <Link to="/auth" className="text-accent font-semibold">
-          Увійти
+          {t("auth.register.login", "Увійти")}
         </Link>
       </p>
     </div>

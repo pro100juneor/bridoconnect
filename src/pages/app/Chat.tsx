@@ -5,25 +5,20 @@ import { ArrowLeft, Send, Paperclip, MoreVertical } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMessages } from "@/hooks/useMessages";
 import { supabase } from "@/integrations/supabase/client";
+import { useT } from "@/i18n/useT";
 import { tap } from "@/lib/native";
-
-// supabase-js типізує embedded join як масив без FK-метаданих,
-// у рантаймі для to-one приходить об'єкт — нормалізуємо обидві форми.
-interface ChatPartnerJoin {
-  name: string | null;
-}
-
-const firstJoin = (value: ChatPartnerJoin | ChatPartnerJoin[] | null): ChatPartnerJoin | null =>
-  Array.isArray(value) ? (value[0] ?? null) : value;
 
 const Chat = () => {
   const navigate = useNavigate();
   const reduced = useReducedMotion();
   const { id } = useParams();
   const { user } = useAuth();
+  const { t, localeTag } = useT();
   const { messages, sendMessage, loading } = useMessages(id || "");
   const [input, setInput] = useState("");
-  const [partnerName, setPartnerName] = useState("Чат");
+  const [partnerName, setPartnerName] = useState(() => t("chat.titleFallback", "Чат"));
+  const [partnerId, setPartnerId] = useState<string | null>(null);
+  const [partnerOnline, setPartnerOnline] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,17 +33,60 @@ const Chat = () => {
       .upsert({ user_id: user.id, deal_id: id, last_read_at: new Date().toISOString() });
   }, [id, user, messages.length]);
 
+  // Співрозмовник — це друга сторона угоди, а не завжди її автор.
   useEffect(() => {
-    if (!id) return;
-    supabase
-      .from("deals")
-      .select("title, creator_id, sponsor_id, profiles!creator_id(name)")
-      .eq("id", id)
-      .single()
-      .then(({ data }) => {
-        if (data) setPartnerName(firstJoin(data.profiles)?.name || "Партнер");
+    if (!id || !user) return;
+    let alive = true;
+    void (async () => {
+      const { data: deal } = await supabase
+        .from("deals")
+        .select("creator_id, sponsor_id")
+        .eq("id", id)
+        .single();
+      if (!alive || !deal) return;
+      const other = deal.creator_id === user.id ? deal.sponsor_id : deal.creator_id;
+      if (!other) {
+        setPartnerName(t("chat.partnerFallback", "Партнер"));
+        return;
+      }
+      setPartnerId(other);
+      const { data: profile } = await supabase.from("profiles").select("name").eq("id", other).maybeSingle();
+      if (alive) setPartnerName(profile?.name || t("chat.partnerFallback", "Партнер"));
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [id, user, t]);
+
+  // Реальний presence через Supabase Realtime: обидві сторони трекають себе в
+  // каналі угоди. «Онлайн» показуємо, лише поки партнер справді в каналі —
+  // раніше тут був статичний підпис, який брехав завжди.
+  useEffect(() => {
+    if (!id || !user) return;
+    const channel = supabase.channel(`presence:deal:${id}`, {
+      config: { presence: { key: user.id } },
+    });
+
+    const syncOnline = () => {
+      const state = channel.presenceState();
+      setPartnerOnline(!!partnerId && Object.prototype.hasOwnProperty.call(state, partnerId));
+    };
+
+    channel
+      .on("presence", { event: "sync" }, syncOnline)
+      .on("presence", { event: "join" }, syncOnline)
+      .on("presence", { event: "leave" }, syncOnline)
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          void channel.track({ online_at: new Date().toISOString() });
+        }
       });
-  }, [id]);
+
+    return () => {
+      setPartnerOnline(false);
+      void supabase.removeChannel(channel);
+    };
+  }, [id, user, partnerId]);
 
   const send = async () => {
     if (!input.trim() || !user || !id) return;
@@ -78,7 +116,7 @@ const Chat = () => {
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-background/85 backdrop-blur-md sticky top-0 z-10">
         <button
           onClick={() => navigate(-1)}
-          aria-label="Назад"
+          aria-label={t("common.back", "Назад")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
@@ -88,7 +126,8 @@ const Chat = () => {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm text-foreground truncate">{partnerName}</p>
-          <p className="text-xs text-success">онлайн</p>
+          {/* Без presence-даних не пишемо нічого — вигадувати статус не можна. */}
+          {partnerOnline && <p className="text-xs text-success">{t("chat.online", "онлайн")}</p>}
         </div>
         <button
           onClick={() => {
@@ -97,9 +136,12 @@ const Chat = () => {
           }}
           className="text-xs bg-accent text-white px-3 py-1.5 rounded-2xl font-medium min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
         >
-          Угода
+          {t("deal.title", "Угода")}
         </button>
-        <button aria-label="Меню" className="min-h-[44px] min-w-[44px] flex items-center justify-center">
+        <button
+          aria-label={t("chat.menuAria", "Меню")}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center"
+        >
           <MoreVertical className="w-5 h-5 text-muted-foreground" strokeWidth={1.75} />
         </button>
       </div>
@@ -137,7 +179,7 @@ const Chat = () => {
                 >
                   <p className="text-sm">{msg.text}</p>
                   <p className={`text-[10px] mt-1 ${isMe ? "text-white/60" : "text-muted-foreground"}`}>
-                    {new Date(msg.created_at).toLocaleTimeString("uk", {
+                    {new Date(msg.created_at).toLocaleTimeString(localeTag, {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
@@ -165,9 +207,9 @@ const Chat = () => {
               </svg>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed text-center">
-              Почніть розмову — напишіть перше
+              {t("chat.emptyLine1", "Почніть розмову — напишіть перше")}
               <br />
-              повідомлення.
+              {t("chat.emptyLine2", "повідомлення.")}
             </p>
           </div>
         )}
@@ -176,7 +218,7 @@ const Chat = () => {
 
       <div className="flex items-center gap-2 px-4 py-3 border-t border-border bg-background/85 backdrop-blur-md">
         <button
-          aria-label="Прикріпити файл"
+          aria-label={t("chat.attachAria", "Прикріпити файл")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground"
         >
           <Paperclip className="w-5 h-5" strokeWidth={1.75} />
@@ -185,13 +227,13 @@ const Chat = () => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
-          placeholder="Повідомлення…"
+          placeholder={t("chat.inputPlaceholder", "Повідомлення…")}
           className="flex-1 bg-secondary rounded-xl px-4 py-2 text-sm outline-none text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent/30"
         />
         <button
           onClick={send}
           disabled={!input.trim()}
-          aria-label="Надіслати"
+          aria-label={t("chat.sendAria", "Надіслати")}
           className="min-h-[44px] min-w-[44px] bg-accent rounded-2xl flex items-center justify-center disabled:opacity-50 transition-transform duration-150 hover:-translate-y-px"
         >
           <Send className="w-5 h-5 text-white" strokeWidth={1.75} />

@@ -3,6 +3,7 @@ import { Search as SearchIcon, SlidersHorizontal, MapPin, Star, CheckCircle2 } f
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/i18n/useT";
 import { tap } from "@/lib/native";
 
 // Shape of the profile rows selected below (client has no Database generic).
@@ -21,6 +22,7 @@ interface SearchResult {
 const Search = () => {
   const navigate = useNavigate();
   void useAuth(); // mount auth ctx
+  const { t } = useT();
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -55,20 +57,20 @@ const Search = () => {
   return (
     <div className="pb-8">
       <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-3">
-        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">Пошук</h1>
+        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">{t("search.title", "Пошук")}</h1>
         <div className="flex gap-2">
           <div className="flex-1 flex items-center gap-2 bg-secondary rounded-2xl px-3 py-2 min-h-[44px]">
             <SearchIcon className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ім'я, місто, потреба…"
+              placeholder={t("search.placeholder", "Ім'я, місто, потреба…")}
               className="bg-transparent text-sm flex-1 outline-none text-foreground placeholder:text-muted-foreground"
             />
           </div>
           <button
             className="min-h-[44px] min-w-[44px] bg-secondary rounded-2xl flex items-center justify-center transition-transform duration-150 hover:-translate-y-px"
-            aria-label="Фільтри"
+            aria-label={t("search.filtersAria", "Фільтри")}
             onClick={() => {
               void tap("light");
             }}
@@ -103,7 +105,9 @@ const Search = () => {
             </svg>
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {query.length < 2 ? "Введіть ім'я або місто" : "Нічого не знайдено"}
+            {query.length < 2
+              ? t("search.hint", "Введіть ім'я або місто")
+              : t("search.notFound", "Нічого не знайдено")}
           </p>
         </div>
       ) : (
@@ -146,7 +150,7 @@ const Search = () => {
                     <MapPin className="w-3 h-3" strokeWidth={1.75} />
                     {r.city || "—"}
                     <Star className="w-3 h-3 fill-warning text-warning" strokeWidth={1.75} />
-                    {r.rating || "—"} · {r.deals_count || 0} угод
+                    {r.rating || "—"} · {t("search.deals", "{n} угод", { n: r.deals_count || 0 })}
                   </div>
                 </div>
                 <button
@@ -157,7 +161,7 @@ const Search = () => {
                     navigate(`/app/user/${r.id}`);
                   }}
                 >
-                  Профіль
+                  {t("search.profile", "Профіль")}
                 </button>
               </div>
               {r.tags && (

@@ -1,0 +1,32 @@
+{
+  "mfa.enroll.title": "Zwei-Faktor-Authentifizierung aktivieren",
+  "mfa.enroll.desc": "Scannen Sie den QR-Code in Google Authenticator, 1Password, Aegis oder einer anderen TOTP-App und geben Sie den angezeigten Code ein.",
+  "mfa.disable.title": "Zwei-Faktor-Authentifizierung deaktivieren",
+  "mfa.disable.desc": "Bestätigen Sie die Aktion mit einem Code aus Ihrer App — ohne ihn lässt sie sich nicht deaktivieren.",
+  "mfa.disableCta": "Deaktivieren",
+  "mfa.qrAlt": "QR-Code für Ihre TOTP-App",
+  "mfa.manualKey": "Oder geben Sie den Schlüssel manuell ein:",
+  "mfa.preparingKey": "Schlüssel wird vorbereitet…",
+  "mfa.codeLabel": "Code aus Ihrer App",
+  "mfa.copyFailed": "Kopieren fehlgeschlagen",
+  "mfa.verifying": "Wird geprüft…",
+  "mfa.enabled.title": "Zwei-Faktor-Authentifizierung aktiviert",
+  "mfa.enabled.desc": "Bei der nächsten Anmeldung benötigen Sie einen Code aus Ihrer App.",
+  "mfa.disabled.title": "Zwei-Faktor-Authentifizierung deaktiviert",
+  "mfa.disabled.desc": "Die Anmeldung erfolgt jetzt nur noch mit Passwort.",
+
+  "mfa.challenge.title": "Anmeldung bestätigen",
+  "mfa.challenge.desc": "Geben Sie den sechsstelligen Code aus Ihrer TOTP-App ein.",
+  "mfa.challenge.codeLabel": "Code",
+  "mfa.challenge.submit": "Anmelden",
+  "mfa.challenge.signOut": "Abmelden",
+  "mfa.challenge.factorsFailed": "Die Faktoren konnten nicht geladen werden. Bitte melden Sie sich erneut an.",
+  "mfa.challenge.invalidCode": "Ungültiger oder abgelaufener Code",
+
+  "errorBoundary.desc": "Ein Fehler ist aufgetreten. Ein Neuladen der Seite hilft meistens.",
+  "errorBoundary.reload": "Neu laden",
+
+  "pullToRefresh.refreshing": "Wird aktualisiert…",
+  "pullToRefresh.release": "Loslassen zum Aktualisieren",
+  "pullToRefresh.pull": "Nach unten ziehen"
+}

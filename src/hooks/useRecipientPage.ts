@@ -186,7 +186,19 @@ export const useRecipientPage = () => {
     if (!user) return null;
     const { data: prof, error } = await from("profiles").select(PROFILE_COLS).eq("id", user.id).maybeSingle();
     if (error || !prof) return null;
-    const profile = normalizeProfile(prof);
+    // Скрытые секции вынесены триггером в profile_hidden_fields (038) — владельцу
+    // возвращаем настоящие значения, посетителям /u/:slug их не отдаст уже БД.
+    const { data: hidden } = await from("profile_hidden_fields")
+      .select("bio, city, country")
+      .eq("profile_id", user.id)
+      .maybeSingle();
+    const safe = (hidden ?? {}) as { bio?: string | null; city?: string | null; country?: string | null };
+    const profile = normalizeProfile({
+      ...(prof as RecipientProfileRow),
+      bio: (prof as RecipientProfileRow).bio ?? safe.bio ?? null,
+      city: (prof as RecipientProfileRow).city ?? safe.city ?? null,
+      country: (prof as RecipientProfileRow).country ?? safe.country ?? null,
+    });
 
     const [photosRes, postsRes, wishRes] = await Promise.all([
       from("profile_photos")

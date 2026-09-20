@@ -8,6 +8,7 @@ import { useStripe } from "@/hooks/useStripe";
 import { usePaypal } from "@/hooks/usePaypal";
 import { useAdyen } from "@/hooks/useAdyen";
 import { useT } from "@/i18n/useT";
+import { useCurrency } from "@/hooks/useCurrency";
 import { toast } from "@/hooks/use-toast";
 import ReviewModal from "@/components/ReviewModal";
 import { Confetti } from "@/components/Confetti";
@@ -43,6 +44,7 @@ interface DealView extends DealRow {
 const ActiveDeal = () => {
   const navigate = useNavigate();
   const { t } = useT();
+  const { dealProgress, formatIn } = useCurrency();
   const { id } = useParams();
   const { user } = useAuth();
   const { createCheckout, releaseEscrow, refundDeal } = useStripe();
@@ -74,7 +76,7 @@ const ActiveDeal = () => {
           const p: DealCreatorProfile = d.profiles || {};
           setDeal({
             ...d,
-            creator_name: p.name || "Користувач",
+            creator_name: p.name || "",
             creator_flag: p.country === "Україна" ? "🇺🇦" : "🏳️",
             creator_city: p.city || "",
             creator_rating: p.rating || 0,
@@ -105,13 +107,19 @@ const ActiveDeal = () => {
   const handlePay = async () => {
     const n = Number(amount);
     if (!n || n < 1) {
-      toast({ title: "Вкажіть суму", description: "Введіть суму від €1", variant: "destructive" });
+      toast({
+        title: t("deal.support.amountRequired", "Вкажіть суму"),
+        description: t("deal.support.amountMin", "Введіть суму від {min}", {
+          min: formatIn(1, "eur"),
+        }),
+        variant: "destructive",
+      });
       return;
     }
     if (!user) {
       toast({
-        title: "Потрібен вхід",
-        description: "Увійдіть, щоб підтримати угоду",
+        title: t("deal.needAuth", "Потрібен вхід"),
+        description: t("deal.needAuthDesc", "Увійдіть, щоб підтримати угоду"),
         variant: "destructive",
       });
       navigate("/auth");
@@ -120,8 +128,8 @@ const ActiveDeal = () => {
     if (payMethod === "stripe" && deal?.creator_connect_status !== "enabled") {
       void notify("error");
       toast({
-        title: "Отримувач ще не підключив Stripe",
-        description: "Спробуйте PayPal або зверніться пізніше.",
+        title: t("deal.support.notReady.stripe"),
+        description: t("deal.support.tryPaypal", "Спробуйте PayPal або зверніться пізніше."),
         variant: "destructive",
       });
       return;
@@ -130,8 +138,8 @@ const ActiveDeal = () => {
     if (payMethod === "paypal" && deal?.creator_paypal_status !== "active") {
       void notify("error");
       toast({
-        title: "Отримувач ще не підключив PayPal",
-        description: "Спробуйте Stripe або зверніться пізніше.",
+        title: t("deal.support.notReady.paypal"),
+        description: t("deal.support.tryStripe", "Спробуйте Stripe або зверніться пізніше."),
         variant: "destructive",
       });
       return;
@@ -149,7 +157,10 @@ const ActiveDeal = () => {
         // Без Drop-in SDK: показываем session id и ждём WIP интеграции.
         toast({
           title: "Adyen session created",
-          description: `Session ${session.sessionId.slice(0, 12)}… — Drop-in UI підключиться у наступному релізі.`,
+          description: `Session ${session.sessionId.slice(0, 12)}… — ${t(
+            "deal.adyen.dropinSoon",
+            "Drop-in UI підключиться у наступному релізі."
+          )}`,
         });
       } else {
         await createCheckout({ amount: n, dealId: id });
@@ -157,8 +168,8 @@ const ActiveDeal = () => {
     } catch (e) {
       void notify("error");
       toast({
-        title: "Помилка платежу",
-        description: e instanceof Error && e.message ? e.message : "Спробуйте ще раз.",
+        title: t("deal.pay.error", "Помилка платежу"),
+        description: e instanceof Error && e.message ? e.message : t("common.retryHint", "Спробуйте ще раз."),
         variant: "destructive",
       });
       setPaying(false);
@@ -174,8 +185,11 @@ const ActiveDeal = () => {
       await refundDeal(id, "sponsor requested");
       void notify("success");
       toast({
-        title: "Запит на повернення",
-        description: "Refund ініційовано, processor підтвердить через webhook.",
+        title: t("deal.refund.requested", "Запит на повернення"),
+        description: t(
+          "deal.refund.requestedDesc",
+          "Refund ініційовано, processor підтвердить через webhook."
+        ),
       });
       setDeal((prev) =>
         prev ? { ...prev, status: "cancelled", refunded_at: new Date().toISOString() } : prev
@@ -183,8 +197,9 @@ const ActiveDeal = () => {
     } catch (e) {
       void notify("error");
       toast({
-        title: "Не вдалося повернути",
-        description: e instanceof Error && e.message ? e.message : "Спробуйте пізніше.",
+        title: t("deal.refund.error", "Не вдалося повернути"),
+        description:
+          e instanceof Error && e.message ? e.message : t("common.retryLater", "Спробуйте пізніше."),
         variant: "destructive",
       });
     } finally {
@@ -199,7 +214,7 @@ const ActiveDeal = () => {
     try {
       await releaseEscrow(id);
       void notify("success");
-      toast({ title: "Готово", description: "Кошти переведено отримувачу." });
+      toast({ title: t("common.done", "Готово"), description: t("deal.escrow.done") });
       setDeal((prev) =>
         prev ? { ...prev, status: "completed", escrow_released_at: new Date().toISOString() } : prev
       );
@@ -208,8 +223,8 @@ const ActiveDeal = () => {
     } catch (e) {
       void notify("error");
       toast({
-        title: "Не вдалося завершити",
-        description: e instanceof Error && e.message ? e.message : "Спробуйте ще раз.",
+        title: t("deal.escrow.error", "Не вдалося завершити"),
+        description: e instanceof Error && e.message ? e.message : t("common.retryHint", "Спробуйте ще раз."),
         variant: "destructive",
       });
     } finally {
@@ -234,18 +249,18 @@ const ActiveDeal = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
         <h2 className="font-serif text-xl text-foreground mb-2">{t("deal.notFound.title")}</h2>
-        <p className="text-sm text-muted-foreground mb-6">
-          Можливо, її було видалено або посилання застаріле.
-        </p>
+        <p className="text-sm text-muted-foreground mb-6">{t("deal.notFound.desc")}</p>
         <Button variant="outline" onClick={() => navigate("/app")}>
-          На стрічку
+          {t("deal.notFound.back")}
         </Button>
       </div>
     );
   }
 
   const d = deal;
-  const pct = d.amount > 0 ? Math.round((d.raised / d.amount) * 100) : 0;
+  // d.amount заявлено в d.currency, d.raised — завжди EUR (чеки виставляються в EUR).
+  const progress = dealProgress(d.amount, d.currency, d.raised);
+  const pct = progress.pct;
   const initials = (d.creator_name || "?")
     .split(" ")
     .map((s: string) => s[0])
@@ -260,14 +275,20 @@ const ActiveDeal = () => {
       <div className="flex items-center gap-3 px-4 pt-4 pb-4 border-b border-border">
         <button
           onClick={() => navigate(-1)}
-          aria-label="Назад"
+          aria-label={t("common.back", "Назад")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">Угода</h2>
+        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">
+          {t("deal.title", "Угода")}
+        </h2>
         <span className="text-xs bg-warning/10 text-warning px-2 py-1 rounded-full font-medium">
-          {d.status === "completed" ? "Завершено" : d.status === "disputed" ? "Спір" : "В процесі"}
+          {d.status === "completed"
+            ? t("deals.status.completed", "Завершено")
+            : d.status === "disputed"
+              ? t("deal.dispute")
+              : t("deals.status.inProgress", "В процесі")}
         </span>
       </div>
 
@@ -279,7 +300,7 @@ const ActiveDeal = () => {
             </div>
             <div>
               <p className="font-semibold text-foreground">
-                {d.creator_name} {d.creator_flag}
+                {d.creator_name || t("common.user", "Користувач")} {d.creator_flag}
               </p>
               <p className="text-xs text-muted-foreground">{d.creator_city}</p>
             </div>
@@ -289,7 +310,7 @@ const ActiveDeal = () => {
                 navigate(`/app/chat/${id}`);
               }}
               className="ml-auto min-h-[44px] min-w-[44px] bg-primary/10 rounded-2xl flex items-center justify-center transition-transform duration-150 hover:-translate-y-px"
-              aria-label="Чат"
+              aria-label={t("deal.chat", "Чат")}
             >
               <MessageCircle className="w-5 h-5 text-primary" strokeWidth={1.75} />
             </button>
@@ -297,9 +318,10 @@ const ActiveDeal = () => {
           <p className="text-sm font-medium text-foreground mb-1">{d.title}</p>
           <p className="text-xs text-muted-foreground mb-3">{d.description}</p>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-2xl font-bold text-foreground">€{d.raised}</span>
+            <span className="text-2xl font-bold text-foreground">{progress.raised.formatted}</span>
             <span className="text-xs text-muted-foreground">
-              з €{d.amount} · {pct}%
+              {t("common.of", "з")} {progress.goal.formatted}
+              {progress.comparable ? ` · ${pct}%` : ""}
             </span>
           </div>
           <div className="w-full h-2 bg-secondary rounded-full">
@@ -313,7 +335,11 @@ const ActiveDeal = () => {
         {!finished && (
           <div className="relative p-4 rounded-2xl border border-border overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
             <h3 className="font-semibold text-foreground mb-3">{t("deal.support.title")}</h3>
-            <div className="flex gap-2 mb-3" role="tablist" aria-label="Спосіб оплати">
+            <div
+              className="flex gap-2 mb-3"
+              role="tablist"
+              aria-label={t("deal.payMethod.label", "Спосіб оплати")}
+            >
               {(["stripe", "paypal", "adyen"] as const).map((m) => (
                 <button
                   key={m}
@@ -325,15 +351,21 @@ const ActiveDeal = () => {
                     payMethod === m ? "bg-primary text-white border-primary" : "border-border text-foreground"
                   }`}
                 >
-                  {m === "stripe" ? "Картка" : m === "paypal" ? "PayPal" : "Локальні"}
+                  {m === "stripe"
+                    ? t("deal.payMethod.card")
+                    : m === "paypal"
+                      ? t("deal.payMethod.paypal")
+                      : t("deal.payMethod.local")}
                 </button>
               ))}
             </div>
             {payMethod === "stripe" && deal?.creator_connect_status !== "enabled" && (
               <div className="mb-3 p-3 rounded-xl bg-warning/10 border border-warning/20">
                 <p className="text-xs text-warning font-medium">
-                  Отримувач ще не завершив підключення Stripe. Оплата буде доступна після верифікації або
-                  через PayPal.
+                  {t(
+                    "deal.support.stripePending",
+                    "Отримувач ще не завершив підключення Stripe. Оплата буде доступна після верифікації або через PayPal."
+                  )}
                 </p>
               </div>
             )}
@@ -347,7 +379,7 @@ const ActiveDeal = () => {
                     amount === a ? "bg-accent text-white border-accent" : "border-border text-foreground"
                   }`}
                 >
-                  €{a}
+                  {formatIn(Number(a), "eur")}
                 </button>
               ))}
             </div>
@@ -356,7 +388,7 @@ const ActiveDeal = () => {
               min="1"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="Інша сума…"
+              placeholder={t("deal.support.amount.other")}
               className="w-full bg-secondary rounded-xl px-4 py-2.5 text-sm outline-none text-foreground mb-3 focus:ring-2 focus:ring-accent/30"
             />
             <Button
@@ -370,14 +402,16 @@ const ActiveDeal = () => {
               }
               onClick={handlePay}
             >
-              {paying ? "Відкриваємо оплату…" : `Підтримати €${amount || "…"}`}
+              {paying
+                ? t("deal.support.opening")
+                : `${t("deal.support.cta")} ${amount ? formatIn(Number(amount), "eur") : "…"}`}
             </Button>
           </div>
         )}
 
         <div>
           <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Clock className="w-4 h-4" /> Статус
+            <Clock className="w-4 h-4" /> {t("deal.status.title")}
           </h3>
           <div className="relative">
             <div className="absolute left-3.5 top-0 bottom-0 w-0.5 bg-border" />
@@ -410,9 +444,7 @@ const ActiveDeal = () => {
           <Shield className="w-5 h-5 text-success shrink-0 mt-0.5" strokeWidth={1.75} />
           <div>
             <p className="text-sm font-semibold text-foreground">{t("deal.protection.title")}</p>
-            <p className="text-xs text-muted-foreground">
-              Кошти переводяться тільки після підтвердження обох сторін
-            </p>
+            <p className="text-xs text-muted-foreground">{t("deal.protection.desc")}</p>
           </div>
         </div>
 
@@ -426,7 +458,7 @@ const ActiveDeal = () => {
                 navigate(`/app/dispute/${id}`);
               }}
             >
-              <AlertTriangle className="w-4 h-4 mr-2" strokeWidth={1.75} /> Спір
+              <AlertTriangle className="w-4 h-4 mr-2" strokeWidth={1.75} /> {t("deal.dispute")}
             </Button>
             {user?.id === d.sponsor_id && (d.raised || 0) > 0 && !d.escrow_released_at && !d.refunded_at && (
               <Button
@@ -458,7 +490,7 @@ const ActiveDeal = () => {
         <ReviewModal
           dealId={id || ""}
           revieweeId={d.creator_id || "u1"}
-          revieweeName={d.creator_name || "Користувач"}
+          revieweeName={d.creator_name || t("common.user", "Користувач")}
           revieweeRole="as_recipient"
           onClose={() => setShowReview(false)}
           onSuccess={() => {

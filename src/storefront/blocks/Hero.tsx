@@ -1,10 +1,13 @@
 import { Store } from "lucide-react";
+import { useT } from "@/i18n/useT";
 import type { BlockProps } from "../types";
 
 // Hero: logo + shop name + tagline, optionally over a banner image.
 // Layout-aware: centered for minimal-center/banner-stack, left-aligned otherwise.
 export default function Hero({ profile, theme, seller }: BlockProps) {
-  const name = profile.brand.name || seller?.name || "Магазин";
+  const { t } = useT();
+  // Display-only fallback — never written back to the profile.
+  const name = profile.brand.name || seller?.name || t("storefront.hero.shopFallback", "Магазин");
   const tagline = profile.brand.tagline;
   const banner = profile.brand.banner_url;
   const centered =
@@ -81,7 +84,7 @@ export default function Hero({ profile, theme, seller }: BlockProps) {
           {profile.logo_url ? (
             <img
               src={profile.logo_url}
-              alt={`${name} логотип`}
+              alt={t("storefront.hero.logoAlt", "{name} логотип", { name })}
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           ) : (

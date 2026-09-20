@@ -1,19 +1,52 @@
+import { execFileSync } from "node:child_process";
 import { test, expect, type ConsoleMessage, type Response } from "@playwright/test";
 
 // Full-app route smoke: every route from App.tsx is visited and asserted to
 // render (#root non-empty) with zero console errors and zero hard network
 // failures (5xx and non-soft 4xx). Public routes run anonymously; app routes
-// after login. Dynamic :id routes are filled from seeded staging data.
+// after login. Dynamic :id routes are filled from the seeded dataset.
 //
-// Runs against whatever backend the dev server points at (staging by default).
-// Requires seeded users, so bypass the docker db-reset globalSetup:
+// Runs against whatever backend the dev server points at (локальный стек,
+// см. playwright.config.ts). Требует засеянных пользователей; чтобы пропустить
+// docker db-reset из globalSetup:
 //   SKIP_DB_RESET=1 npx playwright test route-smoke --project=chromium
 //
 // Credentials + dynamic ids are overridable via env for CI/other datasets.
 
 const EMAIL = process.env.SMOKE_EMAIL ?? "seller@brido.local";
 const PASSWORD = process.env.SMOKE_PASSWORD ?? "password123";
-const SELLER = process.env.SMOKE_PROFILE_ID ?? "2f72d240-2c81-404f-91cc-366553d096a1";
+
+/**
+ * id профиля продавца нельзя зашивать константой: seed-local.mjs создаёт
+ * пользователей через GoTrue, а тот выдаёт случайные UUID на каждый
+ * `supabase db reset`. Прежний захардкоженный id остался от staging — после
+ * перевода прогона на локальный стек запрос profiles?id=eq.<staging-id>
+ * возвращал ноль строк, PostgREST отвечал 406 на .single(), и страницы
+ * /app/user/:id, /app/sponsor/:id, /app/shop/seller/:id падали в smoke.
+ *
+ * Спрашиваем id по стабильному имени из сида («Test Seller») анонимным
+ * ключом — profiles публично читаемы. Синхронно, потому что список маршрутов
+ * нужен на этапе сбора тестов.
+ */
+function resolveSellerId(): string {
+  if (process.env.SMOKE_PROFILE_ID) return process.env.SMOKE_PROFILE_ID;
+  try {
+    const status = execFileSync("supabase", ["status", "-o", "env"], { encoding: "utf8" });
+    const api = status.match(/^API_URL="?([^"\n]*)"?$/m)?.[1];
+    const anon = status.match(/^ANON_KEY="?([^"\n]*)"?$/m)?.[1];
+    if (!api || !anon) return "";
+    const body = execFileSync(
+      "curl",
+      ["-s", `${api}/rest/v1/profiles?select=id&name=eq.Test%20Seller&limit=1`, "-H", `apikey: ${anon}`],
+      { encoding: "utf8" }
+    );
+    return (JSON.parse(body) as Array<{ id: string }>)[0]?.id ?? "";
+  } catch {
+    return "";
+  }
+}
+
+const SELLER = resolveSellerId();
 const PRODUCT = process.env.SMOKE_PRODUCT_ID ?? "";
 const DEAL = process.env.SMOKE_DEAL_ID ?? "";
 
@@ -42,19 +75,19 @@ const APP_ROUTES = [
   "/app/cart",
   "/app/shop/new",
   "/app/shop/design",
-  `/app/shop/seller/${SELLER}`,
+  ...(SELLER ? [`/app/shop/seller/${SELLER}`] : []),
   "/app/profile",
   "/app/profile/edit",
   "/app/my-page",
   "/app/sponsor-privacy",
-  `/app/sponsor/${SELLER}`,
+  ...(SELLER ? [`/app/sponsor/${SELLER}`] : []),
   "/app/search",
   "/app/chats",
   "/app/notifications",
   "/app/deals",
   "/app/wallet",
   "/app/wishlist",
-  `/app/user/${SELLER}`,
+  ...(SELLER ? [`/app/user/${SELLER}`] : []),
   "/app/settings",
   "/app/admin",
   "/app/premium",

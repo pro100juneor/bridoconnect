@@ -9,24 +9,49 @@ import {
   type SponsorReveal,
 } from "@/hooks/useSponsorAccess";
 import { toast } from "@/hooks/use-toast";
+import { useT } from "@/i18n/useT";
 import { tap, notify } from "@/lib/native";
 
-const REVEAL_FIELDS: Array<{ key: keyof SponsorReveal; label: string; multiline?: boolean }> = [
-  { key: "about", label: "Про себе", multiline: true },
-  { key: "city", label: "Місто" },
-  { key: "occupation", label: "Рід занять" },
-  { key: "languages", label: "Мови" },
+// `key` is the jsonb field name (persisted); labelKey/labelUk are UI-only.
+const REVEAL_FIELDS: Array<{
+  key: keyof SponsorReveal;
+  labelKey: string;
+  labelUk: string;
+  multiline?: boolean;
+}> = [
+  { key: "about", labelKey: "sponsor.field.about", labelUk: "Про себе", multiline: true },
+  { key: "city", labelKey: "sponsor.field.city", labelUk: "Місто" },
+  { key: "occupation", labelKey: "sponsor.field.occupation", labelUk: "Рід занять" },
+  { key: "languages", labelKey: "sponsor.field.languages", labelUk: "Мови" },
 ];
 
-const STATUS_COPY: Record<string, { label: string; tone: string }> = {
-  pending: { label: "Очікує рішення", tone: "text-warning" },
-  granted: { label: "Доступ надано", tone: "text-success" },
-  denied: { label: "Відхилено", tone: "text-destructive" },
-  revoked: { label: "Відкликано", tone: "text-destructive" },
+// Presentation of the grant status enum — the enum values themselves are untouched.
+const STATUS_COPY: Record<string, { labelKey: string; labelUk: string; tone: string }> = {
+  pending: {
+    labelKey: "sponsor.privacy.status.pending",
+    labelUk: "Очікує рішення",
+    tone: "text-warning",
+  },
+  granted: {
+    labelKey: "sponsor.privacy.status.granted",
+    labelUk: "Доступ надано",
+    tone: "text-success",
+  },
+  denied: {
+    labelKey: "sponsor.privacy.status.denied",
+    labelUk: "Відхилено",
+    tone: "text-destructive",
+  },
+  revoked: {
+    labelKey: "sponsor.privacy.status.revoked",
+    labelUk: "Відкликано",
+    tone: "text-destructive",
+  },
 };
 
 const SponsorPrivacy = () => {
   const navigate = useNavigate();
+  const { t, localeTag } = useT();
   const { reveal, loading: revealLoading, save } = useSponsorReveal();
   const { incomingRequests, decide } = useSponsorAccess();
 
@@ -64,14 +89,19 @@ const SponsorPrivacy = () => {
     setSaving(false);
     if (error) {
       toast({
-        title: "Помилка",
-        description: (typeof error === "string" ? error : error?.message) || "Не вдалося зберегти",
+        title: t("sponsor.error", "Помилка"),
+        description:
+          (typeof error === "string" ? error : error?.message) ||
+          t("sponsor.privacy.saveFailed", "Не вдалося зберегти"),
         variant: "destructive",
       });
       return;
     }
     void notify("success");
-    toast({ title: "Збережено", description: "Анкету спонсора оновлено." });
+    toast({
+      title: t("sponsor.privacy.saved", "Збережено"),
+      description: t("sponsor.privacy.savedDesc", "Анкету спонсора оновлено."),
+    });
   };
 
   const handleDecide = async (grantId: string, status: "granted" | "denied" | "revoked") => {
@@ -81,8 +111,10 @@ const SponsorPrivacy = () => {
     setBusyId(null);
     if (error) {
       toast({
-        title: "Помилка",
-        description: (typeof error === "string" ? error : error?.message) || "Не вдалося оновити",
+        title: t("sponsor.error", "Помилка"),
+        description:
+          (typeof error === "string" ? error : error?.message) ||
+          t("sponsor.privacy.updateFailed", "Не вдалося оновити"),
         variant: "destructive",
       });
       return;
@@ -90,10 +122,10 @@ const SponsorPrivacy = () => {
     toast({
       title:
         status === "granted"
-          ? "Доступ надано"
+          ? t("sponsor.privacy.toast.granted", "Доступ надано")
           : status === "denied"
-            ? "Запит відхилено"
-            : "Доступ відкликано",
+            ? t("sponsor.privacy.toast.denied", "Запит відхилено")
+            : t("sponsor.privacy.toast.revoked", "Доступ відкликано"),
     });
     await loadRequests();
   };
@@ -103,27 +135,31 @@ const SponsorPrivacy = () => {
       <div className="px-4 pt-4 pb-2 flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
-          aria-label="Назад"
+          aria-label={t("sponsor.back", "Назад")}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-lg text-foreground animate-fade-in">Приватність спонсора</h2>
+        <h2 className="font-serif text-lg text-foreground animate-fade-in">
+          {t("sponsor.privacy.title", "Приватність спонсора")}
+        </h2>
       </div>
 
       <div className="px-4 space-y-6 mt-2">
         <div className="relative bg-secondary rounded-2xl p-4 flex items-start gap-3 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
           <Lock className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" strokeWidth={1.75} />
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Ваша сторінка спонсора закрита за замовчуванням. Доступ надається окремо для кожного запиту —
-            неможливо відкрити «всім назавжди».
+            {t(
+              "sponsor.privacy.intro",
+              "Ваша сторінка спонсора закрита за замовчуванням. Доступ надається окремо для кожного запиту — неможливо відкрити «всім назавжди»."
+            )}
           </p>
         </div>
 
         {/* Non-sensitive questionnaire — you choose what to reveal. */}
         <div>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Анкета (несекретна)
+            {t("sponsor.privacy.formSection", "Анкета (несекретна)")}
           </p>
           {revealLoading ? (
             <div className="h-40 bg-secondary animate-pulse rounded-2xl" />
@@ -131,7 +167,9 @@ const SponsorPrivacy = () => {
             <div className="space-y-3">
               {REVEAL_FIELDS.map((f) => (
                 <div key={f.key}>
-                  <label className="text-xs text-muted-foreground block mb-1">{f.label}</label>
+                  <label className="text-xs text-muted-foreground block mb-1">
+                    {t(f.labelKey, f.labelUk)}
+                  </label>
                   {f.multiline ? (
                     <textarea
                       value={form[f.key] || ""}
@@ -154,7 +192,7 @@ const SponsorPrivacy = () => {
                 disabled={saving}
                 onClick={handleSave}
               >
-                Зберегти анкету
+                {t("sponsor.privacy.saveForm", "Зберегти анкету")}
               </Button>
             </div>
           )}
@@ -163,14 +201,16 @@ const SponsorPrivacy = () => {
         {/* Incoming access requests — decided one by one. */}
         <div>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Запити на доступ
+            {t("sponsor.privacy.requestsSection", "Запити на доступ")}
           </p>
           {reqLoading ? (
             <div className="h-24 bg-secondary animate-pulse rounded-2xl" />
           ) : requests.length === 0 ? (
             <div className="flex flex-col items-center py-8 gap-3">
               <Inbox className="w-10 h-10 text-muted-foreground" strokeWidth={1.5} />
-              <p className="text-sm text-muted-foreground">Запитів немає</p>
+              <p className="text-sm text-muted-foreground">
+                {t("sponsor.privacy.noRequests", "Запитів немає")}
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -192,17 +232,19 @@ const SponsorPrivacy = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">
-                          {r.requester?.name || "Користувач"}
+                          {r.requester?.name || t("common.user", "Користувач")}
                         </p>
                         <p className="text-[11px] text-muted-foreground">
-                          {new Date(r.created_at).toLocaleDateString("uk", {
+                          {new Date(r.created_at).toLocaleDateString(localeTag, {
                             day: "numeric",
                             month: "short",
                           })}{" "}
-                          · контекст: {r.context}
+                          · {t("sponsor.privacy.context", "контекст: {ctx}", { ctx: r.context })}
                         </p>
                       </div>
-                      <span className={`text-[10px] font-medium ${copy.tone}`}>{copy.label}</span>
+                      <span className={`text-[10px] font-medium ${copy.tone}`}>
+                        {t(copy.labelKey, copy.labelUk)}
+                      </span>
                     </div>
 
                     {r.message && (
@@ -219,7 +261,8 @@ const SponsorPrivacy = () => {
                           disabled={busy}
                           onClick={() => handleDecide(r.id, "granted")}
                         >
-                          <Check className="w-4 h-4" strokeWidth={2} /> Надати доступ
+                          <Check className="w-4 h-4" strokeWidth={2} />{" "}
+                          {t("sponsor.privacy.grant", "Надати доступ")}
                         </Button>
                       )}
                       {r.status === "pending" && (
@@ -230,7 +273,7 @@ const SponsorPrivacy = () => {
                           disabled={busy}
                           onClick={() => handleDecide(r.id, "denied")}
                         >
-                          <X className="w-4 h-4" strokeWidth={2} /> Відхилити
+                          <X className="w-4 h-4" strokeWidth={2} /> {t("sponsor.privacy.deny", "Відхилити")}
                         </Button>
                       )}
                       {r.status === "granted" && (
@@ -241,7 +284,8 @@ const SponsorPrivacy = () => {
                           disabled={busy}
                           onClick={() => handleDecide(r.id, "revoked")}
                         >
-                          <Ban className="w-4 h-4" strokeWidth={2} /> Відкликати
+                          <Ban className="w-4 h-4" strokeWidth={2} />{" "}
+                          {t("sponsor.privacy.revoke", "Відкликати")}
                         </Button>
                       )}
                     </div>

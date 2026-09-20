@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStreamRoom } from "@/hooks/useStreamRoom";
 import { useStripe } from "@/hooks/useStripe";
 import { tap, notify } from "@/lib/native";
+import { useT } from "@/i18n/useT";
+import { useCurrency } from "@/hooks/useCurrency";
 
 type StreamRow = {
   id: string;
@@ -23,6 +25,10 @@ const StreamViewer = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
+  const { t } = useT();
+  // raised/goal_amount — EUR. Прогресс сбора показываем в валюте пользователя (money),
+  // а пресеты доната — строго в EUR (formatIn): именно столько спишет Stripe.
+  const { money, formatIn } = useCurrency();
   const { createStreamDonation } = useStripe();
   const videoRef = useRef<HTMLVideoElement>(null);
   const { connect, disconnect, sendChat, participants, messages } = useStreamRoom(videoRef);
@@ -75,7 +81,7 @@ const StreamViewer = () => {
   const sendMsg = () => {
     if (!msg.trim()) return;
     void tap("light");
-    void sendChat(user?.user_metadata?.name || "Ви", msg.trim(), false);
+    void sendChat(user?.user_metadata?.name || t("live.you", "Ви"), msg.trim(), false);
     setMsg("");
   };
 
@@ -90,7 +96,7 @@ const StreamViewer = () => {
     }
   };
 
-  const hostName = stream?.profiles?.name || "Ефір";
+  const hostName = stream?.profiles?.name || t("live.defaultHost", "Ефір");
   const hostFlag = stream?.profiles?.country === "Україна" ? "🇺🇦" : "🏳️";
   const title = stream?.title || "";
   const goal = stream?.goal_amount || 0;
@@ -109,7 +115,7 @@ const StreamViewer = () => {
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-10">
           <button
             onClick={() => navigate(-1)}
-            aria-label="Назад"
+            aria-label={t("live.back", "Назад")}
             className="min-h-[44px] min-w-[44px] bg-black/40 rounded-full flex items-center justify-center"
           >
             <ArrowLeft className="w-5 h-5 text-white" strokeWidth={1.75} />
@@ -141,9 +147,12 @@ const StreamViewer = () => {
                   />
                 </div>
                 <div className="flex justify-between text-xs mt-1">
-                  <span className="text-white/60">Зібрано</span>
+                  <span className="text-white/60">{t("live.raised", "Зібрано")}</span>
                   <span className="text-white font-semibold">
-                    €{raised.toLocaleString()} / €{goal.toLocaleString()}
+                    {t("live.raisedSlash", "{raised} / {goal}", {
+                      raised: money(raised, "eur").formatted,
+                      goal: money(goal, "eur").formatted,
+                    })}
                   </span>
                 </div>
               </>
@@ -156,7 +165,7 @@ const StreamViewer = () => {
                 onClick={() => donate(amt)}
                 className="flex-1 min-h-[44px] py-2 bg-accent rounded-2xl text-white text-xs font-bold transition-all duration-150 hover:-translate-y-px active:scale-95"
               >
-                €{amt}
+                {formatIn(amt, "eur")}
               </button>
             ))}
           </div>
@@ -165,14 +174,14 @@ const StreamViewer = () => {
 
       <div className="flex-1 bg-background flex flex-col min-h-0">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-          <span className="text-xs font-semibold text-muted-foreground">Чат</span>
+          <span className="text-xs font-semibold text-muted-foreground">{t("live.chat", "Чат")}</span>
           <motion.button
             onClick={() => {
               void tap("light");
               setLiked((l) => !l);
             }}
             whileTap={{ scale: 0.85 }}
-            aria-label={liked ? "Прибрати лайк" : "Лайк"}
+            aria-label={liked ? t("live.unlike", "Прибрати лайк") : t("live.like", "Лайк")}
             className="min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <motion.span layoutId="stream-like" className="inline-flex">
@@ -185,7 +194,9 @@ const StreamViewer = () => {
         </div>
         <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2">
           {messages.length === 0 && (
-            <p className="text-xs text-muted-foreground/60">Повідомлень поки немає — будьте першим 👋</p>
+            <p className="text-xs text-muted-foreground/60">
+              {t("live.chatEmpty", "Повідомлень поки немає — будьте першим 👋")}
+            </p>
           )}
           {messages.map((m) => (
             <div key={m.id} className={`text-xs ${m.isDonation ? "text-accent font-semibold" : ""}`}>
@@ -199,13 +210,13 @@ const StreamViewer = () => {
             value={msg}
             onChange={(e) => setMsg(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendMsg()}
-            placeholder="Написати в чаті…"
+            placeholder={t("live.chatPlaceholder", "Написати в чаті…")}
             className="flex-1 bg-secondary rounded-2xl px-3 py-2 text-xs outline-none text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent/30"
           />
           <button
             onClick={sendMsg}
             disabled={!msg.trim()}
-            aria-label="Надіслати"
+            aria-label={t("live.send", "Надіслати")}
             className="min-h-[44px] min-w-[44px] bg-accent rounded-2xl flex items-center justify-center disabled:opacity-50 transition-transform duration-150 hover:-translate-y-px"
           >
             <Send className="w-4 h-4 text-white" strokeWidth={1.75} />

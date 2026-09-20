@@ -4,6 +4,9 @@ import { CheckCircle, XCircle, Clock, ChevronRight, type LucideIcon } from "luci
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PullToRefresh } from "@/components/PullToRefresh";
+import { useT } from "@/i18n/useT";
+import { useCurrency } from "@/hooks/useCurrency";
+import { convertAmount } from "@/lib/money";
 import { tap } from "@/lib/native";
 import type { Deal, Profile } from "@/integrations/supabase/types";
 
@@ -13,17 +16,21 @@ interface DealListItem extends Deal {
   profiles?: Pick<Profile, "name" | "verified" | "rating"> | null;
 }
 
-const statusMap: Record<string, { icon: LucideIcon; label: string; color: string }> = {
-  completed: { icon: CheckCircle, label: "Завершено", color: "text-success bg-success/10" },
-  active: { icon: Clock, label: "Активна", color: "text-warning bg-warning/10" },
-  pending: { icon: Clock, label: "Очікує", color: "text-warning bg-warning/10" },
-  cancelled: { icon: XCircle, label: "Скасовано", color: "text-destructive bg-destructive/10" },
-  disputed: { icon: XCircle, label: "Спір", color: "text-destructive bg-destructive/10" },
+// Подпись берётся из словаря на каждом рендере — иначе статусы остались бы
+// украинскими после переключения языка (константа вычисляется один раз).
+const statusMap: Record<string, { icon: LucideIcon; key: string; fallback: string; color: string }> = {
+  completed: { icon: CheckCircle, key: "deals.status.completed", fallback: "Завершено", color: "text-success bg-success/10" },
+  active: { icon: Clock, key: "deals.status.active", fallback: "Активна", color: "text-warning bg-warning/10" },
+  pending: { icon: Clock, key: "deals.status.pending", fallback: "Очікує", color: "text-warning bg-warning/10" },
+  cancelled: { icon: XCircle, key: "deals.status.cancelled", fallback: "Скасовано", color: "text-destructive bg-destructive/10" },
+  disputed: { icon: XCircle, key: "deals.status.disputed", fallback: "Спір", color: "text-destructive bg-destructive/10" },
 };
 
 const DealHistory = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, localeTag } = useT();
+  const { money, rates } = useCurrency();
   const [deals, setDeals] = useState<DealListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,29 +51,38 @@ const DealHistory = () => {
   }, [refetch]);
 
   const list = deals;
-  const total = list.filter((d) => d.status === "completed").reduce((s, d) => s + (d.amount || 0), 0);
+  // Суммировать amount по угодам «как есть» нельзя: у каждой своя deals.currency.
+  // Нормализуем в EUR по живому курсу; угоды с неизвестным курсом в сумму не
+  // попадают (лучше недосчитать, чем показать смесь валют одним числом).
+  const totalEur = list
+    .filter((d) => d.status === "completed")
+    .reduce((sum, d) => sum + (convertAmount(d.amount || 0, d.currency, "eur", rates) ?? 0), 0);
   const completed = list.filter((d) => d.status === "completed").length;
 
   return (
     <div className="pb-8">
       <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-4">
         <h1 className="font-serif text-4xl tracking-tight text-foreground mb-4 animate-fade-in">
-          Історія угод
+          {t("deals.history.title", "Історія угод")}
         </h1>
         {/* DESIGN.md §Anti-patterns: break symmetric 3-col — "Надано" hero anchor on top, then 2-col */}
         <div className="space-y-3">
           <div className="relative bg-secondary rounded-2xl p-4 text-center overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
-            <span className="text-xs uppercase tracking-widest text-muted-foreground block mb-1">Надано</span>
-            <span className="font-serif text-3xl tracking-tight text-foreground">€{total}</span>
+            <span className="text-xs uppercase tracking-widest text-muted-foreground block mb-1">
+              {t("deals.history.provided", "Надано")}
+            </span>
+            <span className="font-serif text-3xl tracking-tight text-foreground">
+              {money(totalEur, "eur").formatted}
+            </span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="relative bg-secondary rounded-2xl p-3 text-center overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
               <p className="text-lg font-bold text-foreground">{list.length}</p>
-              <p className="text-xs text-muted-foreground">Всього</p>
+              <p className="text-xs text-muted-foreground">{t("deals.history.total", "Всього")}</p>
             </div>
             <div className="relative bg-secondary rounded-2xl p-3 text-center overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
               <p className="text-lg font-bold text-success">{completed}</p>
-              <p className="text-xs text-muted-foreground">Завершено</p>
+              <p className="text-xs text-muted-foreground">{t("deals.status.completed", "Завершено")}</p>
             </div>
           </div>
         </div>
@@ -97,9 +113,9 @@ const DealHistory = () => {
             </svg>
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Поки що немає угод.
+            {t("deals.history.empty", "Поки що немає угод.")}
             <br />
-            Знайдіть запит на стрічці.
+            {t("deals.history.emptyHint", "Знайдіть запит на стрічці.")}
           </p>
         </div>
       ) : (
@@ -107,7 +123,7 @@ const DealHistory = () => {
           <div className="px-4 mt-4 space-y-2">
             {list.map((deal) => {
               const s = statusMap[deal.status] || statusMap.pending;
-              const name = deal.creator_name || deal.profiles?.name || "Користувач";
+              const name = deal.creator_name || deal.profiles?.name || t("common.user", "Користувач");
               return (
                 <button
                   key={deal.id}
@@ -130,15 +146,20 @@ const DealHistory = () => {
                         {name} {deal.creator_flag || "🏳️"}
                       </p>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${s.color}`}>
-                        {s.label}
+                        {t(s.key, s.fallback)}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {deal.title || "Угода"} · {new Date(deal.created_at).toLocaleDateString("uk")}
+                      {deal.title || t("deals.item.fallbackTitle", "Угода")} ·{" "}
+                      {new Date(deal.created_at).toLocaleDateString(localeTag)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-sm text-foreground">€{deal.amount || 0}</p>
+                    {/* Сумма угоды заявлена в deal.currency — показываем её честно,
+                        конвертируя в валюту отображения по курсу из currency_rates. */}
+                    <p className="font-bold text-sm text-foreground">
+                      {money(deal.amount || 0, deal.currency).formatted}
+                    </p>
                     <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" strokeWidth={1.75} />
                   </div>
                 </button>

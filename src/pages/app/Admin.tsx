@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { formatMinor } from "@/lib/money";
 import type { UserRole } from "@/integrations/supabase/types";
 
 type SanctionsRow = {
@@ -336,7 +337,7 @@ const Admin = () => {
                   {pr.title}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
-                  {(pr.price_cents / 100).toFixed(0)} {pr.currency?.toUpperCase()}
+                  {formatMinor(pr.price_cents, pr.currency, { round: true })}
                 </span>
                 <button
                   onClick={() => toggleProduct(pr)}
@@ -446,7 +447,9 @@ const Admin = () => {
                 className="flex items-center gap-3 py-2 border-b border-border/40 last:border-0"
               >
                 <span className="text-xs flex-1 truncate">{r.deal_id?.slice(0, 8) || "—"}</span>
-                <span className="text-xs font-medium">€{r.amount}</span>
+                {/* Refund'ы проводятся в EUR (чеки выставляются в EUR) —
+                    админка показывает сумму в валюте списания, без конвертации. */}
+                <span className="text-xs font-medium">{formatMinor(r.amount * 100, "eur")}</span>
                 <span className="text-[10px] text-muted-foreground">{r.processor}</span>
                 <span className="text-[10px] text-muted-foreground">{r.status}</span>
               </div>

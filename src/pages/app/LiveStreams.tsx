@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { tap } from "@/lib/native";
+import { useT } from "@/i18n/useT";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { Stream, Profile } from "@/integrations/supabase/types";
 
 interface StreamRow extends Stream {
@@ -19,6 +21,10 @@ interface StreamItem extends StreamRow {
 
 const LiveStreams = () => {
   const navigate = useNavigate();
+  const { t } = useT();
+  // raised/goal_amount хранятся в EUR (Stripe списывает донаты строго в EUR),
+  // но это агрегат-прогресс — показываем его в валюте отображения пользователя.
+  const { money } = useCurrency();
   void useAuth(); // keep auth side-effects mounted; user gated upstream
   const [streams, setStreams] = useState<StreamItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +39,9 @@ const LiveStreams = () => {
     setStreams(
       ((data ?? []) as StreamRow[]).map((s) => ({
         ...s,
-        host_name: s.profiles?.name || "Невідомо",
+        // Пустая строка вместо подписи: имя из БД не переводим, а запасной
+        // текст подставляем уже в рендере — иначе refetch зависел бы от локали.
+        host_name: s.profiles?.name || "",
         host_flag: "🏳️",
       }))
     );
@@ -50,7 +58,9 @@ const LiveStreams = () => {
     <div className="pb-8">
       <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">Прямі ефіри</h2>
+          <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">
+            {t("live.title", "Прямі ефіри")}
+          </h2>
           <Button
             size="sm"
             className="bg-accent hover:bg-accent/90 text-white gap-1 min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
@@ -59,16 +69,20 @@ const LiveStreams = () => {
               navigate("/app/live/start");
             }}
           >
-            <Plus className="w-4 h-4" strokeWidth={1.75} /> Запустити
+            <Plus className="w-4 h-4" strokeWidth={1.75} /> {t("live.startCta", "Запустити")}
           </Button>
         </div>
         {live.length > 0 && (
           <div className="flex items-center gap-2 bg-accent/10 rounded-2xl px-3 py-2">
             <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-            <span className="text-xs text-accent font-medium">{live.length} прямих ефірів зараз</span>
+            <span className="text-xs text-accent font-medium">
+              {t("live.nowLive", "{count} прямих ефірів зараз", { count: live.length })}
+            </span>
             <Users className="w-3 h-3 text-accent ml-auto" strokeWidth={1.75} />
             <span className="text-xs text-accent">
-              {live.reduce((a, s) => a + (s.viewer_count || 0), 0)} глядачів
+              {t("live.viewers", "{count} глядачів", {
+                count: live.reduce((a, s) => a + (s.viewer_count || 0), 0),
+              })}
             </span>
           </div>
         )}
@@ -101,9 +115,9 @@ const LiveStreams = () => {
             </svg>
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Зараз немає активних ефірів.
+            {t("live.emptyTitle", "Зараз немає активних ефірів.")}
             <br />
-            Будьте першим, хто розпочне.
+            {t("live.emptySubtitle", "Будьте першим, хто розпочне.")}
           </p>
           <Button
             variant="outline"
@@ -113,7 +127,7 @@ const LiveStreams = () => {
               void refetch();
             }}
           >
-            Оновити
+            {t("live.refresh", "Оновити")}
           </Button>
         </div>
       ) : (
@@ -157,7 +171,9 @@ const LiveStreams = () => {
                           LIVE
                         </span>
                       ) : (
-                        <span className="bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">Запис</span>
+                        <span className="bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">
+                          {t("live.recorded", "Запис")}
+                        </span>
                       )}
                     </div>
                     <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
@@ -172,14 +188,17 @@ const LiveStreams = () => {
                       {s.title}
                     </p>
                     <p className="text-xs text-muted-foreground mb-2">
-                      {s.host_name} {s.host_flag}
+                      {s.host_name || t("live.unknownHost", "Невідомо")} {s.host_flag}
                     </p>
                     {pct !== null && (
                       <div>
                         <div className="flex justify-between text-xs mb-1">
-                          <span className="text-muted-foreground">Зібрано</span>
+                          <span className="text-muted-foreground">{t("live.raised", "Зібрано")}</span>
                           <span className="font-semibold text-foreground">
-                            €{s.raised} з €{s.goal_amount}
+                            {t("live.raisedOf", "{raised} з {goal}", {
+                              raised: money(s.raised || 0, "eur").formatted,
+                              goal: money(s.goal_amount || 0, "eur").formatted,
+                            })}
                           </span>
                         </div>
                         <div className="w-full h-1.5 bg-secondary rounded-full">
