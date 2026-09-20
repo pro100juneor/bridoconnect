@@ -1,10 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Sanctions screening — production should call ComplyAdvantage or Refinitiv
-// World-Check. This function provides the integration shell + an offline
-// fallback that matches against a small built-in OFAC list. Replace the
-// `screenExternal` call with the real provider when API keys are provisioned.
+// Sanctions screening — production calls ComplyAdvantage (COMPLYADVANTAGE_API_KEY).
+// FAIL CLOSED: without a verified provider (no key or API error) the function never
+// returns "clear" — it returns "review" (manual compliance check), and a built-in
+// heuristic list can only escalate to "blocked". Never auto-clears unknown people.
 
 const ALLOWED_ORIGINS = new Set([
   "https://bridoconnect.vercel.app",
@@ -60,8 +60,13 @@ async function screenExternal(name: string, country: string | null): Promise<Scr
       return { result, matched, risk_score: score };
     }
   }
-  // Offline fallback.
-  const matched: ScreenResult["matched"] = [];
+  // Offline fallback — FAIL CLOSED. No real provider verified this person (no
+  // COMPLYADVANTAGE_API_KEY, or the API errored), so we must NOT auto-clear. The
+  // baseline is "review" (manual compliance check); the heuristic list can only
+  // escalate to "blocked", never downgrade to "clear".
+  const matched: ScreenResult["matched"] = [
+    { list: "screening_unavailable", reason: "no verified provider — manual review required" },
+  ];
   if (country && SANCTIONED_COUNTRY_ISO2.has(country.toUpperCase())) {
     matched.push({ list: "country_block", reason: `sanctioned jurisdiction ${country}` });
   }
@@ -71,8 +76,9 @@ async function screenExternal(name: string, country: string | null): Promise<Scr
       matched.push({ list: "offline_ofac", reason: `name matches "${frag}"` });
     }
   }
-  const score = matched.length === 0 ? 0 : matched.length >= 2 ? 80 : 40;
-  const result: ScreenResult["result"] = score >= 60 ? "blocked" : score >= 20 ? "review" : "clear";
+  const hardHits = matched.length - 1; // exclude the "screening_unavailable" marker
+  const score = hardHits >= 2 ? 80 : hardHits === 1 ? 40 : 20;
+  const result: ScreenResult["result"] = score >= 60 ? "blocked" : "review";
   return { result, matched, risk_score: score };
 }
 
