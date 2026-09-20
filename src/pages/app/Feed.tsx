@@ -21,6 +21,8 @@ import { useT } from "@/i18n/useT";
 import { useCurrency } from "@/hooks/useCurrency";
 import { usePromotions, type PromotedProfile } from "@/hooks/usePromotions";
 import PromoCarousel, { promoHref } from "@/components/PromoCarousel";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 // DESIGN.md §Banned: no inline emoji as UI icon. Map categories → Lucide.
 const categoryIcon = (cat: string): LucideIcon => {
@@ -55,10 +57,43 @@ const categoryEmoji = (cat: string) => {
 const Feed = () => {
   const navigate = useNavigate();
   const { t } = useT();
+  const { user } = useAuth();
   const { dealProgress } = useCurrency();
   const [activeCategory, setActiveCategory] = useState("Всі");
   const [activeFlag, setActiveFlag] = useState<string | null>(null);
   const { deals: realDeals, loading, refetch } = useDeals({ status: "active" });
+
+  // Real unread-notifications count drives the bell dot (was hardcoded on).
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    if (!user) {
+      setUnread(0);
+      return;
+    }
+    let active = true;
+    const load = () =>
+      supabase
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("read", false)
+        .then(({ count }) => {
+          if (active) setUnread(count ?? 0);
+        });
+    void load();
+    const channel = supabase
+      .channel(`feed-unread-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        () => void load()
+      )
+      .subscribe();
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   // Paid promo feed — ranked server-side (active_promotions RPC). The >=3-min
   // top-group guarantee is enforced in the DB (min_visible_until), not here.
@@ -145,7 +180,7 @@ const Feed = () => {
             aria-label={t("feed.notifications", "Сповіщення")}
           >
             <Bell className="w-5 h-5" />
-            <div className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
+            {unread > 0 && <div className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />}
           </button>
         </div>
       </div>

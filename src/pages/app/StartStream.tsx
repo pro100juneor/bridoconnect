@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, Radio, Camera, Mic, Eye } from "lucide-react";
@@ -29,6 +29,38 @@ const StartStream = () => {
   const [roomName, setRoomName] = useState("");
   const [celebrate, setCelebrate] = useState(false);
   const connecting = status === "connecting";
+
+  // Real device pre-flight: reflect whether a mic/camera actually exists and
+  // whether permission is already granted. Permission itself is requested by
+  // LiveKit on connect, so we don't force a getUserMedia prompt on this screen.
+  type DeviceState = "checking" | "ready" | "available" | "missing";
+  const [micState, setMicState] = useState<DeviceState>("checking");
+  const [camState, setCamState] = useState<DeviceState>("checking");
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        if (!active) return;
+        const classify = (kind: MediaDeviceKind): DeviceState => {
+          const list = devices.filter((d) => d.kind === kind);
+          if (list.length === 0) return "missing";
+          return list.some((d) => d.label) ? "ready" : "available";
+        };
+        setMicState(classify("audioinput"));
+        setCamState(classify("videoinput"));
+      } catch {
+        if (active) {
+          setMicState("missing");
+          setCamState("missing");
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // value уходит в streams.category — это данные, их не переводим.
   // Переводится только подпись кнопки.
@@ -231,17 +263,33 @@ const StartStream = () => {
         </div>
         <div className="space-y-2">
           {[
-            { icon: Mic, key: "live.deviceMic", fallback: "Мікрофон" },
-            { icon: Camera, key: "live.deviceCamera", fallback: "Камера" },
-          ].map((d) => (
-            <div key={d.key} className="flex items-center justify-between p-3 bg-secondary rounded-2xl">
-              <div className="flex items-center gap-2">
-                <d.icon className="w-4 h-4 text-success" strokeWidth={1.75} />
-                <span className="text-sm text-foreground">{t(d.key, d.fallback)}</span>
+            { icon: Mic, key: "live.deviceMic", fallback: "Мікрофон", state: micState },
+            { icon: Camera, key: "live.deviceCamera", fallback: "Камера", state: camState },
+          ].map((d) => {
+            const label =
+              d.state === "ready"
+                ? t("live.deviceReady", "Готово")
+                : d.state === "available"
+                  ? t("live.deviceWillAsk", "Дозвіл при старті")
+                  : d.state === "missing"
+                    ? t("live.deviceMissing", "Немає пристрою")
+                    : t("live.deviceChecking", "Перевірка…");
+            const tone =
+              d.state === "ready"
+                ? "text-success"
+                : d.state === "missing"
+                  ? "text-destructive"
+                  : "text-muted-foreground";
+            return (
+              <div key={d.key} className="flex items-center justify-between p-3 bg-secondary rounded-2xl">
+                <div className="flex items-center gap-2">
+                  <d.icon className={`w-4 h-4 ${tone}`} strokeWidth={1.75} />
+                  <span className="text-sm text-foreground">{t(d.key, d.fallback)}</span>
+                </div>
+                <span className={`text-xs ${tone}`}>{label}</span>
               </div>
-              <span className="text-xs text-success">{t("live.deviceConnected", "Підключено")}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <Button
           className="w-full bg-accent hover:bg-accent/90 text-white gap-2 min-h-[44px] transition-transform duration-150 hover:-translate-y-px"
