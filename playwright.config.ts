@@ -61,6 +61,7 @@ export default defineConfig({
       testIgnore: [
         "**/iphone-audit.spec.ts",
         "**/button-explorer.spec.ts",
+        "**/qa-crawl.spec.ts",
         "**/appstore-screenshots.spec.ts",
         // Не тест, а генератор: пишет прямо в public/images/walkthrough/,
         // то есть в закоммиченные маркетинговые картинки. В обычном прогоне он
@@ -80,7 +81,7 @@ export default defineConfig({
     // Task 65 (audit): iPhone Safari (WebKit) crawl of every screen.
     {
       name: "iphone-webkit",
-      testMatch: ["**/iphone-audit.spec.ts", "**/button-explorer.spec.ts"],
+      testMatch: ["**/iphone-audit.spec.ts", "**/button-explorer.spec.ts", "**/qa-crawl.spec.ts"],
       use: { ...devices["iPhone 14"] },
     },
   ],
