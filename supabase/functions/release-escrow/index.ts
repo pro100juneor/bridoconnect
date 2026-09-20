@@ -188,7 +188,8 @@ serve(async (req) => {
       });
       const payoutJson = await payoutResp.json().catch(() => ({}));
       if (!payoutResp.ok) {
-        throw new Error(`paypal release: ${payoutResp.status} ${JSON.stringify(payoutJson)}`);
+        console.error("paypal release failed", payoutResp.status, JSON.stringify(payoutJson));
+        throw new Error("paypal release failed");
       }
       transferId = payoutJson?.item_id || deal.paypal_capture_id;
     } else if (deal.payment_processor === "adyen") {

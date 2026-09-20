@@ -48,31 +48,46 @@ serve(async (req) => {
       });
     }
 
-    const { orderId, dealId } = await req.json();
-    let resolvedOrderId: string | null = orderId ?? null;
-    if (!resolvedOrderId && dealId) {
-      const { data: deal } = await supabase
-        .from("deals")
-        .select("paypal_order_id")
-        .eq("id", dealId)
-        .maybeSingle();
-      resolvedOrderId = deal?.paypal_order_id ?? null;
-    }
-    if (!resolvedOrderId) {
-      return new Response(JSON.stringify({ error: "orderId or dealId required" }), {
+    // Never trust a client-supplied orderId (IDOR): require dealId and resolve the
+    // order server-side from the deal row.
+    const { dealId } = await req.json();
+    if (!dealId) {
+      return new Response(JSON.stringify({ error: "dealId required" }), {
         status: 400,
         headers: { ...headers, "Content-Type": "application/json" },
       });
     }
+    const { data: deal } = await supabase
+      .from("deals")
+      .select("creator_id, sponsor_id, paypal_order_id")
+      .eq("id", dealId)
+      .maybeSingle();
+    if (!deal || !deal.paypal_order_id) {
+      return new Response(JSON.stringify({ error: "deal or paypal order not found" }), {
+        status: 404,
+        headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
+    // Authorization: only the paying sponsor may capture. sponsor_id is set by
+    // webhook-paypal after capture, so it may still be null here for the payer;
+    // block the recipient (creator) and any different sponsor.
+    if (deal.creator_id === user.id || (deal.sponsor_id && deal.sponsor_id !== user.id)) {
+      return new Response(JSON.stringify({ error: "not allowed to capture this order" }), {
+        status: 403,
+        headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
+    const resolvedOrderId = deal.paypal_order_id;
 
     const token = await paypalAccessToken();
-    const resp = await fetch(`${PAYPAL_BASE}/v2/checkout/orders/${resolvedOrderId}/capture`, {
+    const safeOrderId = encodeURIComponent(resolvedOrderId);
+    const resp = await fetch(`${PAYPAL_BASE}/v2/checkout/orders/${safeOrderId}/capture`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
         // Idempotency: a retry with the same key returns the original result.
-        "PayPal-Request-Id": `capture-${resolvedOrderId}`,
+        "PayPal-Request-Id": `capture-${safeOrderId}`,
       },
     });
     const json = await resp.json().catch(() => ({}));
@@ -84,7 +99,9 @@ serve(async (req) => {
       json.details.some((d: { issue?: string }) => d.issue === "ORDER_ALREADY_CAPTURED");
 
     if (!resp.ok && !alreadyCaptured) {
-      throw new Error(`paypal capture: ${resp.status} ${JSON.stringify(json)}`);
+      // Log the full provider response server-side; return a generic message.
+      console.error("paypal capture failed", resp.status, JSON.stringify(json));
+      throw new Error("paypal capture failed");
     }
 
     const captureId = json?.purchase_units?.[0]?.payments?.captures?.[0]?.id ?? null;
