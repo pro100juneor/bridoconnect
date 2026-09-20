@@ -7,8 +7,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 //   - Recipients without bank accounts (refugees)
 //   - Micropayments via Lightning (sub-€1 donations where Stripe min applies)
 //
-// BTCPay self-hosted: gives full custody to the recipient, no KYC needed.
-// Auth: BTCPAY_API_KEY header to /api/v1/stores/<store-id>/invoices.
+// BTCPay self-hosted. Auth: BTCPAY_API_KEY → /api/v1/stores/<store-id>/invoices.
+//
+// ⚠️ COMPLIANCE (MiCA, legal opinion R5): the invoice is currently created on the
+// PLATFORM's BTCPay store (BTCPAY_STORE_ID), i.e. funds settle to a platform wallet
+// and would then have to be forwarded to the recipient — that is custody/transfer of
+// crypto-assets and may trigger MiCA CASP obligations. Before enabling crypto, the
+// invoice must settle DIRECTLY to the recipient (per-recipient store / the recipient's
+// address from profile_crypto_addresses), so the platform never holds the crypto.
+// NOT wired to any UI payment path yet — effectively OFF.
 
 const BTCPAY_URL = Deno.env.get("BTCPAY_URL") || "https://btcpay.example.com";
 

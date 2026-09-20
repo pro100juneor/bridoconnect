@@ -82,18 +82,10 @@ const ImpressumPage = () => {
         <section>
           <h2 className="font-semibold text-base mb-2">Streitschlichtung</h2>
           <p className="text-muted-foreground">
-            Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{" "}
-            <a
-              href="https://ec.europa.eu/consumers/odr/"
-              className="text-accent underline"
-              target="_blank"
-              rel="noreferrer"
-            >
-              ec.europa.eu/consumers/odr
-            </a>
-            .<br />
+            {/* Die EU-Plattform zur Online-Streitbeilegung (OS) wurde am 20.07.2025
+                eingestellt; der frühere Verweis wurde daher entfernt. */}
             Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer
-            Verbraucherschlichtungsstelle teilzunehmen.
+            Verbraucherschlichtungsstelle teilzunehmen (§ 36 VSBG).
           </p>
         </section>
       </div>
