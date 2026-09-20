@@ -110,7 +110,7 @@ const HowItWorksPage = () => {
               {t("howItWorks.globalLabel", "Глобально")}
             </p>
             <p className="font-serif text-2xl leading-tight">
-              {t("howItWorks.globalStat", "200+ країн · 6 платіжних коридорів")}
+              {t("howItWorks.globalStat", "Мультивалютні платежі · 6 платіжних коридорів")}
             </p>
           </div>
         </div>

@@ -63,8 +63,10 @@ const PublicFooter = () => {
           ))}
         </div>
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          {/* Legal entity line — brand + Handelsregister name, never translated. */}
-          <p className="text-white/40 text-xs">© 2026 BridoConnect GmbH · Deutschland</p>
+          {/* Legal entity line — real operator per Impressum (sole proprietorship), never translated. */}
+          <p className="text-white/40 text-xs">
+            © 2026 BridoConnect · Firma Luftarbeiter, Inh. O. Kusov · Deutschland
+          </p>
           <div className="flex gap-4">
             <Link to="/auth" className="text-white/60 text-xs hover:text-white">
               {t("auth.login.submit", "Увійти")}

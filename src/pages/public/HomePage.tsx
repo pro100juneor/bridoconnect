@@ -605,16 +605,16 @@ export default function HomePage() {
                 l: t("home.transparency.pillar2.label", "Шифрування"),
                 d: t(
                   "home.transparency.pillar2.desc",
-                  "Дані зашифровані. Сервери в Німеччині (AWS Frankfurt). Повна відповідність GDPR."
+                  "Дані зашифровані та зберігаються в ЄС. Повна відповідність GDPR."
                 ),
               },
               {
                 icon: Eye,
-                n: "98%",
+                n: "95%",
                 l: t("home.transparency.pillar3.label", "Доходить"),
                 d: t(
                   "home.transparency.pillar3.desc",
-                  "98% угод завершуються успішно. Публічна історія кожної транзакції."
+                  "95% суми доходить отримувачу — лише 5% комісія. Публічна історія кожної транзакції."
                 ),
               },
               {
@@ -741,7 +741,7 @@ export default function HomePage() {
               {[
                 t("home.cta.badge1", "✓ 100% верифіковані"),
                 t("home.cta.badge2", "✓ Escrow-захист"),
-                t("home.cta.badge3", "✓ Сервери в Німеччині"),
+                t("home.cta.badge3", "✓ Дані в ЄС"),
                 t("home.cta.badge4", "✓ GDPR"),
               ].map((f) => (
                 <span key={f}>{f}</span>

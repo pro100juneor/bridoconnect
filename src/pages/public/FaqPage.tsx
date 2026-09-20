@@ -52,7 +52,7 @@ const faqs = [
   {
     key: "faq.q10",
     q: "BridoConnect — офіційна організація?",
-    a: "Так. BridoConnect GmbH зареєстрована в Німеччині (Frankfurt am Main). Ми діємо відповідно до законодавства ЄС та GDPR.",
+    a: "Так. BridoConnect — це сервіс зареєстрованого в Німеччині підприємства «Firma Luftarbeiter» (власник Oleksii Kusov, Auerbach). Реквізити — в Impressum. Ми діємо відповідно до законодавства ЄС та GDPR.",
   },
 ];
 

@@ -66,8 +66,6 @@ const ImpressumPage = () => {
             Postfach 1464
             <br />
             39004 Magdeburg
-            <br />
-            USt-IdNr.: DE 114 103 514
           </p>
         </section>
 
