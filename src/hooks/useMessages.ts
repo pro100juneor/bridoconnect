@@ -7,10 +7,14 @@ export const useMessages = (dealId: string) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!dealId) { setLoading(false); return; }
+    if (!dealId) {
+      setLoading(false);
+      return;
+    }
 
     // Завантажуємо існуючі повідомлення
-    supabase.from("messages")
+    supabase
+      .from("messages")
       .select("*")
       .eq("deal_id", dealId)
       .order("created_at", { ascending: true })
@@ -26,9 +30,9 @@ export const useMessages = (dealId: string) => {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `deal_id=eq.${dealId}` },
         (payload) => {
-          setMessages(prev => {
+          setMessages((prev) => {
             // Уникаємо дублікатів
-            const exists = prev.find(m => m.id === (payload.new as Message).id);
+            const exists = prev.find((m) => m.id === (payload.new as Message).id);
             if (exists) return prev;
             return [...prev, payload.new as unknown as Message];
           });
@@ -36,14 +40,18 @@ export const useMessages = (dealId: string) => {
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [dealId]);
 
-  const sendMessage = async (text: string, senderId: string) => {
-    if (!dealId || !text.trim()) return { error: "Invalid params" };
+  const sendMessage = async (text: string, senderId: string, attachmentUrl?: string) => {
+    if (!dealId || (!text.trim() && !attachmentUrl)) return { error: "Invalid params" };
     const { data, error } = await supabase
       .from("messages")
-      .insert([{ deal_id: dealId, sender_id: senderId, text: text.trim() }])
+      .insert([
+        { deal_id: dealId, sender_id: senderId, text: text.trim(), attachment_url: attachmentUrl ?? null },
+      ])
       .select()
       .single();
     return { data, error };

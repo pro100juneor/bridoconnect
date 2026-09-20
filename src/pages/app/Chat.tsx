@@ -9,6 +9,8 @@ import { useT } from "@/i18n/useT";
 import { tap } from "@/lib/native";
 import { toast } from "@/hooks/use-toast";
 import { submitReport } from "@/lib/reports";
+import { uploadChatAttachment } from "@/lib/chatAttachments";
+import { ChatAttachment } from "@/components/ChatAttachment";
 
 const Chat = () => {
   const navigate = useNavigate();
@@ -22,7 +24,24 @@ const Chat = () => {
   const [partnerId, setPartnerId] = useState<string | null>(null);
   const [partnerOnline, setPartnerOnline] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user || !id) return;
+    void tap("light");
+    setUploading(true);
+    const { path, error } = await uploadChatAttachment("deal", id, file);
+    setUploading(false);
+    if (error || !path) {
+      toast({ title: t("chat.attachError", "Не вдалося завантажити файл"), variant: "destructive" });
+      return;
+    }
+    await sendMessage("", user.id, path);
+  };
 
   const handleReport = async () => {
     setMenuOpen(false);
@@ -221,7 +240,12 @@ const Chat = () => {
                       : "bg-background text-foreground rounded-tl-sm shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)]"
                   }`}
                 >
-                  <p className="text-sm">{msg.text}</p>
+                  {msg.attachment_url && (
+                    <div className={msg.text ? "mb-1.5" : ""}>
+                      <ChatAttachment path={msg.attachment_url} mine={isMe} />
+                    </div>
+                  )}
+                  {msg.text && <p className="text-sm">{msg.text}</p>}
                   <p className={`text-[10px] mt-1 ${isMe ? "text-white/60" : "text-muted-foreground"}`}>
                     {new Date(msg.created_at).toLocaleTimeString(localeTag, {
                       hour: "2-digit",
@@ -261,11 +285,14 @@ const Chat = () => {
       </div>
 
       <div className="flex items-center gap-2 px-4 py-3 border-t border-border bg-background/85 backdrop-blur-md">
+        <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={onPickFile} />
         <button
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
           aria-label={t("chat.attachAria", "Прикріпити файл")}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground disabled:opacity-50"
         >
-          <Paperclip className="w-5 h-5" strokeWidth={1.75} />
+          <Paperclip className={`w-5 h-5 ${uploading ? "animate-pulse" : ""}`} strokeWidth={1.75} />
         </button>
         <input
           value={input}

@@ -40,6 +40,7 @@ export interface Message {
   deal_id: string;
   sender_id: string;
   text: string;
+  attachment_url?: string | null;
   created_at: string;
 }
 

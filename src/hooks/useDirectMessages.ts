@@ -6,6 +6,7 @@ export interface DirectMessage {
   thread_id: string;
   sender_id: string;
   text: string;
+  attachment_url?: string | null;
   created_at: string;
 }
 
@@ -66,11 +67,18 @@ export const useDirectMessages = (threadId: string | null) => {
     };
   }, [threadId]);
 
-  const sendMessage = async (text: string, senderId: string) => {
-    if (!threadId || !text.trim()) return { error: "Invalid params" };
+  const sendMessage = async (text: string, senderId: string, attachmentUrl?: string) => {
+    if (!threadId || (!text.trim() && !attachmentUrl)) return { error: "Invalid params" };
     const { data, error } = await supabase
       .from("direct_messages")
-      .insert([{ thread_id: threadId, sender_id: senderId, text: text.trim() }])
+      .insert([
+        {
+          thread_id: threadId,
+          sender_id: senderId,
+          text: text.trim(),
+          attachment_url: attachmentUrl ?? null,
+        },
+      ])
       .select()
       .single();
     return { data, error };
