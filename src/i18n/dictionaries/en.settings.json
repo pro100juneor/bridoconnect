@@ -32,7 +32,7 @@
   "settings.deleteAccount.successTitle": "Account deleted",
   "settings.deleteAccount.successDesc": "Thank you for being with us.",
 
-  "wallet.availableBalance": "Available balance",
+  "wallet.availableBalance": "Operations summary",
   "wallet.send": "Send",
   "wallet.sentTotal": "Sent",
   "wallet.receivedTotal": "Topped up",

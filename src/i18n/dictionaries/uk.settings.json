@@ -32,7 +32,7 @@
   "settings.deleteAccount.successTitle": "Акаунт видалено",
   "settings.deleteAccount.successDesc": "Дякуємо, що були з нами.",
 
-  "wallet.availableBalance": "Доступний баланс",
+  "wallet.availableBalance": "Підсумок операцій",
   "wallet.send": "Відправити",
   "wallet.sentTotal": "Відправлено",
   "wallet.receivedTotal": "Поповнено",

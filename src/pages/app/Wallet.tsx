@@ -40,7 +40,7 @@ const Wallet = () => {
       <div className="px-4 pt-4 pb-6 bg-primary text-white rounded-b-3xl mb-4">
         <h2 className="font-serif text-xl mb-6">{t("wallet.title")}</h2>
         <div className="text-center mb-6">
-          <p className="text-white/60 text-sm mb-1">{t("wallet.availableBalance", "Доступний баланс")}</p>
+          <p className="text-white/60 text-sm mb-1">{t("wallet.availableBalance", "Підсумок операцій")}</p>
           <p className="text-4xl font-bold">€{balance.toFixed(2)}</p>
         </div>
         {/* Пополнение кошелька скрыто намеренно: вывод и расход баланса не
