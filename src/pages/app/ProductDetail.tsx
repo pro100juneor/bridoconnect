@@ -6,6 +6,7 @@ import { tap, notify } from "@/lib/native";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { useStripe } from "@/hooks/useStripe";
 import { useCart } from "@/hooks/useCart";
+import { useProductFavorites } from "@/hooks/useProductFavorites";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useT } from "@/i18n/useT";
 import { toast } from "@/hooks/use-toast";
@@ -21,7 +22,7 @@ const ProductDetail = () => {
   const { code, convert } = useCurrency();
   const { t } = useT();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [liked, setLiked] = useState(false);
+  const { isFavorite, toggleFavorite } = useProductFavorites();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
@@ -93,7 +94,11 @@ const ProductDetail = () => {
   };
 
   if (loading) {
-    return <main className="pb-24 px-4 pt-8 text-center text-sm text-muted-foreground">{t("shop.loading", "Завантаження…")}</main>;
+    return (
+      <main className="pb-24 px-4 pt-8 text-center text-sm text-muted-foreground">
+        {t("shop.loading", "Завантаження…")}
+      </main>
+    );
   }
 
   if (!product) {
@@ -117,17 +122,21 @@ const ProductDetail = () => {
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">{t("product.title", "Товар")}</h2>
+        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">
+          {t("product.title", "Товар")}
+        </h2>
         <button
           onClick={() => {
             void tap("light");
-            setLiked((l) => !l);
+            if (id) void toggleFavorite(id);
           }}
-          aria-label={liked ? t("product.unlike", "Прибрати з обраних") : t("product.like", "В обрані")}
+          aria-label={
+            id && isFavorite(id) ? t("product.unlike", "Прибрати з обраних") : t("product.like", "В обрані")
+          }
           className="min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <Heart
-            className={`w-5 h-5 ${liked ? "fill-accent text-accent" : "text-muted-foreground"}`}
+            className={`w-5 h-5 ${id && isFavorite(id) ? "fill-accent text-accent" : "text-muted-foreground"}`}
             strokeWidth={1.75}
           />
         </button>
@@ -171,7 +180,9 @@ const ProductDetail = () => {
 
       {product.videos.length > 0 && (
         <div className="px-4 mb-4 space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("product.videos", "Відео")}</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            {t("product.videos", "Відео")}
+          </p>
           <div className="flex gap-3 overflow-x-auto scrollbar-hide snap-x">
             {product.videos.map((src) => (
               <video
@@ -189,7 +200,9 @@ const ProductDetail = () => {
 
       <div className="px-4 space-y-4">
         <div>
-          <p className="text-xs text-muted-foreground mb-1">{product.category || t("product.categoryFallback", "Товар")}</p>
+          <p className="text-xs text-muted-foreground mb-1">
+            {product.category || t("product.categoryFallback", "Товар")}
+          </p>
           <h1 className="font-serif text-4xl tracking-tight text-foreground mb-2 animate-fade-in">
             {product.title}
           </h1>
@@ -209,7 +222,9 @@ const ProductDetail = () => {
         <div className="relative flex items-center justify-between p-4 bg-secondary rounded-2xl overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
           <div>
             <p className="text-xs text-muted-foreground">{t("product.price", "Ціна")}</p>
-            <p className="text-3xl font-bold text-foreground">{convert(product.price_cents, product.currency).formatted}</p>
+            <p className="text-3xl font-bold text-foreground">
+              {convert(product.price_cents, product.currency).formatted}
+            </p>
           </div>
           <button
             onClick={() => {
@@ -255,7 +270,9 @@ const ProductDetail = () => {
           <div className="relative flex items-center gap-3 p-3 bg-secondary rounded-2xl overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">
             <Shield className="w-6 h-6 text-accent shrink-0" strokeWidth={1.75} />
             <div>
-              <p className="text-sm font-medium text-foreground">{t("product.protection", "Захист BridoConnect")}</p>
+              <p className="text-sm font-medium text-foreground">
+                {t("product.protection", "Захист BridoConnect")}
+              </p>
               <p className="text-xs text-muted-foreground">
                 {t("product.protectionDesc", "Гроші повертаються якщо щось пішло не так")}
               </p>

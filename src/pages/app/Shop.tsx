@@ -5,6 +5,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { tap, notify } from "@/lib/native";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
+import { useProductFavorites } from "@/hooks/useProductFavorites";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,7 +42,7 @@ const Shop = () => {
   const { t } = useT();
   const [searchParams, setSearchParams] = useSearchParams();
   const [active, setActive] = useState("Всі");
-  const [liked, setLiked] = useState<string[]>([]);
+  const { isFavorite, toggleFavorite } = useProductFavorites();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -115,7 +116,7 @@ const Shop = () => {
 
   const toggleLike = (id: string) => {
     void tap("light");
-    setLiked((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id]));
+    void toggleFavorite(id);
   };
 
   return (
@@ -229,14 +230,14 @@ const Shop = () => {
                         toggleLike(p.id);
                       }}
                       aria-label={
-                        liked.includes(p.id)
+                        isFavorite(p.id)
                           ? t("product.unlike", "Прибрати з обраних")
                           : t("product.like", "В обрані")
                       }
                       className="absolute top-2 right-2 min-h-[44px] min-w-[44px] flex items-center justify-center bg-white/80 rounded-full backdrop-blur-sm"
                     >
                       <Heart
-                        className={`w-4 h-4 ${liked.includes(p.id) ? "fill-accent text-accent" : "text-muted-foreground"}`}
+                        className={`w-4 h-4 ${isFavorite(p.id) ? "fill-accent text-accent" : "text-muted-foreground"}`}
                         strokeWidth={1.75}
                       />
                     </button>
