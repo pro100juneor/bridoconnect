@@ -121,10 +121,16 @@ const StreamViewer = () => {
             <ArrowLeft className="w-5 h-5 text-white" strokeWidth={1.75} />
           </button>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 bg-red-500 px-3 py-1 rounded-full">
-              <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              <span className="text-white text-xs font-bold">LIVE</span>
-            </div>
+            {stream?.status === "live" ? (
+              <div className="flex items-center gap-1.5 bg-red-500 px-3 py-1 rounded-full">
+                <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                <span className="text-white text-xs font-bold">LIVE</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full">
+                <span className="text-white text-xs font-bold">{t("live.recorded", "Запис")}</span>
+              </div>
+            )}
             <div className="flex items-center gap-1 bg-black/40 px-2.5 py-1 rounded-full">
               <Users className="w-3 h-3 text-white" strokeWidth={1.75} />
               <span className="text-white text-xs">{viewerCount}</span>

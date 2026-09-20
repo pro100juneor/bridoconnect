@@ -162,6 +162,8 @@ const ActiveDeal = () => {
             "Drop-in UI підключиться у наступному релізі."
           )}`,
         });
+        // Adyen path does not redirect away — re-enable the button (Stripe/PayPal navigate off-page).
+        setPaying(false);
       } else {
         await createCheckout({ amount: n, dealId: id });
       }
