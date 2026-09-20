@@ -3,7 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // dLocal webhook (Smart Notifications).
 // Events: PAID, REJECTED, REFUNDED, CHARGEBACK.
-// HMAC SHA-256 signature in X-Signature header, key = DLOCAL_SECRET.
+// Signature: Authorization "V2-HMAC-SHA256, Signature: <hex>",
+//   hmac = HMAC_SHA256(DLOCAL_SECRET, X-Login + X-Date + body).
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL") || "",
@@ -24,6 +25,13 @@ async function hmacHex(secret: string, msg: string): Promise<string> {
     .join("");
 }
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
+}
+
 type DlocalEvent = {
   id: string;
   status: "PAID" | "REJECTED" | "REFUNDED" | "CHARGEBACK" | "PENDING";
@@ -41,13 +49,23 @@ type DlocalEvent = {
 
 serve(async (req) => {
   const body = await req.text();
-  const sig = req.headers.get("x-signature") || "";
   const secret = Deno.env.get("DLOCAL_SECRET") || "";
   if (!secret) return new Response("missing secret", { status: 500 });
 
-  const computed = await hmacHex(secret, body);
-  if (computed !== sig) {
-    return new Response("invalid signature", { status: 400 });
+  // dLocal Smart Notifications sign with:
+  //   Authorization: "V2-HMAC-SHA256, Signature: <hex>"
+  //   signature = HMAC_SHA256(secret, X-Login + X-Date + body)
+  // (the previous code verified hmac(secret, body) against the wrong header, so
+  //  every genuine callback was rejected — H-3).
+  const authHeader = req.headers.get("authorization") || "";
+  const receivedSig = authHeader.includes("Signature:")
+    ? (authHeader.split("Signature:").pop() || "").trim()
+    : "";
+  const xLogin = Deno.env.get("DLOCAL_LOGIN") || "";
+  const xDate = req.headers.get("x-date") || "";
+  const computed = await hmacHex(secret, `${xLogin}${xDate}${body}`);
+  if (!receivedSig || !timingSafeEqual(computed, receivedSig)) {
+    return new Response("invalid signature", { status: 401 });
   }
 
   let event: DlocalEvent;
