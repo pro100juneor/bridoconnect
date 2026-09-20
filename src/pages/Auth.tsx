@@ -49,10 +49,10 @@ const Auth = () => {
     });
     if (error) {
       toast({
-        title: t("auth.google.notConfigured.title", "Google OAuth не налаштовано"),
+        title: t("auth.google.notConfigured.title", "Вхід через Google недоступний"),
         description: t(
           "auth.google.notConfigured.login",
-          "Адміністратор скоро це підключить. Поки що увійдіть через email."
+          "Зараз вхід через Google недоступний. Скористайтесь email."
         ),
         variant: "destructive",
       });

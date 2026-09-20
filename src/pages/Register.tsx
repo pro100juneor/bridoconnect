@@ -94,10 +94,10 @@ const Register = () => {
     });
     if (error) {
       toast({
-        title: t("auth.google.notConfigured.title", "Google OAuth не налаштовано"),
+        title: t("auth.google.notConfigured.title", "Вхід через Google недоступний"),
         description: t(
           "auth.google.notConfigured.register",
-          "Адміністратор скоро це підключить. Поки що зареєструйтесь через email."
+          "Зараз реєстрація через Google недоступна. Скористайтесь email."
         ),
         variant: "destructive",
       });

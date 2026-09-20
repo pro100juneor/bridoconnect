@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStreamRoom } from "@/hooks/useStreamRoom";
 import { Confetti } from "@/components/Confetti";
 import { tap, notify } from "@/lib/native";
+import { toast } from "@/hooks/use-toast";
 import { useT } from "@/i18n/useT";
 import { useCurrency } from "@/hooks/useCurrency";
 import { symbolFor } from "@/lib/money";
@@ -107,12 +108,13 @@ const StartStream = () => {
       setLive(false);
       setRoomName("");
       void notify("error");
-      alert(
-        t(
+      toast({
+        title: t(
           "live.connectFailed",
           "Не вдалося підключити ефір. Перевірте доступ до камери/мікрофона і спробуйте знову."
-        )
-      );
+        ),
+        variant: "destructive",
+      });
     }
   };
 

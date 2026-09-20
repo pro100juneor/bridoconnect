@@ -6,6 +6,7 @@ import { tap, notify } from "@/lib/native";
 import { useCart } from "@/hooks/useCart";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useStripe } from "@/hooks/useStripe";
+import { toast } from "@/hooks/use-toast";
 import { useT } from "@/i18n/useT";
 
 const Cart = () => {
@@ -28,8 +29,12 @@ const Cart = () => {
       await checkoutCart({ productIds, currency: code });
     } catch (e) {
       void notify("error");
-      // error.message приходит с бэкенда — не переводим
-      alert(e instanceof Error ? e.message : t("product.payFailed", "Не вдалося почати оплату"));
+      toast({
+        title: t("product.payFailed", "Не вдалося почати оплату"),
+        // error.message приходит с бэкенда — не переводим
+        description: e instanceof Error ? e.message : undefined,
+        variant: "destructive",
+      });
       setPaying(false);
     }
   };

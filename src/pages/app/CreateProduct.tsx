@@ -89,7 +89,10 @@ const CreateProduct = () => {
     if (picked.length === 0) return;
     if (files.length + picked.length > MAX_IMAGES) {
       void notify("error");
-      toast({ title: t("product.maxImages", "Максимум {n} фото", { n: MAX_IMAGES }), variant: "destructive" });
+      toast({
+        title: t("product.maxImages", "Максимум {n} фото", { n: MAX_IMAGES }),
+        variant: "destructive",
+      });
       return;
     }
     setFiles((f) => [...f, ...picked]);
@@ -102,21 +105,30 @@ const CreateProduct = () => {
     if (picked.length === 0) return;
     if (videos.length + picked.length > MAX_VIDEOS) {
       void notify("error");
-      toast({ title: t("product.maxVideos", "Максимум {n} відео", { n: MAX_VIDEOS }), variant: "destructive" });
+      toast({
+        title: t("product.maxVideos", "Максимум {n} відео", { n: MAX_VIDEOS }),
+        variant: "destructive",
+      });
       return;
     }
     const accepted: File[] = [];
     for (const file of picked) {
       if (file.size > MAX_VIDEO_BYTES) {
         void notify("error");
-        toast({ title: t("product.videoTooLarge", "Відео завелике: максимум 50 МБ"), variant: "destructive" });
+        toast({
+          title: t("product.videoTooLarge", "Відео завелике: максимум 50 МБ"),
+          variant: "destructive",
+        });
         continue;
       }
       try {
         const duration = await readVideoDuration(file);
         if (duration > MAX_VIDEO_SEC + 0.5) {
           void notify("error");
-          toast({ title: t("product.videoTooLong", "Відео задовге: максимум 30 секунд"), variant: "destructive" });
+          toast({
+            title: t("product.videoTooLong", "Відео задовге: максимум 30 секунд"),
+            variant: "destructive",
+          });
           continue;
         }
       } catch {
@@ -166,9 +178,16 @@ const CreateProduct = () => {
     if (error || !id) {
       void notify("error");
       if (error && /capacity/i.test(error)) {
-        toast({ title: t("product.capacityReached", "Досягнуто ліміту магазину (5000 позицій)"), variant: "destructive" });
+        toast({
+          title: t("product.capacityReached", "Досягнуто ліміту магазину (5000 позицій)"),
+          variant: "destructive",
+        });
       } else {
-        alert(error || t("product.createFailed", "Не вдалося створити товар"));
+        toast({
+          title: t("product.createFailed", "Не вдалося створити товар"),
+          description: error || undefined,
+          variant: "destructive",
+        });
       }
       setSaving(false);
       return;
@@ -187,7 +206,9 @@ const CreateProduct = () => {
         >
           <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.75} />
         </button>
-        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">{t("product.new", "Новий товар")}</h2>
+        <h2 className="font-serif text-xl text-foreground flex-1 animate-fade-in">
+          {t("product.new", "Новий товар")}
+        </h2>
       </div>
 
       <div className="px-4 space-y-4 mt-4">
@@ -332,7 +353,9 @@ const CreateProduct = () => {
                   setCategory(cat.value);
                 }}
                 className={`min-h-[44px] px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150 hover:-translate-y-px ${
-                  category === cat.value ? "bg-accent text-white border-accent" : "border-border text-foreground"
+                  category === cat.value
+                    ? "bg-accent text-white border-accent"
+                    : "border-border text-foreground"
                 }`}
               >
                 {t(cat.key, cat.value)}

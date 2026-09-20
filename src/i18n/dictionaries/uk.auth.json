@@ -12,9 +12,9 @@
   "auth.login.success.title": "Вітаємо! 👋",
   "auth.login.success.desc": "Ви успішно увійшли в BridoConnect",
 
-  "auth.google.notConfigured.title": "Google OAuth не налаштовано",
-  "auth.google.notConfigured.login": "Адміністратор скоро це підключить. Поки що увійдіть через email.",
-  "auth.google.notConfigured.register": "Адміністратор скоро це підключить. Поки що зареєструйтесь через email.",
+  "auth.google.notConfigured.title": "Вхід через Google недоступний",
+  "auth.google.notConfigured.login": "Зараз вхід через Google недоступний. Скористайтесь email.",
+  "auth.google.notConfigured.register": "Зараз реєстрація через Google недоступна. Скористайтесь email.",
 
   "auth.register.title": "Реєстрація",
   "auth.register.subtitle": "Приєднатись до BridoConnect",

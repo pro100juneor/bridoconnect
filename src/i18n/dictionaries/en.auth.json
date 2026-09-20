@@ -12,9 +12,9 @@
   "auth.login.success.title": "Welcome! 👋",
   "auth.login.success.desc": "You have signed in to BridoConnect",
 
-  "auth.google.notConfigured.title": "Google OAuth is not configured",
-  "auth.google.notConfigured.login": "An admin will enable it soon. For now, sign in with email.",
-  "auth.google.notConfigured.register": "An admin will enable it soon. For now, register with email.",
+  "auth.google.notConfigured.title": "Google sign-in unavailable",
+  "auth.google.notConfigured.login": "Google sign-in is currently unavailable. Please use email.",
+  "auth.google.notConfigured.register": "Google sign-up is currently unavailable. Please use email.",
 
   "auth.register.title": "Registration",
   "auth.register.subtitle": "Join BridoConnect",

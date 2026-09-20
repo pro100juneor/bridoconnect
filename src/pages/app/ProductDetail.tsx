@@ -75,7 +75,11 @@ const ProductDetail = () => {
       await buyProduct({ productId: id, currency: code });
     } catch (e) {
       void notify("error");
-      alert(e instanceof Error ? e.message : t("product.payFailed", "Не вдалося почати оплату"));
+      toast({
+        title: t("product.payFailed", "Не вдалося почати оплату"),
+        description: e instanceof Error ? e.message : undefined,
+        variant: "destructive",
+      });
       setPaying(false);
     }
   };
