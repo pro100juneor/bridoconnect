@@ -51,5 +51,14 @@ export const usePaypal = () => {
     if (url) window.location.href = url;
   };
 
-  return { createOrder, onboardPaypal };
+  // Called on return from PayPal approval to capture the order. Payment is then
+  // recorded onto the deal idempotently by webhook-paypal. (Rail gated OFF in UI
+  // until sandbox-verified.)
+  const captureOrder = async ({ orderId, dealId }: { orderId?: string; dealId?: string }) => {
+    const resp = await authedFetch("capture-paypal-order", { orderId, dealId });
+    if (!resp.ok) throw new Error(await safeJsonError(resp, "PayPal capture error"));
+    return resp.json();
+  };
+
+  return { createOrder, onboardPaypal, captureOrder };
 };

@@ -59,6 +59,14 @@ const ActiveDeal = () => {
   const [releasing, setReleasing] = useState(false);
   const [refunding, setRefunding] = useState(false);
   const [payMethod, setPayMethod] = useState<"stripe" | "paypal" | "adyen">("stripe");
+  // Feature flags: the PayPal and Adyen rails are implemented server-side but stay
+  // OFF in the UI until verified end-to-end against the provider sandboxes.
+  // Flip to true once sandbox testing passes.
+  const PAYPAL_ENABLED = false;
+  const ADYEN_ENABLED = false;
+  const payMethods = (["stripe", "paypal", "adyen"] as const).filter(
+    (m) => m === "stripe" || (m === "paypal" && PAYPAL_ENABLED) || (m === "adyen" && ADYEN_ENABLED)
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -342,7 +350,7 @@ const ActiveDeal = () => {
               role="tablist"
               aria-label={t("deal.payMethod.label", "Спосіб оплати")}
             >
-              {(["stripe", "paypal", "adyen"] as const).map((m) => (
+              {payMethods.map((m) => (
                 <button
                   key={m}
                   role="tab"

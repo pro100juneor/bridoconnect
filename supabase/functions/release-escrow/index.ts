@@ -3,6 +3,7 @@ import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getStripeConnect } from "../_shared/payment-accounts.ts";
 import { sendTransactionalEmail } from "../_shared/email.ts";
+import { PAYPAL_BASE, paypalAccessToken } from "../_shared/paypal.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2023-10-16",
@@ -124,10 +125,7 @@ serve(async (req) => {
       } else {
         // Новый поток: деньги на балансе платформы — переводим получателю.
         const recipient = await getStripeConnect(supabase, deal.creator_id);
-        if (
-          !recipient.stripe_connect_account_id ||
-          recipient.stripe_connect_status !== "enabled"
-        ) {
+        if (!recipient.stripe_connect_account_id || recipient.stripe_connect_status !== "enabled") {
           return new Response(
             JSON.stringify({
               error: "recipient_not_onboarded",
@@ -172,11 +170,28 @@ serve(async (req) => {
           headers: { ...headers, "Content-Type": "application/json" },
         });
       }
-      // PayPal split с DELAYED_DISBURSEMENT — disbursement release делается на
-      // стороне PayPal автоматически по истечении hold-периода или явно через
-      // /v2/payments/captures/<id>/release. Implement when partner-fee credentials
-      // are wired; for now just mark completed.
-      transferId = deal.paypal_capture_id;
+      // PayPal Commerce Platform DELAYED disbursement: release the held funds to
+      // the recipient via Referenced Payouts, keyed by the capture id.
+      // Ref: POST /v1/payments/referenced-payouts-items { reference_id, reference_type }.
+      // (Gated OFF in UI until verified against PayPal sandbox.)
+      const ppToken = await paypalAccessToken();
+      const payoutResp = await fetch(`${PAYPAL_BASE}/v1/payments/referenced-payouts-items`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${ppToken}`,
+          "Content-Type": "application/json",
+          "PayPal-Request-Id": `release-${deal.paypal_capture_id}`,
+        },
+        body: JSON.stringify({
+          reference_id: deal.paypal_capture_id,
+          reference_type: "TRANSACTION_ID",
+        }),
+      });
+      const payoutJson = await payoutResp.json().catch(() => ({}));
+      if (!payoutResp.ok) {
+        throw new Error(`paypal release: ${payoutResp.status} ${JSON.stringify(payoutJson)}`);
+      }
+      transferId = payoutJson?.item_id || deal.paypal_capture_id;
     } else if (deal.payment_processor === "adyen") {
       if (!deal.adyen_psp_reference) {
         return new Response(JSON.stringify({ error: "no adyen psp reference on deal" }), {
