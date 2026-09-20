@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, AlertTriangle, Upload, CheckCircle, Circle, CircleDot } from "lucide-react";
@@ -10,6 +10,7 @@ import { useT } from "@/i18n/useT";
 import { useCurrency } from "@/hooks/useCurrency";
 import { toast } from "@/hooks/use-toast";
 import { tap, notify } from "@/lib/native";
+import { uploadChatAttachment } from "@/lib/chatAttachments";
 
 interface DisputeProfileJoin {
   name?: string | null;
@@ -56,6 +57,26 @@ const Dispute = () => {
   const [submitting, setSubmitting] = useState(false);
   const [disputeId, setDisputeId] = useState<string | null>(null);
   const [deal, setDeal] = useState<DisputeDeal | null>(null);
+  const [attachments, setAttachments] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const onPickFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (picked.length === 0 || !id) return;
+    void tap("light");
+    setUploading(true);
+    for (const file of picked) {
+      const { path, error } = await uploadChatAttachment("deal", id, file);
+      if (error || !path) {
+        toast({ title: t("dispute.attachError", "Не вдалося завантажити файл"), variant: "destructive" });
+        continue;
+      }
+      setAttachments((prev) => [...prev, path]);
+    }
+    setUploading(false);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -78,14 +99,15 @@ const Dispute = () => {
     }
     void tap("medium");
     setSubmitting(true);
-    const { data, error } = await openDispute(id, reason, desc);
+    const { data, error } = await openDispute(id, reason, desc, attachments);
     setSubmitting(false);
 
     if (error || !data) {
       void notify("error");
       toast({
         title: t("dispute.failed", "Не вдалося відкрити спір"),
-        description: error?.message ?? t("dispute.failedHint", "Спробуйте ще раз або зверніться в підтримку."),
+        description:
+          error?.message ?? t("dispute.failedHint", "Спробуйте ще раз або зверніться в підтримку."),
         variant: "destructive",
       });
       return;
@@ -246,14 +268,54 @@ const Dispute = () => {
                 className="w-full bg-secondary rounded-2xl px-4 py-3 text-sm outline-none text-foreground placeholder:text-muted-foreground resize-none focus:ring-2 focus:ring-accent/30 leading-relaxed"
               />
             </div>
-            <div className="relative border-2 border-dashed border-border rounded-2xl p-6 text-center overflow-hidden">
-              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" strokeWidth={1.75} />
-              <p className="text-sm text-muted-foreground">
-                {t("dispute.attach", "Прикріпити скріншоти або документи")}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t("dispute.attachHint", "PNG, JPG, PDF до 10MB")}
-              </p>
+            <div>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*,.pdf"
+                multiple
+                className="hidden"
+                onChange={onPickFiles}
+              />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="w-full relative border-2 border-dashed border-border rounded-2xl p-6 text-center overflow-hidden disabled:opacity-50 hover:border-accent/50 transition-colors"
+              >
+                <Upload
+                  className={`w-8 h-8 text-muted-foreground mx-auto mb-2 ${uploading ? "animate-pulse" : ""}`}
+                  strokeWidth={1.75}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {uploading
+                    ? t("dispute.attaching", "Завантаження…")
+                    : t("dispute.attach", "Прикріпити скріншоти або документи")}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("dispute.attachHint", "PNG, JPG, PDF до 10MB")}
+                </p>
+              </button>
+              {attachments.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {attachments.map((path, i) => (
+                    <div
+                      key={path}
+                      className="flex items-center justify-between gap-2 text-xs bg-secondary rounded-xl px-3 py-2"
+                    >
+                      <span className="truncate text-foreground">{path.split("/").pop()}</span>
+                      <button
+                        type="button"
+                        onClick={() => setAttachments((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="text-muted-foreground shrink-0"
+                        aria-label={t("common.remove", "Прибрати")}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex gap-3">
               <Button

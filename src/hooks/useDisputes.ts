@@ -11,6 +11,7 @@ export interface Dispute {
   status: "open" | "reviewing" | "resolved" | "rejected";
   admin_note: string | null;
   resolution: string | null;
+  attachments: string[];
   created_at: string;
   updated_at: string;
 }
@@ -42,7 +43,8 @@ export const useDisputes = (dealId?: string) => {
   const openDispute = async (
     dealIdArg: string,
     reason: string,
-    description: string
+    description: string,
+    attachments: string[] = []
   ): Promise<{ data: Dispute | null; error: Error | null }> => {
     if (!user) return { data: null, error: new Error("Not authenticated") };
 
@@ -55,6 +57,7 @@ export const useDisputes = (dealId?: string) => {
           reason,
           description,
           status: "open",
+          attachments,
         },
       ])
       .select()
