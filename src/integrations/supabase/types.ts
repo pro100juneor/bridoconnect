@@ -1,7 +1,10 @@
 export type UserRole = "sponsor" | "recipient" | "admin";
 export type DealStatus = "pending" | "active" | "completed" | "cancelled" | "disputed";
 export type TransactionType = "deposit" | "withdrawal" | "deal_payment" | "refund";
-export type VerificationStatus = "pending" | "submitted" | "approved" | "rejected";
+// KYC document-request lifecycle (public.verification_requests.status).
+// NB: distinct from a profile's verification_status ("unverified" | "pending" |
+// "verified"), which lives in useIdentity/useRecipientPage — different concept.
+export type VerificationRequestStatus = "pending" | "submitted" | "approved" | "rejected";
 export type NotificationType = "deal_accepted" | "deal_completed" | "new_message" | "donation_received" | "review_received" | "system";
 
 export interface Profile {
@@ -59,7 +62,7 @@ export interface VerificationRequest {
   user_id: string;
   document_type: "id_document" | "selfie" | "address_proof";
   document_path: string;
-  status: VerificationStatus;
+  status: VerificationRequestStatus;
   admin_note?: string;
   created_at: string;
   updated_at: string;
