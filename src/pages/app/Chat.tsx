@@ -7,6 +7,8 @@ import { useMessages } from "@/hooks/useMessages";
 import { supabase } from "@/integrations/supabase/client";
 import { useT } from "@/i18n/useT";
 import { tap } from "@/lib/native";
+import { toast } from "@/hooks/use-toast";
+import { submitReport } from "@/lib/reports";
 
 const Chat = () => {
   const navigate = useNavigate();
@@ -19,7 +21,23 @@ const Chat = () => {
   const [partnerName, setPartnerName] = useState(() => t("chat.titleFallback", "Чат"));
   const [partnerId, setPartnerId] = useState<string | null>(null);
   const [partnerOnline, setPartnerOnline] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const handleReport = async () => {
+    setMenuOpen(false);
+    if (!user || !partnerId || !id) return;
+    void tap("light");
+    const { error } = await submitReport(user.id, partnerId, `chat:deal:${id}`);
+    if (error) {
+      toast({ title: t("chat.reportError", "Не вдалося надіслати"), variant: "destructive" });
+    } else {
+      toast({
+        title: t("chat.reportSent", "Скаргу надіслано"),
+        description: t("chat.reportSentDesc", "Дякуємо, ми розглянемо звернення."),
+      });
+    }
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -138,12 +156,38 @@ const Chat = () => {
         >
           {t("deal.title", "Угода")}
         </button>
-        <button
-          aria-label={t("chat.menuAria", "Меню")}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center"
-        >
-          <MoreVertical className="w-5 h-5 text-muted-foreground" strokeWidth={1.75} />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => {
+              void tap("light");
+              setMenuOpen((o) => !o);
+            }}
+            aria-label={t("chat.menuAria", "Меню")}
+            aria-expanded={menuOpen}
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center"
+          >
+            <MoreVertical className="w-5 h-5 text-muted-foreground" strokeWidth={1.75} />
+          </button>
+          {menuOpen && (
+            <>
+              <button
+                type="button"
+                aria-hidden="true"
+                tabIndex={-1}
+                className="fixed inset-0 z-20 cursor-default"
+                onClick={() => setMenuOpen(false)}
+              />
+              <div className="absolute right-0 top-full mt-1 z-30 w-52 bg-background rounded-xl border border-border shadow-lg overflow-hidden">
+                <button
+                  onClick={handleReport}
+                  className="w-full text-left px-4 py-3 text-sm text-destructive hover:bg-secondary min-h-[44px]"
+                >
+                  {t("chat.report", "Поскаржитися на користувача")}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-secondary/20">
