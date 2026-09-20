@@ -97,10 +97,11 @@ const Premium = () => {
     void tap("medium");
     setLoading(plan.id);
     try {
+      // Не празднуем до оплаты: подтверждение приходит после возврата со Stripe.
+      await createSubscription({ priceId: plan.priceId });
       void notify("success");
       setCelebrate(true);
       setTimeout(() => setCelebrate(false), 2500);
-      await createSubscription({ priceId: plan.priceId });
     } catch (e) {
       void notify("error");
       setCelebrate(false);

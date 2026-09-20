@@ -42,7 +42,6 @@ const Wallet = () => {
         <div className="text-center mb-6">
           <p className="text-white/60 text-sm mb-1">{t("wallet.availableBalance", "Доступний баланс")}</p>
           <p className="text-4xl font-bold">€{balance.toFixed(2)}</p>
-          <p className="text-white/40 text-xs mt-1">≈ ${(balance * 1.09).toFixed(0)} USD</p>
         </div>
         {/* Пополнение кошелька скрыто намеренно: вывод и расход баланса не
             реализованы, поэтому пополнение было бы дорогой в один конец.
