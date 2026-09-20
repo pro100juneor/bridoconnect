@@ -2,7 +2,6 @@
   "auth.or": "or",
   "auth.password.show": "Show password",
   "auth.password.hide": "Hide password",
-
   "auth.login.subtitle": "Sign in to BridoConnect",
   "auth.login.passwordPlaceholder": "Your password",
   "auth.login.submitting": "Signing in…",
@@ -11,11 +10,9 @@
   "auth.login.error.invalidCredentials": "Invalid email or password",
   "auth.login.success.title": "Welcome! 👋",
   "auth.login.success.desc": "You have signed in to BridoConnect",
-
   "auth.google.notConfigured.title": "Google sign-in unavailable",
   "auth.google.notConfigured.login": "Google sign-in is currently unavailable. Please use email.",
   "auth.google.notConfigured.register": "Google sign-up is currently unavailable. Please use email.",
-
   "auth.register.title": "Registration",
   "auth.register.subtitle": "Join BridoConnect",
   "auth.register.roleLabel": "I want to",
@@ -43,7 +40,6 @@
   "auth.register.success.sentTo": "We have sent a confirmation email to:",
   "auth.register.success.hint": "Confirm your email and then sign in to your account.",
   "auth.register.success.cta": "To sign-in →",
-
   "auth.reset.back": "Back",
   "auth.reset.title": "Password recovery",
   "auth.reset.desc": "Enter your account email and we will send you a recovery link.",
@@ -56,7 +52,6 @@
   "auth.reset.sent.desc": "We have sent a recovery link to:",
   "auth.reset.sent.hint": "Didn't get it? Check your spam folder or try again.",
   "auth.reset.sent.resend": "Send again",
-
   "review.close": "Close",
   "review.subject": "Rate your collaboration with",
   "review.rating.starsAria": "{count} stars",
@@ -73,7 +68,6 @@
   "review.tag.honest": "Honest",
   "review.tag.fastFinish": "Finished quickly",
   "review.tag.goodCommunication": "Good communication",
-
   "cookie.title": "We use cookies",
   "cookie.desc": "Essential cookies keep the site running (authentication, security) — they are always on. With your consent we additionally use analytics (PostHog, EU-hosted) and error tracking (Sentry) to improve the service. More details —",
   "cookie.essential.title": "Essential",
@@ -87,9 +81,13 @@
   "cookie.rejectAll": "Essential only",
   "cookie.savePreferences": "Save choice",
   "cookie.acceptAll": "Accept all",
-
   "notfound.title": "Page not found",
   "notfound.desc": "The link may be outdated or the page no longer exists.",
   "notfound.back": "Back",
-  "notfound.home": "Go home"
+  "notfound.home": "Go home",
+  "auth.register.agreePrefix": "I am 18 and accept",
+  "auth.register.terms": "Terms of Use",
+  "auth.register.and": "and",
+  "auth.register.privacy": "Privacy Policy",
+  "auth.register.mustAgree": "You must accept the terms"
 }

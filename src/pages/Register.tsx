@@ -280,7 +280,7 @@ const Register = () => {
             className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-accent"
           />
           <span className="text-xs text-muted-foreground leading-relaxed">
-            {t("auth.register.agreePrefix", "Я приймаю")}{" "}
+            {t("auth.register.agreePrefix", "Мені є 18 років, і я приймаю")}{" "}
             <Link to="/agb" className="text-accent underline">
               {t("auth.register.terms", "Умови користування")}
             </Link>{" "}
