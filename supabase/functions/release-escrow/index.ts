@@ -35,10 +35,9 @@ function corsFor(origin: string | null) {
 //   Это и есть настоящий эскроу. Легаси-сделки, оплаченные старым destination
 //   charge (у charge уже есть transfer), не переводим повторно — только
 //   фиксируем completion.
-// - paypal: для DELAYED_DISBURSEMENT нужен capture/release-call. Сейчас
-//   реализован shortcut: помечаем deal completed + ledger entry; реальный
-//   PayPal disbursement release делается на стороне PayPal Dashboard или
-//   через v2/payments/captures/<id>/release endpoint (TODO).
+// - paypal: DELAYED disbursement — held-средства выпускаются получателю через
+//   Referenced Payouts (POST /v1/payments/referenced-payouts-items) по capture id.
+//   Рельс реализован, но gated OFF в UI до проверки на PayPal sandbox.
 // - adyen: split уже произошёл при capture. Просто mark completed.
 //
 // P0-1 fix: caller_id передаётся явно в RPC.
