@@ -16,6 +16,7 @@ interface SearchResult {
   deals_count?: number | null;
   verified?: boolean;
   avatar_url?: string | null;
+  bio?: string | null;
   tags?: string[] | null;
 }
 
@@ -25,6 +26,7 @@ const Search = () => {
   const { t } = useT();
 
   const [query, setQuery] = useState("");
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -38,26 +40,31 @@ const Search = () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setLoading(true);
-      supabase
+      // Search across name, city and need (bio) — placeholder promises all three.
+      // Strip PostgREST-significant chars so the or-filter can't be broken by input.
+      const term = query.replace(/[,()]/g, " ").trim();
+      let q = supabase
         .from("profiles")
-        .select("id, name, city, country, rating, deals_count, verified, avatar_url")
-        .ilike("name", `%${query}%`)
-        .limit(20)
-        .then(({ data }) => {
-          // Real results only — mock fallback was surfacing fake names to live users.
-          setResults(data ?? []);
-          setLoading(false);
-        });
+        .select("id, name, city, country, rating, deals_count, verified, avatar_url, bio")
+        .or(`name.ilike.%${term}%,city.ilike.%${term}%,bio.ilike.%${term}%`);
+      if (verifiedOnly) q = q.eq("verified", true);
+      q.limit(20).then(({ data }) => {
+        // Real results only — mock fallback was surfacing fake names to live users.
+        setResults((data as SearchResult[] | null) ?? []);
+        setLoading(false);
+      });
     }, 300);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query]);
+  }, [query, verifiedOnly]);
 
   return (
     <div className="pb-8">
       <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-3">
-        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">{t("search.title", "Пошук")}</h1>
+        <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">
+          {t("search.title", "Пошук")}
+        </h1>
         <div className="flex gap-2">
           <div className="flex-1 flex items-center gap-2 bg-secondary rounded-2xl px-3 py-2 min-h-[44px]">
             <SearchIcon className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
@@ -69,13 +76,17 @@ const Search = () => {
             />
           </div>
           <button
-            className="min-h-[44px] min-w-[44px] bg-secondary rounded-2xl flex items-center justify-center transition-transform duration-150 hover:-translate-y-px"
+            className={`min-h-[44px] min-w-[44px] rounded-2xl flex items-center justify-center transition-transform duration-150 hover:-translate-y-px ${
+              verifiedOnly ? "bg-accent text-white" : "bg-secondary text-muted-foreground"
+            }`}
             aria-label={t("search.filtersAria", "Фільтри")}
+            aria-pressed={verifiedOnly}
             onClick={() => {
               void tap("light");
+              setVerifiedOnly((v) => !v);
             }}
           >
-            <SlidersHorizontal className="w-5 h-5 text-muted-foreground" strokeWidth={1.75} />
+            <SlidersHorizontal className="w-5 h-5" strokeWidth={1.75} />
           </button>
         </div>
       </div>

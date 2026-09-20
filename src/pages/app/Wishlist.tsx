@@ -8,7 +8,7 @@ import { tap, notify } from "@/lib/native";
 
 const Wishlist = () => {
   const navigate = useNavigate();
-  const { favorites, loading, removeFavorite } = useFavorites();
+  const { favorites, loading, removeFavorite, refetch } = useFavorites();
   const { t } = useT();
 
   const handleRemove = async (targetId: string) => {
@@ -24,15 +24,22 @@ const Wishlist = () => {
     }
   };
 
-  // useFavorites doesn't expose refetch; PullToRefresh is wired to a no-op until hook adds it.
-  const refetch = async () => { void tap("light"); };
+  const handleRefresh = async () => {
+    void tap("light");
+    await refetch();
+  };
 
   return (
     <div className="pb-8">
       <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-3 flex items-center justify-between">
-        <h1 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">{t("wishlist.title", "Обрані")}</h1>
+        <h1 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">
+          {t("wishlist.title", "Обрані")}
+        </h1>
         <button
-          onClick={() => { void tap("light"); navigate("/app/search"); }}
+          onClick={() => {
+            void tap("light");
+            navigate("/app/search");
+          }}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground"
           aria-label={t("wishlist.searchAria", "Пошук")}
         >
@@ -52,16 +59,30 @@ const Wishlist = () => {
         <div className="text-center py-16 px-6">
           <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
             {/* SVG heart per DESIGN.md §States */}
-            <svg viewBox="0 0 48 48" className="w-10 h-10 text-accent" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              viewBox="0 0 48 48"
+              className="w-10 h-10 text-accent"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <path d="M24 40C16 33 6 27 6 17a8 8 0 0 1 14-5l4 4 4-4a8 8 0 0 1 14 5c0 10-10 16-18 23z" />
             </svg>
           </div>
           <p className="font-semibold text-foreground mb-2">{t("wishlist.emptyTitle", "Список порожній")}</p>
           <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-            {t("wishlist.emptyLine1", "Додавайте людей в обрані щоб швидко знаходити")}<br />{t("wishlist.emptyLine2", "їх і допомагати.")}
+            {t("wishlist.emptyLine1", "Додавайте людей в обрані щоб швидко знаходити")}
+            <br />
+            {t("wishlist.emptyLine2", "їх і допомагати.")}
           </p>
           <button
-            onClick={() => { void tap("light"); navigate("/app/search"); }}
+            onClick={() => {
+              void tap("light");
+              navigate("/app/search");
+            }}
             className="text-sm text-accent font-semibold min-h-[44px] px-3"
           >
             {t("wishlist.findPeople", "Знайти людей →")}
@@ -70,7 +91,7 @@ const Wishlist = () => {
       )}
 
       {!loading && favorites.length > 0 && (
-        <PullToRefresh onRefresh={refetch}>
+        <PullToRefresh onRefresh={handleRefresh}>
           <div className="px-4 mt-3 space-y-3">
             {favorites.map((person) => {
               const initials = (person.target_name || "?")
@@ -88,7 +109,10 @@ const Wishlist = () => {
                 >
                   <button
                     className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-lg font-semibold text-primary shrink-0 overflow-hidden"
-                    onClick={() => { void tap("light"); navigate(`/app/user/${person.target_id}`); }}
+                    onClick={() => {
+                      void tap("light");
+                      navigate(`/app/user/${person.target_id}`);
+                    }}
                     aria-label={person.target_name}
                   >
                     {person.target_avatar ? (
@@ -99,25 +123,34 @@ const Wishlist = () => {
                   </button>
                   <button
                     className="flex-1 min-w-0 text-left"
-                    onClick={() => { void tap("light"); navigate(`/app/user/${person.target_id}`); }}
+                    onClick={() => {
+                      void tap("light");
+                      navigate(`/app/user/${person.target_id}`);
+                    }}
                   >
                     <div className="flex items-center gap-1.5">
-                      <p className="font-semibold text-sm text-foreground truncate">
-                        {person.target_name}
-                      </p>
+                      <p className="font-semibold text-sm text-foreground truncate">{person.target_name}</p>
                       {person.target_verified && (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-accent shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                        <CheckCircle2
+                          className="w-3.5 h-3.5 text-accent shrink-0"
+                          strokeWidth={1.75}
+                          aria-hidden="true"
+                        />
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
                       {flag} {person.target_city} ·
                       <Star className="w-3 h-3 fill-warning text-warning" strokeWidth={1.75} />
-                      {(person.target_rating || 0).toFixed(1)} · {t("wishlist.deals", "{n} угод", { n: person.target_deals_count || 0 })}
+                      {(person.target_rating || 0).toFixed(1)} ·{" "}
+                      {t("wishlist.deals", "{n} угод", { n: person.target_deals_count || 0 })}
                     </p>
                   </button>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { void tap("light"); navigate(`/app/user/${person.target_id}`); }}
+                      onClick={() => {
+                        void tap("light");
+                        navigate(`/app/user/${person.target_id}`);
+                      }}
                       className="min-h-[44px] min-w-[44px] bg-secondary rounded-2xl flex items-center justify-center transition-transform duration-150 hover:-translate-y-px"
                       aria-label={t("wishlist.messageAria", "Написати")}
                     >
