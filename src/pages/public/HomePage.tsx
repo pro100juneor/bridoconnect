@@ -391,7 +391,7 @@ export default function HomePage() {
                 n: "03",
                 icon: Eye,
                 t: t("home.how.step3.title", "Отримай підтвердження"),
-                d: t("home.how.step3.desc", "Фото і відео після виконання. Escrow захищає тебе."),
+                d: t("home.how.step3.desc", "Фото і відео після виконання. Захист платежу оберігає тебе."),
                 tag: t("home.how.step3.tag", "Прозоро і публічно"),
               },
             ].map((s, idx) => (
@@ -623,7 +623,7 @@ export default function HomePage() {
                 l: t("home.transparency.pillar4.label", "Комісія"),
                 d: t(
                   "home.transparency.pillar4.desc",
-                  "Лише 5% від суми. Покриває верифікацію, escrow і безпеку платежів."
+                  "Лише 5% від суми. Покриває верифікацію, захист платежу і безпеку."
                 ),
               },
             ].map((p) => (
@@ -650,14 +650,14 @@ export default function HomePage() {
           </div>
           <InView className={`bg-secondary rounded-2xl p-6 ${CARD_INSET}`}>
             <h3 className="text-sm font-semibold text-center mb-4">
-              {t("home.transparency.escrowTitle", "Як працює Escrow-захист")}
+              {t("home.transparency.escrowTitle", "Як працює захист платежу")}
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
                 {
                   n: "1",
                   t: t("home.transparency.escrow1.title", "Спонсор платить"),
-                  s: t("home.transparency.escrow1.desc", "Гроші заморожені"),
+                  s: t("home.transparency.escrow1.desc", "Кошти резервуються на карті"),
                 },
                 {
                   n: "2",
@@ -740,7 +740,7 @@ export default function HomePage() {
             <div className="flex flex-wrap justify-center gap-6 text-sm text-white/40">
               {[
                 t("home.cta.badge1", "✓ 100% верифіковані"),
-                t("home.cta.badge2", "✓ Escrow-захист"),
+                t("home.cta.badge2", "✓ Захист платежу"),
                 t("home.cta.badge3", "✓ Дані в ЄС"),
                 t("home.cta.badge4", "✓ GDPR"),
               ].map((f) => (

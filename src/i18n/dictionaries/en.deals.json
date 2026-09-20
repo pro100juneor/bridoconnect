@@ -75,7 +75,7 @@
   "dispute.submitted": "Dispute submitted",
   "dispute.submittedHint": "The Trust & Safety team will review it within 48 hours.",
   "dispute.openedTitle": "Dispute opened",
-  "dispute.openedDesc": "Your report has been received. The Trust & Safety team will review it within 48 hours. Funds are frozen until the dispute is resolved.",
+  "dispute.openedDesc": "Your report has been received. The Trust & Safety team will review it within 48 hours. Funds are reserved until the dispute is resolved.",
   "dispute.number": "Dispute number",
   "dispute.toDeals": "To deals",
   "dispute.pickReason": "Choose a reason:",

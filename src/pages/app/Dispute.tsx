@@ -138,7 +138,7 @@ const Dispute = () => {
         <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
           {t(
             "dispute.openedDesc",
-            "Ваше звернення прийнято. Команда Trust & Safety розгляне його протягом 48 годин. Кошти заморожені до вирішення спору."
+            "Ваше звернення прийнято. Команда Trust & Safety розгляне його протягом 48 годин. Кошти зарезервовані до вирішення спору."
           )}
         </p>
         <div className="relative w-full p-4 rounded-2xl bg-secondary border border-border mb-6 text-left overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8">

@@ -75,7 +75,7 @@
   "dispute.submitted": "Streitfall eingereicht",
   "dispute.submittedHint": "Das Trust-&-Safety-Team prüft ihn innerhalb von 48 Stunden.",
   "dispute.openedTitle": "Streitfall eröffnet",
-  "dispute.openedDesc": "Deine Meldung ist eingegangen. Das Trust-&-Safety-Team prüft sie innerhalb von 48 Stunden. Die Mittel bleiben bis zur Klärung eingefroren.",
+  "dispute.openedDesc": "Deine Meldung ist eingegangen. Das Trust-&-Safety-Team prüft sie innerhalb von 48 Stunden. Der Betrag bleibt bis zur Klärung reserviert.",
   "dispute.number": "Streitfallnummer",
   "dispute.toDeals": "Zu den Vereinbarungen",
   "dispute.pickReason": "Grund auswählen:",
