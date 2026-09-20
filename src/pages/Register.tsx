@@ -18,6 +18,7 @@ const Register = () => {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   useEffect(() => {
     if (step !== "success") return;
@@ -35,6 +36,13 @@ const Register = () => {
     }
     if (form.password.length < 6) {
       toast({ title: t("auth.register.tooShort", "Пароль мінімум 6 символів"), variant: "destructive" });
+      return;
+    }
+    if (!agreed) {
+      toast({
+        title: t("auth.register.mustAgree", "Потрібно прийняти умови"),
+        variant: "destructive",
+      });
       return;
     }
     setLoading(true);
@@ -141,9 +149,7 @@ const Register = () => {
   return (
     <div className="min-h-screen flex flex-col px-6 pt-12 pb-8 bg-background">
       <div className="mb-6">
-        <h1 className="font-serif text-3xl text-foreground mb-2">
-          {t("auth.register.title", "Реєстрація")}
-        </h1>
+        <h1 className="font-serif text-3xl text-foreground mb-2">{t("auth.register.title", "Реєстрація")}</h1>
         <p className="text-muted-foreground text-sm">
           {t("auth.register.subtitle", "Приєднатись до BridoConnect")}
         </p>
@@ -266,11 +272,31 @@ const Register = () => {
           )}
         </motion.div>
 
+        <motion.label {...fieldEnter(0.22)} className="flex items-start gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-accent"
+          />
+          <span className="text-xs text-muted-foreground leading-relaxed">
+            {t("auth.register.agreePrefix", "Я приймаю")}{" "}
+            <Link to="/agb" className="text-accent underline">
+              {t("auth.register.terms", "Умови користування")}
+            </Link>{" "}
+            {t("auth.register.and", "та")}{" "}
+            <Link to="/datenschutz" className="text-accent underline">
+              {t("auth.register.privacy", "Політику конфіденційності")}
+            </Link>
+            .
+          </span>
+        </motion.label>
+
         <motion.div {...fieldEnter(0.25)}>
           <Button
             type="submit"
             className="w-full bg-accent hover:bg-accent/90 text-white gap-2 h-12 transition-transform duration-150 hover:-translate-y-px"
-            disabled={loading}
+            disabled={loading || !agreed}
           >
             {loading ? (
               // DESIGN.md §Loading: no spinning circles — pulse instead.
