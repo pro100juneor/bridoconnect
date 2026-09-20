@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStreamRoom } from "@/hooks/useStreamRoom";
 import { useStripe } from "@/hooks/useStripe";
-import { tap, notify } from "@/lib/native";
+import { tap, notify, isNative, openExternal, webAppUrl } from "@/lib/native";
 import { useT } from "@/i18n/useT";
 import { useCurrency } from "@/hooks/useCurrency";
 
@@ -88,6 +88,12 @@ const StreamViewer = () => {
   const donate = async (amt: number) => {
     if (!id) return;
     void tap("medium");
+    // App Store 3.2.2(iv): stream donations (fundraising) may only be collected
+    // OUTSIDE the native app — on iOS open the web stream page in Safari.
+    if (isNative) {
+      openExternal(`${webAppUrl}/app/live/${id}`);
+      return;
+    }
     try {
       await createStreamDonation({ streamId: id, amount: amt });
       // On success Stripe redirects away; nothing else to do here.

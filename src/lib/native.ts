@@ -10,6 +10,21 @@ import { Keyboard } from "@capacitor/keyboard";
 export const isNative = Capacitor.isNativePlatform();
 export const platform = Capacitor.getPlatform(); // 'ios' | 'android' | 'web'
 
+// Public web URL of the app. Used to route flows that must happen OUTSIDE the
+// native shell — App Store Guideline 3.2.2(iv): fundraising for others may only
+// collect funds outside the app (Safari), not via in-app payment.
+export const webAppUrl = (import.meta.env.VITE_APP_URL as string) || "https://bridoconnect.vercel.app";
+
+// Opens a URL in the system browser (Safari) on native, a new tab on web.
+export function openExternal(url: string) {
+  if (isNative) {
+    // Capacitor routes the "_system" target to the OS browser (Safari).
+    window.open(url, "_system");
+  } else {
+    window.open(url, "_blank", "noopener");
+  }
+}
+
 // Subtle / medium / heavy taps used on button press, swipe-confirm, etc.
 export async function tap(style: "light" | "medium" | "heavy" = "light") {
   if (!isNative) return;

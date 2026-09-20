@@ -12,7 +12,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { toast } from "@/hooks/use-toast";
 import ReviewModal from "@/components/ReviewModal";
 import { Confetti } from "@/components/Confetti";
-import { tap, notify } from "@/lib/native";
+import { tap, notify, isNative, openExternal, webAppUrl } from "@/lib/native";
 import type { Deal } from "@/integrations/supabase/types";
 
 interface DealCreatorProfile {
@@ -113,6 +113,17 @@ const ActiveDeal = () => {
   })();
 
   const handlePay = async () => {
+    // App Store 3.2.2(iv): fundraising for others may only collect funds OUTSIDE
+    // the native app. On iOS the donation opens the web deal page in Safari.
+    if (isNative) {
+      void tap("light");
+      openExternal(`${webAppUrl}/app/deal/${id}`);
+      toast({
+        title: t("deal.support.web.title", "Продовжте в браузері"),
+        description: t("deal.support.web.desc", "Підтримка оформлюється на сайті BridoConnect."),
+      });
+      return;
+    }
     const n = Number(amount);
     if (!n || n < 1) {
       toast({
