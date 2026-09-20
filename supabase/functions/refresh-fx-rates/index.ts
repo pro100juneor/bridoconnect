@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // Refreshes public.currency_rates from a free, key-less EUR-based FX source
 // (open.er-api.com — daily rates, includes UAH which ECB does not).
 // Intended to run on a daily schedule (pg_cron) but is also callable manually.
-// Optional CRON_SECRET header gate to avoid casual triggering.
+// Requires the CRON_SECRET header (fail-closed) to avoid casual triggering.
 
 const CURRENCIES = ["EUR", "USD", "UAH", "PLN", "GBP", "CZK"];
 const SYMBOLS: Record<string, string> = {
@@ -17,8 +17,10 @@ const SYMBOLS: Record<string, string> = {
 };
 
 serve(async (req) => {
+  // Fail closed: without CRON_SECRET configured the endpoint refuses, so it is
+  // never left open to casual triggering (previously an unset secret allowed all).
   const secret = Deno.env.get("CRON_SECRET");
-  if (secret && req.headers.get("x-cron-secret") !== secret) {
+  if (!secret || req.headers.get("x-cron-secret") !== secret) {
     return new Response(JSON.stringify({ error: "forbidden" }), { status: 403 });
   }
 

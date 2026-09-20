@@ -47,6 +47,13 @@ type BtcpayEvent = {
   };
 };
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
+}
+
 serve(async (req) => {
   const body = await req.text();
   const sigHeader = req.headers.get("btcpay-sig") || "";
@@ -55,7 +62,7 @@ serve(async (req) => {
 
   // BTCPay-Sig format: "sha256=<hex>"
   const expected = "sha256=" + (await hmacHex(secret, body));
-  if (expected !== sigHeader) {
+  if (expected.length !== sigHeader.length || !timingSafeEqual(expected, sigHeader)) {
     return new Response("invalid signature", { status: 400 });
   }
 

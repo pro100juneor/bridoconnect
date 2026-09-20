@@ -56,12 +56,23 @@ async function verifyHmac(notif: AdyenNotif): Promise<boolean> {
   ].map(adyenEscape);
   const signStr = fields.join(":");
   const computed = await hmacSha256(hex2bytes(hmacKey), signStr);
-  return computed === sig;
+  return timingSafeEqual(computed, sig);
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
 }
 
 serve(async (req) => {
   const body = await req.json();
   const items: Array<{ NotificationRequestItem: AdyenNotif }> = body.notificationItems || [];
+
+  // If any item fails to persist we must NOT acknowledge — Adyen redelivers the
+  // batch, and our writes are idempotent (unique psp ref + increment_raised_idempotent).
+  let anyFailed = false;
 
   for (const wrap of items) {
     const n = wrap.NotificationRequestItem;
@@ -128,8 +139,11 @@ serve(async (req) => {
       }
     } catch (err) {
       console.error("adyen handler error:", err);
+      anyFailed = true;
     }
   }
 
+  // Non-2xx tells Adyen to redeliver; only [accepted] acknowledges.
+  if (anyFailed) return new Response("error", { status: 500 });
   return new Response("[accepted]", { status: 200 });
 });
