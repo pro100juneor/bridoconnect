@@ -41,19 +41,6 @@ const categoryIcon = (cat: string): LucideIcon => {
 const categories = ["Всі", "Гроші", "Товари", "Завдання", "Ліки", "Житло", "Їжа"];
 const flags = ["🇺🇦", "🏳️"];
 
-const categoryEmoji = (cat: string) => {
-  const map: Record<string, string> = {
-    Їжа: "🍞",
-    Ліки: "💊",
-    Одяг: "👕",
-    Житло: "🏠",
-    Гроші: "💶",
-    Товари: "📦",
-    Завдання: "🛠️",
-  };
-  return map[cat] || "🤝";
-};
-
 const Feed = () => {
   const navigate = useNavigate();
   const { t } = useT();
