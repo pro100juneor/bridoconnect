@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { MfaChallenge } from "@/components/MfaChallenge";
@@ -19,8 +19,9 @@ const Spinner = () => {
 type AalState = "checking" | "ok" | "needs-mfa";
 
 const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
-  const { user, session, loading } = useAuth();
+  const { user, session, loading, needsOnboarding } = useAuth();
   const [aal, setAal] = useState<AalState>("checking");
+  const location = useLocation();
 
   useEffect(() => {
     if (!user) {
@@ -50,6 +51,11 @@ const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
   if (!user) return <Navigate to="/auth" replace />;
   if (aal === "checking") return <Spinner />;
   if (aal === "needs-mfa") return <MfaChallenge />;
+  // Соц-пользователь без завершённого онбординга → на /welcome (кроме самого /welcome).
+  if (needsOnboarding === null) return <Spinner />;
+  if (needsOnboarding && location.pathname !== "/welcome") {
+    return <Navigate to="/welcome" replace />;
+  }
 
   return children ? <>{children}</> : <Outlet />;
 };

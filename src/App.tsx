@@ -1,6 +1,7 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
+import { initSocialLogin } from "@/lib/socialAuth";
 import PublicLayout from "./components/public/PublicLayout";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -27,6 +28,7 @@ const RecipientPage = lazy(() => import("./pages/public/RecipientPage"));
 
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
+import Welcome from "./pages/Welcome";
 import NotFound from "./pages/NotFound";
 
 import Feed from "./pages/app/Feed";
@@ -63,6 +65,11 @@ import PromoteMe from "./pages/app/PromoteMe";
 import ResetPassword from "./pages/app/ResetPassword";
 
 export default function App() {
+  // Прогрев соц-логина (init натив-SDK на iOS). Ошибку глотает сам initSocialLogin.
+  useEffect(() => {
+    void initSocialLogin();
+  }, []);
+
   return (
     <LocaleProvider>
       <PageTransition>
@@ -108,6 +115,8 @@ export default function App() {
               <Route path="/reset-password" element={<ResetPassword />} />
 
               <Route element={<ProtectedRoute />}>
+                {/* Онбординг соц-пользователей — вне AppLayout (полноэкранный гейт). */}
+                <Route path="/welcome" element={<Welcome />} />
                 <Route element={<AppLayout />}>
                   <Route path="/app" element={<Feed />} />
                   <Route path="/app/live" element={<LiveStreams />} />

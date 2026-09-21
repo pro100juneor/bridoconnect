@@ -7,6 +7,7 @@ import { Eye, EyeOff, UserPlus, CheckCircle, HandHeart, HandHelping } from "luci
 import { toast } from "@/hooks/use-toast";
 import { Confetti } from "@/components/Confetti";
 import { isNative } from "@/lib/native";
+import { signInWithGoogle, signInWithApple, type SocialProvider } from "@/lib/socialAuth";
 import { useT } from "@/i18n/useT";
 
 const Register = () => {
@@ -19,6 +20,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [social, setSocial] = useState<SocialProvider | null>(null);
 
   useEffect(() => {
     if (step !== "success") return;
@@ -50,7 +52,14 @@ const Register = () => {
       email: form.email,
       password: form.password,
       options: {
-        data: { name: form.name, role: form.role },
+        // age_confirmed/terms_accepted → триггер handle_new_user помечает онбординг
+        // завершённым (согласие уже собрано этой формой), гейт /welcome не показывается.
+        data: {
+          name: form.name,
+          role: form.role,
+          age_confirmed: "true",
+          terms_accepted: "true",
+        },
         emailRedirectTo: window.location.origin + "/app",
       },
     });
@@ -87,21 +96,21 @@ const Register = () => {
     setStep("success");
   };
 
-  const handleGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin + "/app" },
-    });
+  const handleSocial = async (provider: SocialProvider) => {
+    setSocial(provider);
+    const { error } = provider === "google" ? await signInWithGoogle() : await signInWithApple();
+    setSocial(null);
     if (error) {
       toast({
-        title: t("auth.google.notConfigured.title", "Вхід через Google недоступний"),
-        description: t(
-          "auth.google.notConfigured.register",
-          "Зараз реєстрація через Google недоступна. Скористайтесь email."
-        ),
+        title: t("auth.social.error.title", "Вхід недоступний"),
+        description: t("auth.social.error.desc", "Зараз цей спосіб входу недоступний. Скористайтесь email."),
         variant: "destructive",
       });
+      return;
     }
+    // Нативний id_token-флоу вже поставив сесію; новий соц-користувач потрапить на
+    // /welcome (роль + згода). Web-OAuth зробить redirect сам.
+    if (isNative) navigate("/app");
   };
 
   if (step === "success") {
@@ -317,37 +326,50 @@ const Register = () => {
         </motion.div>
       </form>
 
-      {/* На iOS сторонні логіни приховані (guideline 4.8) — див. Auth.tsx */}
-      {!isNative && (
-        <div className="mt-5">
-          <div className="relative flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-muted-foreground">{t("auth.or", "або")}</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-          <Button variant="outline" className="w-full h-12" onClick={handleGoogle}>
-            <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-            {t("auth.register.google", "Зареєструватись через Google")}
-          </Button>
+      <div className="mt-5">
+        <div className="relative flex items-center gap-3 mb-4">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-muted-foreground">{t("auth.or", "або")}</span>
+          <div className="flex-1 h-px bg-border" />
         </div>
-      )}
+        {/* Sign in with Apple — обов'язковий на iOS поруч з Google (App Store 4.8). */}
+        <Button
+          className="w-full h-12 mb-2 gap-2 bg-black text-white hover:bg-black/90"
+          onClick={() => handleSocial("apple")}
+          disabled={social !== null}
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M16.36 12.86c.02 2.32 2.03 3.09 2.05 3.1-.02.05-.32 1.11-1.07 2.2-.64.94-1.31 1.87-2.36 1.89-1.03.02-1.36-.61-2.54-.61-1.18 0-1.55.59-2.52.63-1.01.04-1.79-1.01-2.44-1.95-1.32-1.92-2.33-5.42-.97-7.79.67-1.17 1.87-1.91 3.17-1.93 1-.02 1.94.67 2.55.67.61 0 1.76-.83 2.96-.71.5.02 1.92.2 2.83 1.52-.07.05-1.69.99-1.67 2.96M14.4 6.13c.54-.65.9-1.56.8-2.46-.78.03-1.72.52-2.28 1.17-.5.57-.94 1.5-.82 2.38.87.07 1.76-.44 2.3-1.09" />
+          </svg>
+          {t("auth.register.apple", "Зареєструватись через Apple")}
+        </Button>
+        <Button
+          variant="outline"
+          className="w-full h-12 gap-2"
+          onClick={() => handleSocial("google")}
+          disabled={social !== null}
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24">
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            />
+          </svg>
+          {t("auth.register.google", "Зареєструватись через Google")}
+        </Button>
+      </div>
 
       <p className="text-center text-sm text-muted-foreground mt-5">
         {t("auth.register.haveAccount", "Вже є акаунт?")}{" "}
