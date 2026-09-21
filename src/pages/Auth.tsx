@@ -46,21 +46,28 @@ const Auth = () => {
 
   const handleSocial = async (provider: SocialProvider) => {
     setSocial(provider);
-    const { error } = provider === "google" ? await signInWithGoogle() : await signInWithApple();
-    setSocial(null);
-    if (error) {
-      void notify("error");
-      toast({
-        title: t("auth.social.error.title", "Вхід недоступний"),
-        description: t("auth.social.error.desc", "Зараз цей спосіб входу недоступний. Скористайтесь email."),
-        variant: "destructive",
-      });
-      return;
-    }
-    // Нативний id_token-флоу вже поставив сесію; web-OAuth сам зробить redirect.
-    if (isNative) {
-      void notify("success");
-      navigate("/app");
+    try {
+      const { error } = provider === "google" ? await signInWithGoogle() : await signInWithApple();
+      if (error) {
+        void notify("error");
+        toast({
+          title: t("auth.social.error.title", "Вхід недоступний"),
+          description: t(
+            "auth.social.error.desc",
+            "Зараз цей спосіб входу недоступний. Скористайтесь email."
+          ),
+          variant: "destructive",
+        });
+        return;
+      }
+      // Нативний id_token-флоу вже поставив сесію; web-OAuth сам зробить redirect.
+      if (isNative) {
+        void notify("success");
+        navigate("/app");
+      }
+    } finally {
+      // Гарантований сброс — інакше кнопка «зависає» в лоадингу при будь-якому збої.
+      setSocial(null);
     }
   };
 

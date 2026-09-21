@@ -98,19 +98,26 @@ const Register = () => {
 
   const handleSocial = async (provider: SocialProvider) => {
     setSocial(provider);
-    const { error } = provider === "google" ? await signInWithGoogle() : await signInWithApple();
-    setSocial(null);
-    if (error) {
-      toast({
-        title: t("auth.social.error.title", "Вхід недоступний"),
-        description: t("auth.social.error.desc", "Зараз цей спосіб входу недоступний. Скористайтесь email."),
-        variant: "destructive",
-      });
-      return;
+    try {
+      const { error } = provider === "google" ? await signInWithGoogle() : await signInWithApple();
+      if (error) {
+        toast({
+          title: t("auth.social.error.title", "Вхід недоступний"),
+          description: t(
+            "auth.social.error.desc",
+            "Зараз цей спосіб входу недоступний. Скористайтесь email."
+          ),
+          variant: "destructive",
+        });
+        return;
+      }
+      // Нативний id_token-флоу вже поставив сесію; новий соц-користувач потрапить на
+      // /welcome (роль + згода). Web-OAuth зробить redirect сам.
+      if (isNative) navigate("/app");
+    } finally {
+      // Гарантований сброс — інакше кнопка «зависає» в лоадингу при будь-якому збої.
+      setSocial(null);
     }
-    // Нативний id_token-флоу вже поставив сесію; новий соц-користувач потрапить на
-    // /welcome (роль + згода). Web-OAuth зробить redirect сам.
-    if (isNative) navigate("/app");
   };
 
   if (step === "success") {
