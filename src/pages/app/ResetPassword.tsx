@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,51 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const { t } = useT();
   const reduced = useReducedMotion();
-  const [step, setStep] = useState<"email" | "sent">("email");
+  const [step, setStep] = useState<"email" | "sent" | "recover">("email");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // H-10: по ссылке восстановления Supabase устанавливает recovery-сессию и шлёт
+  // событие PASSWORD_RECOVERY → показываем форму нового пароля (раньше её не было вовсе).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("type") === "recovery") setStep("recover");
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setStep("recover");
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password.length < 6) {
+      toast({ title: t("auth.register.tooShort", "Пароль мінімум 6 символів"), variant: "destructive" });
+      return;
+    }
+    if (password !== confirm) {
+      toast({ title: t("auth.register.mismatch", "Паролі не збігаються"), variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setLoading(false);
+    if (error) {
+      void notify("error");
+      toast({
+        title: t("auth.reset.error.title", "Помилка"),
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    void notify("success");
+    toast({ title: t("auth.reset.done.title", "Пароль оновлено") });
+    navigate("/app");
+  };
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +78,61 @@ const ResetPassword = () => {
       setStep("sent");
     }
   };
+
+  if (step === "recover") {
+    return (
+      <main className="min-h-screen flex flex-col px-6 pt-12 bg-background">
+        <div className="flex items-center gap-3 mb-2">
+          <KeyRound className="w-7 h-7 text-accent" strokeWidth={1.75} />
+          <h1 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">
+            {t("auth.reset.new.title", "Новий пароль")}
+          </h1>
+        </div>
+        <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
+          {t("auth.reset.new.desc", "Введіть новий пароль для вашого акаунту.")}
+        </p>
+        <form onSubmit={handleUpdatePassword} className="space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+              {t("auth.register.password", "Пароль")}
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="new-password"
+              placeholder={t("auth.register.passwordPlaceholder", "Мінімум 6 символів")}
+              className="w-full bg-secondary rounded-2xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+              {t("auth.register.confirm", "Підтвердіть пароль")}
+            </label>
+            <input
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              required
+              autoComplete="new-password"
+              placeholder={t("auth.register.confirmPlaceholder", "Повторіть пароль")}
+              className="w-full bg-secondary rounded-2xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
+            />
+          </div>
+          <Button
+            type="submit"
+            className="w-full bg-accent hover:bg-accent/90 text-white h-12 transition-transform duration-150 hover:-translate-y-px"
+            disabled={!password || !confirm || loading}
+          >
+            {loading
+              ? t("auth.reset.new.submitting", "Зберігаємо…")
+              : t("auth.reset.new.submit", "Зберегти пароль")}
+          </Button>
+        </form>
+      </main>
+    );
+  }
 
   if (step === "sent") {
     return (
@@ -120,7 +217,9 @@ const ResetPassword = () => {
             >
               {t("auth.reset.submitting", "Надсилаємо…")}
             </motion.span>
-          ) : t("auth.reset.submit", "Надіслати посилання")}
+          ) : (
+            t("auth.reset.submit", "Надіслати посилання")
+          )}
         </Button>
         <button
           type="button"
