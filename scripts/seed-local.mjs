@@ -12,6 +12,11 @@
 import { createClient } from "../node_modules/@supabase/supabase-js/dist/index.mjs";
 
 const URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
+// GF-2: сид деструктивен (создаёт admin, удаляет deals) — запрещаем против не-локальной БД.
+if (!/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(URL)) {
+  console.error(`Refusing to seed: SUPABASE_URL must be local (127.0.0.1/localhost), got "${URL}".`);
+  process.exit(1);
+}
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE;
 if (!SERVICE_ROLE) {
   console.error("SUPABASE_SERVICE_ROLE is required. Run `supabase status` and export it.");
@@ -35,7 +40,7 @@ const EXECUTORS = [
 // Аккаунты, которых ждут отдельные спеки (route-smoke, admin-audit).
 const EXTRA_USERS = [
   { email: "seller@brido.local",  name: "Test Seller", role: "recipient", city: "DEMO", country: "Україна", verified: true, bio: "DEMO seed — not a real person." },
-  { email: "oleksii@brido.local", name: "Oleksii",     role: "admin",     city: "DEMO", country: "Україна", verified: true, password: "Oleksii" },
+  { email: "oleksii@brido.local", name: "Oleksii",     role: "admin",     city: "DEMO", country: "Україна", verified: true, password: "LocalAdmin!2026" },
 ];
 
 const DEALS = [
