@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useT } from "@/i18n/useT";
 
-// Імпресум за § 5 TMG — обов'язкові відомості німецькою. Не перекладається.
+// Імпресум за § 5 DDG — обов'язкові відомості німецькою. Не перекладається.
 const ImpressumPage = () => {
   const navigate = useNavigate();
   const { t } = useT();
@@ -19,7 +19,7 @@ const ImpressumPage = () => {
 
       <div className="space-y-6 text-sm text-foreground leading-relaxed">
         <section>
-          <h2 className="font-semibold text-base mb-2">Angaben gemäß § 5 TMG</h2>
+          <h2 className="font-semibold text-base mb-2">Angaben gemäß § 5 DDG</h2>
           <p>
             Firma „Luftarbeiter"
             <br />
@@ -70,7 +70,7 @@ const ImpressumPage = () => {
         </section>
 
         <section>
-          <h2 className="font-semibold text-base mb-2">Verantwortlich für den Inhalt (§ 55 Abs. 2 RStV)</h2>
+          <h2 className="font-semibold text-base mb-2">Verantwortlich für den Inhalt (§ 18 Abs. 2 MStV)</h2>
           <p>
             Oleksii Kusov
             <br />

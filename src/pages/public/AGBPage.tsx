@@ -37,7 +37,7 @@ const sections = [
   {
     title: "§ 7 Rückerstattung und Streitigkeiten",
     content:
-      "Sponsoren können binnen 14 Tagen nach Zahlung eine Rückerstattung anfordern, sofern die Treuhand-Frist noch nicht abgelaufen ist und keine Empfangsbestätigung erfolgt ist. Streitfälle werden über die plattforminterne Dispute-Funktion eröffnet; bei Charge-Back über Stripe wird der Deal automatisch als „disputed“ markiert. Endgültige Entscheidungen über Rückerstattungen liegen bei Stripe nach deren AGB.",
+      "Sponsoren können binnen 14 Tagen nach Zahlung eine Rückerstattung anfordern, sofern die Reservierungsfrist noch nicht abgelaufen ist und keine Empfangsbestätigung erfolgt ist. Streitfälle werden über die plattforminterne Dispute-Funktion eröffnet; bei Charge-Back über Stripe wird der Deal automatisch als „disputed“ markiert. Endgültige Entscheidungen über Rückerstattungen liegen bei Stripe nach deren AGB.",
   },
   {
     title: "§ 8 Haftung",
