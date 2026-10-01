@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { Deal, Profile } from "@/integrations/supabase/types";
 import { useReviews } from "@/hooks/useReviews";
+import { useCurrency } from "@/hooks/useCurrency";
 import { toast } from "@/hooks/use-toast";
 import { tap, notify } from "@/lib/native";
 import { useT } from "@/i18n/useT";
@@ -48,6 +49,7 @@ const PublicProfile = () => {
   const { user } = useAuth();
   const { t, localeTag } = useT();
   const { reviews } = useReviews(id);
+  const { dealProgress } = useCurrency();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -242,29 +244,34 @@ const PublicProfile = () => {
             {t("publicProfile.activeRequests", "Активні запити")}
           </h4>
           <div className="space-y-2">
-            {deals.map((deal) => (
-              <div
-                key={deal.id}
-                onClick={() => {
-                  void tap("light");
-                  navigate(`/app/deal/${deal.id}`);
-                }}
-                className="relative p-3 rounded-2xl border border-border cursor-pointer hover:bg-secondary/50 hover:-translate-y-px transition-all duration-150 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8"
-              >
-                <p className="text-sm font-medium text-foreground truncate">{deal.title}</p>
-                <div className="flex items-center justify-between mt-1">
-                  <div className="flex-1 h-1.5 bg-secondary rounded-full mr-3">
-                    <div
-                      className="h-full bg-accent rounded-full"
-                      style={{ width: `${Math.min((deal.raised / deal.amount) * 100, 100)}%` }}
-                    />
+            {deals.map((deal) => {
+              // H-8: раніше тут було €raised/€amount і raised/amount — змішування валют
+              // (raised завжди EUR, amount — у deal.currency). dealProgress зводить коректно.
+              const progress = dealProgress(deal.amount, deal.currency, deal.raised);
+              return (
+                <div
+                  key={deal.id}
+                  onClick={() => {
+                    void tap("light");
+                    navigate(`/app/deal/${deal.id}`);
+                  }}
+                  className="relative p-3 rounded-2xl border border-border cursor-pointer hover:bg-secondary/50 hover:-translate-y-px transition-all duration-150 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8"
+                >
+                  <p className="text-sm font-medium text-foreground truncate">{deal.title}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <div className="flex-1 h-1.5 bg-secondary rounded-full mr-3">
+                      <div
+                        className="h-full bg-accent rounded-full"
+                        style={{ width: `${Math.min(progress.pct, 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {progress.raised.formatted} / {progress.goal.formatted}
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    €{deal.raised} / €{deal.amount}
-                  </span>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : (

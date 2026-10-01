@@ -41,10 +41,11 @@ async function ensureInit(): Promise<void> {
       // Google инициализируем ТОЛЬКО при наличии client-id: без него нативный
       // GoogleSignIn SDK не сконфигурирован, и init/login роняют процесс (нативный
       // fatal, который JS-try/catch не ловит).
-      if (GOOGLE_IOS_CLIENT_ID) {
+      // Нужны ОБА id: iOSServerClientId (=webClientId) — audience id_token'а,
+      // без него signInWithIdToken падает по audience. Нет одного — не инициализируем google.
+      if (GOOGLE_IOS_CLIENT_ID && GOOGLE_WEB_CLIENT_ID) {
         options.google = {
           iOSClientId: GOOGLE_IOS_CLIENT_ID,
-          // iOSServerClientId должен совпадать с webClientId (audience id_token'а).
           iOSServerClientId: GOOGLE_WEB_CLIENT_ID,
         };
       }
@@ -91,7 +92,7 @@ export async function signInWithGoogle(): Promise<SocialResult> {
   }
   // КРИТИЧНО: без iOS client-id нативный GoogleSignIn падает фатально (краш процесса),
   // а не бросает ловимую ошибку. Поэтому вообще не трогаем нативный SDK, пока не настроен.
-  if (!GOOGLE_IOS_CLIENT_ID) return { error: "google_not_configured" };
+  if (!GOOGLE_IOS_CLIENT_ID || !GOOGLE_WEB_CLIENT_ID) return { error: "google_not_configured" };
   try {
     await ensureInit();
     const { SocialLogin } = await import("@capgo/capacitor-social-login");

@@ -5,6 +5,7 @@ import { Shield, Eye, Users, Lock, CheckCircle, Plus } from "lucide-react";
 import VideoHero from "@/components/VideoHero";
 import { useT } from "@/i18n/useT";
 import { useDeals } from "@/hooks/useDeals";
+import { useCurrency } from "@/hooks/useCurrency";
 
 /**
  * Карточка получателя на витрине главной. Одна форма для двух источников:
@@ -24,6 +25,8 @@ export interface RecipientCard {
   bioKey?: string;
   goal: number;
   raised: number;
+  /** Валюта цілі (goal). raised завжди EUR. Demo-картки — EUR. */
+  currency?: string;
   rating: number;
   deals: number;
   photo: string | null;
@@ -155,6 +158,7 @@ const SECTIONS = [
 export default function HomePage() {
   const reduced = useReducedMotion();
   const { t } = useT();
+  const { dealProgress } = useCurrency();
   const [ri, setRi] = useState(0);
   const [activeSection, setActiveSection] = useState("hero");
 
@@ -203,6 +207,7 @@ export default function HomePage() {
       bio: d.description || "",
       goal: Number(d.amount),
       raised: Number(d.raised) || 0,
+      currency: d.currency,
       rating: Number(d.creator_rating) || 0,
       deals: Number(d.creator_deals) || 0,
       photo: d.creator_avatar || null,
@@ -213,7 +218,9 @@ export default function HomePage() {
   const cards: RecipientCard[] = isDemo ? demoRecipients : liveRecipients;
 
   const r = cards[Math.min(ri, cards.length - 1)];
-  const pct = r.goal > 0 ? Math.round((r.raised / r.goal) * 100) : 0;
+  // H-8: goal у r.currency, raised у EUR — зводимо коректно (раніше було пряме ділення + хардкод €).
+  const rProgress = dealProgress(r.goal, r.currency, r.raised);
+  const pct = rProgress.pct;
   // Демо-тексты живут в словаре по ключам, реальные приходят как есть из базы.
   const rName = r.nameKey ? t(r.nameKey, r.name) : r.name;
   const rCity = r.cityKey ? t(r.cityKey, r.city) : r.city;
@@ -519,9 +526,9 @@ export default function HomePage() {
                 <p className="text-sm text-muted-foreground leading-relaxed mb-4">{rBio}</p>
                 <div className="mb-4">
                   <div className="flex justify-between text-xs mb-1.5">
-                    <span className="font-semibold">€{r.raised.toLocaleString()}</span>
+                    <span className="font-semibold">{rProgress.raised.formatted}</span>
                     <span className="text-muted-foreground">
-                      {t("common.of", "з")} €{r.goal.toLocaleString()}
+                      {t("common.of", "з")} {rProgress.goal.formatted}
                     </span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -560,7 +567,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {rec.goal > 0 ? Math.round((rec.raised / rec.goal) * 100) : 0}%
+                    {dealProgress(rec.goal, rec.currency, rec.raised).pct}%
                   </div>
                 </button>
               ))}

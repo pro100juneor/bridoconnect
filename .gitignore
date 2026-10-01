@@ -48,3 +48,6 @@ public/audio/
 .env.staging
 .env.*.local
 .env.prod-db-pass
+
+# never commit real env (CLAUDE.md); was tracked by oversight
+.env.production
