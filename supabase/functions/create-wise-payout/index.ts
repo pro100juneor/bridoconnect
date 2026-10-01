@@ -74,7 +74,9 @@ serve(async (req) => {
 
     const { data: deal } = await supabase
       .from("deals")
-      .select("id, creator_id, sponsor_id, amount_cents, platform_fee_cents, escrow_released_at")
+      .select(
+        "id, creator_id, sponsor_id, amount_cents, platform_fee_cents, escrow_released_at, payment_processor, refunded_at"
+      )
       .eq("id", dealId)
       .maybeSingle();
     if (!deal) {
@@ -94,6 +96,15 @@ serve(async (req) => {
     // и ровно один раз (claim через уникальный event id в transactions).
     if (!deal.escrow_released_at) {
       return new Response(JSON.stringify({ error: "escrow not released yet" }), {
+        status: 409,
+        headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
+    // H-1: выплата Wise возможна ТОЛЬКО для Wise-сделки и только если нет возврата.
+    // Иначе (Stripe/PayPal/Adyen) средства уже отправлены release-escrow → повторная
+    // выплата с Wise-баланса платформы = гарантированная двойная выплата.
+    if (deal.payment_processor !== "wise" || deal.refunded_at) {
+      return new Response(JSON.stringify({ error: "wise payout not applicable for this deal" }), {
         status: 409,
         headers: { ...headers, "Content-Type": "application/json" },
       });
