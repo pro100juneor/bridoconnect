@@ -36,6 +36,7 @@ export const useFavorites = () => {
   const { user } = useAuth();
   const [favorites, setFavorites] = useState<FavoriteTarget[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null); // H-14
 
   const fetchFavorites = useCallback(async () => {
     if (!user) {
@@ -44,13 +45,16 @@ export const useFavorites = () => {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
+    setError(null);
+    const { data, error: qErr } = await supabase
       .from("favorites")
       .select("*, profiles!target_id(name, avatar_url, country, city, rating, verified, deals_count)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
+    if (qErr) {
+      setError(qErr.message);
+    } else if (data) {
       const enriched = data.map((f: FavoriteRow) => ({
         id: f.id,
         target_id: f.target_id,
@@ -106,6 +110,7 @@ export const useFavorites = () => {
   return {
     favorites,
     loading,
+    error,
     addFavorite,
     removeFavorite,
     isFavorite,

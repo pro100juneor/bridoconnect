@@ -8,7 +8,7 @@ import { tap, notify } from "@/lib/native";
 
 const Wishlist = () => {
   const navigate = useNavigate();
-  const { favorites, loading, removeFavorite, refetch } = useFavorites();
+  const { favorites, loading, error, removeFavorite, refetch } = useFavorites();
   const { t } = useT();
 
   const handleRemove = async (targetId: string) => {
@@ -55,7 +55,21 @@ const Wishlist = () => {
         </div>
       )}
 
-      {!loading && favorites.length === 0 && (
+      {!loading && error && (
+        <div className="text-center py-16 px-6">
+          <p className="font-semibold text-foreground mb-2">
+            {t("common.loadError", "Не вдалося завантажити")}
+          </p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {t("common.loadErrorDesc", "Перевірте з'єднання та спробуйте ще раз.")}
+          </p>
+          <button onClick={() => refetch()} className="text-sm text-accent font-semibold min-h-[44px]">
+            {t("common.retry", "Спробувати знову")}
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && favorites.length === 0 && (
         <div className="text-center py-16 px-6">
           <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
             {/* SVG heart per DESIGN.md §States */}

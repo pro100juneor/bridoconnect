@@ -57,6 +57,7 @@
   "common.loadErrorDesc": "Перевірте з'єднання та спробуйте ще раз.",
   "common.refresh": "Оновити",
   "common.remove": "Прибрати",
+  "common.retry": "Спробувати знову",
   "connect.crypto.disable": "Вимкнути",
   "connect.crypto.save": "Зберегти",
   "createDeal.invalidAmount": "Вкажіть суму більше 0",

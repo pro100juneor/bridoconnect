@@ -57,6 +57,7 @@
   "common.loadErrorDesc": "Verbindung prüfen und erneut versuchen.",
   "common.refresh": "Aktualisieren",
   "common.remove": "Entfernen",
+  "common.retry": "Erneut versuchen",
   "connect.crypto.disable": "Deaktivieren",
   "connect.crypto.save": "Speichern",
   "createDeal.invalidAmount": "Betrag größer als 0 eingeben",
