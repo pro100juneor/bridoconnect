@@ -63,6 +63,7 @@
   "deal.support.web.title": "Continue in the browser",
   "dispute.attachError": "Could not upload file",
   "dispute.attaching": "Uploading…",
+  "editProfile.avatarError": "Could not upload photo",
   "home.recipients.demoBadge": "Example",
   "home.recipients.demoNotice": "There are no open requests yet — below are examples of how a recipient profile will look. These are fictional stories; no money is collected for them.",
   "home.recipients.eyebrowDemo": "What a profile looks like",

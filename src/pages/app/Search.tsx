@@ -30,6 +30,8 @@ const Search = () => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // LOW: guard против гонки ответов — поздний старый ответ не перезапишет свежий.
+  const reqRef = useRef(0);
 
   useEffect(() => {
     if (!query || query.length < 2) {
@@ -40,15 +42,18 @@ const Search = () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setLoading(true);
+      const myReq = ++reqRef.current;
       // Search across name, city and need (bio) — placeholder promises all three.
-      // Strip PostgREST-significant chars so the or-filter can't be broken by input.
-      const term = query.replace(/[,()]/g, " ").trim();
+      // Strip PostgREST-significant chars + ilike-wildcards (% _) so ввод не ломает or-filter
+      // и «%» не матчит всё подряд.
+      const term = query.replace(/[,()%_]/g, " ").trim();
       let q = supabase
         .from("profiles")
         .select("id, name, city, country, rating, deals_count, verified, avatar_url, bio")
         .or(`name.ilike.%${term}%,city.ilike.%${term}%,bio.ilike.%${term}%`);
       if (verifiedOnly) q = q.eq("verified", true);
       q.limit(20).then(({ data }) => {
+        if (myReq !== reqRef.current) return; // устаревший ответ — игнор
         // Real results only — mock fallback was surfacing fake names to live users.
         setResults((data as SearchResult[] | null) ?? []);
         setLoading(false);

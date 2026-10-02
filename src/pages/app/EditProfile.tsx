@@ -55,11 +55,20 @@ const EditProfile = () => {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
-    const ext = file.name.split(".").pop();
+    const ext = file.name.split(".").pop() || "jpg"; // LOW: без fallback → avatar.undefined
     const path = `${user.id}/avatar.${ext}`;
-    await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    if (upErr) {
+      void notify("error");
+      toast({
+        title: t("editProfile.avatarError", "Не вдалося завантажити фото"),
+        variant: "destructive",
+      });
+      return;
+    }
     const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-    await updateProfile({ avatar_url: data.publicUrl });
+    // LOW: cache-buster — иначе после ре-аплоада по тому же пути показывается старая картинка.
+    await updateProfile({ avatar_url: `${data.publicUrl}?v=${Date.now()}` });
     void notify("success");
   };
 

@@ -22,12 +22,25 @@ async function initSentry() {
       Sentry.replayIntegration({ maskAllText: true, blockAllMedia: true }),
     ],
     beforeSend(event) {
-      // Дропаем PII в query/body если случайно попадёт
-      if (event.request?.query_string && typeof event.request.query_string === "string") {
-        event.request.query_string = event.request.query_string.replace(
-          /(token|password|secret)=[^&]+/gi,
-          "$1=[REDACTED]"
-        );
+      // MEDIUM: расширенный скраб PII/секретов — query, тело запроса и URL в breadcrumbs.
+      const SECRETS =
+        /(token|password|secret|code|api[_-]?key|apikey|auth|refresh_token|access_token)=[^&\s]+/gi;
+      const scrub = (s: unknown) => (typeof s === "string" ? s.replace(SECRETS, "$1=[REDACTED]") : s);
+      if (event.request) {
+        if (typeof event.request.query_string === "string") {
+          event.request.query_string = scrub(event.request.query_string) as string;
+        }
+        if (typeof event.request.data === "string") {
+          event.request.data = scrub(event.request.data);
+        }
+        if (typeof event.request.url === "string") {
+          event.request.url = scrub(event.request.url) as string;
+        }
+      }
+      if (Array.isArray(event.breadcrumbs)) {
+        for (const b of event.breadcrumbs) {
+          if (b.data && typeof b.data.url === "string") b.data.url = scrub(b.data.url) as string;
+        }
       }
       return event;
     },

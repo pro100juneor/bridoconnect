@@ -83,7 +83,8 @@ export const useProfile = () => {
     const {
       data: { publicUrl },
     } = supabase.storage.from("avatars").getPublicUrl(path);
-    const result = await updateProfile({ avatar_url: publicUrl });
+    // LOW: cache-buster — путь фиксированный (upsert), без ?v браузер отдаёт старую картинку.
+    const result = await updateProfile({ avatar_url: `${publicUrl}?v=${Date.now()}` });
     return result;
   };
 
