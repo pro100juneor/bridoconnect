@@ -9,6 +9,7 @@ import { SUPPORTED_CURRENCIES } from "@/lib/money";
 import { useAuth } from "@/contexts/AuthContext";
 import { Confetti } from "@/components/Confetti";
 import { tap, notify } from "@/lib/native";
+import { toast } from "@/hooks/use-toast";
 
 // Стабільні ключі для назв категорій (у БД вони лишаються українськими).
 const categoryKeys: Record<string, string> = {
@@ -31,14 +32,42 @@ const CreateDeal = () => {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
-  const [form, setForm] = useState({ title: "", category: "", amount: "", currency: "EUR", description: "", urgent: false });
+  const [form, setForm] = useState({
+    title: "",
+    category: "",
+    amount: "",
+    currency: "EUR",
+    description: "",
+    urgent: false,
+  });
   // Категорія зберігається в БД українською (так її читають фільтри стрічки),
   // а підпис у формі перекладається на льоту.
-  const categories = ["Житло та оренда", "Їжа та продукти", "Ліки та медицина", "Одяг та речі", "Транспорт", "Освіта", "Завдання/послуги", "Інше"];
+  const categories = [
+    "Житло та оренда",
+    "Їжа та продукти",
+    "Ліки та медицина",
+    "Одяг та речі",
+    "Транспорт",
+    "Освіта",
+    "Завдання/послуги",
+    "Інше",
+  ];
   const categoryLabel = (cat: string) => t(`deals.create.category.${categoryKeys[cat] ?? "other"}`, cat);
 
   const handlePublish = async () => {
     if (!user) return;
+    // MEDIUM: нельзя публиковать запрос с нулевой суммой и пустым описанием.
+    const amountNum = parseFloat(form.amount);
+    if (!(amountNum > 0)) {
+      void notify("error");
+      toast({ title: t("createDeal.invalidAmount", "Вкажіть суму більше 0"), variant: "destructive" });
+      return;
+    }
+    if (!form.description.trim()) {
+      void notify("error");
+      toast({ title: t("createDeal.invalidDesc", "Додайте опис запиту"), variant: "destructive" });
+      return;
+    }
     setSaving(true);
     void tap("medium");
     const { error } = await createDeal({
@@ -46,7 +75,7 @@ const CreateDeal = () => {
       title: form.title,
       description: form.description,
       category: form.category,
-      amount: parseFloat(form.amount) || 0,
+      amount: amountNum,
       currency: form.currency,
       status: "pending",
       urgent: form.urgent,
@@ -67,9 +96,7 @@ const CreateDeal = () => {
   }, [done, navigate]);
 
   // DESIGN.md §Animation: layoutId morph between active progress segments.
-  const stepTransition = reduced
-    ? { duration: 0 }
-    : { ease: [0.34, 1.56, 0.64, 1] as const, duration: 0.28 };
+  const stepTransition = reduced ? { duration: 0 } : { ease: [0.34, 1.56, 0.64, 1] as const, duration: 0.28 };
 
   return (
     <main className="pb-8 relative">
@@ -229,11 +256,16 @@ const CreateDeal = () => {
               transition={stepTransition}
             >
               <div className="p-4 rounded-2xl bg-secondary border border-border">
-                <h3 className="font-semibold text-foreground mb-3">{t("deals.create.review", "Перевірте запит")}</h3>
+                <h3 className="font-semibold text-foreground mb-3">
+                  {t("deals.create.review", "Перевірте запит")}
+                </h3>
                 <div className="space-y-2 text-sm">
                   {[
                     [t("deals.create.shortName", "Назва"), form.title || "—"],
-                    [t("deals.create.category", "Категорія"), form.category ? categoryLabel(form.category) : "—"],
+                    [
+                      t("deals.create.category", "Категорія"),
+                      form.category ? categoryLabel(form.category) : "—",
+                    ],
                     [
                       t("deals.create.shortAmount", "Сума"),
                       form.amount ? `${form.amount} ${form.currency.toUpperCase()}` : "—",
@@ -246,7 +278,9 @@ const CreateDeal = () => {
                   ))}
                   {form.urgent && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">{t("deals.create.priority", "Пріоритет")}:</span>
+                      <span className="text-muted-foreground">
+                        {t("deals.create.priority", "Пріоритет")}:
+                      </span>
                       <span className="text-foreground font-medium flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-red-500 inline-block" aria-hidden="true" />
                         {t("deals.create.urgent", "Терміново")}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, Camera, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProfile } from "@/hooks/useProfile";
@@ -18,6 +18,7 @@ type FormState = {
 };
 
 const EditProfile = () => {
+  const reduced = useReducedMotion();
   const navigate = useNavigate();
   const { profile, updateProfile } = useProfile();
   const { user } = useAuth();
@@ -164,7 +165,10 @@ const EditProfile = () => {
           disabled={saving}
         >
           {saving ? (
-            <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 0.9 }}>
+            <motion.span
+              animate={reduced ? {} : { opacity: [1, 0.4, 1] }}
+              transition={reduced ? {} : { repeat: Infinity, duration: 0.9 }}
+            >
               {t("common.saving", "Зберігаємо…")}
             </motion.span>
           ) : (

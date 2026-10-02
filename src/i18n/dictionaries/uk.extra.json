@@ -57,6 +57,8 @@
   "common.loadErrorDesc": "Перевірте з'єднання та спробуйте ще раз.",
   "common.refresh": "Оновити",
   "common.remove": "Прибрати",
+  "createDeal.invalidAmount": "Вкажіть суму більше 0",
+  "createDeal.invalidDesc": "Додайте опис запиту",
   "deal.support.web.desc": "Підтримка оформлюється на сайті BridoConnect.",
   "deal.support.web.title": "Продовжте в браузері",
   "dispute.attachError": "Не вдалося завантажити файл",

@@ -60,7 +60,13 @@ const STORAGE_KEY = "brido_video_lang";
 
 function detectInitialLang(): string {
   if (typeof window === "undefined") return "uk";
-  const stored = window.localStorage.getItem(STORAGE_KEY);
+  // LOW: приватный режим / заблокированное хранилище бросают — не роняем hero.
+  let stored: string | null = null;
+  try {
+    stored = window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    /* storage недоступно */
+  }
   if (stored && LANGS.some((l) => l.code === stored)) return stored;
   // Browser locale: try full code first (zh-CN → zh, pt-BR → pt), then 2-letter.
   const full = (navigator.language || "uk").toLowerCase();
@@ -124,7 +130,11 @@ export const VideoHero = ({ variant = "hero" }: { variant?: keyof typeof VIDEO_S
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, lang);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, lang);
+    } catch {
+      /* storage недоступно (приватный режим) — не критично */
+    }
     const a = audioRef.current;
     if (!a) return;
     const wasPlaying = !a.paused;

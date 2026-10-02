@@ -57,6 +57,8 @@
   "common.loadErrorDesc": "Check your connection and try again.",
   "common.refresh": "Refresh",
   "common.remove": "Remove",
+  "createDeal.invalidAmount": "Enter an amount greater than 0",
+  "createDeal.invalidDesc": "Add a description for the request",
   "deal.support.web.desc": "Support is completed on the BridoConnect website.",
   "deal.support.web.title": "Continue in the browser",
   "dispute.attachError": "Could not upload file",

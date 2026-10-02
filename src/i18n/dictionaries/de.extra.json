@@ -57,6 +57,8 @@
   "common.loadErrorDesc": "Verbindung prüfen und erneut versuchen.",
   "common.refresh": "Aktualisieren",
   "common.remove": "Entfernen",
+  "createDeal.invalidAmount": "Betrag größer als 0 eingeben",
+  "createDeal.invalidDesc": "Beschreibung der Anfrage hinzufügen",
   "deal.support.web.desc": "Die Unterstützung wird auf der BridoConnect-Website abgeschlossen.",
   "deal.support.web.title": "Im Browser fortfahren",
   "dispute.attachError": "Datei konnte nicht hochgeladen werden",
