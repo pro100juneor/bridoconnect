@@ -6,7 +6,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useT } from "@/i18n/useT";
 import { useCurrency } from "@/hooks/useCurrency";
-import { convertAmount } from "@/lib/money";
 import { tap } from "@/lib/native";
 import type { Deal, Profile } from "@/integrations/supabase/types";
 
@@ -19,18 +18,43 @@ interface DealListItem extends Deal {
 // Подпись берётся из словаря на каждом рендере — иначе статусы остались бы
 // украинскими после переключения языка (константа вычисляется один раз).
 const statusMap: Record<string, { icon: LucideIcon; key: string; fallback: string; color: string }> = {
-  completed: { icon: CheckCircle, key: "deals.status.completed", fallback: "Завершено", color: "text-success bg-success/10" },
-  active: { icon: Clock, key: "deals.status.active", fallback: "Активна", color: "text-warning bg-warning/10" },
-  pending: { icon: Clock, key: "deals.status.pending", fallback: "Очікує", color: "text-warning bg-warning/10" },
-  cancelled: { icon: XCircle, key: "deals.status.cancelled", fallback: "Скасовано", color: "text-destructive bg-destructive/10" },
-  disputed: { icon: XCircle, key: "deals.status.disputed", fallback: "Спір", color: "text-destructive bg-destructive/10" },
+  completed: {
+    icon: CheckCircle,
+    key: "deals.status.completed",
+    fallback: "Завершено",
+    color: "text-success bg-success/10",
+  },
+  active: {
+    icon: Clock,
+    key: "deals.status.active",
+    fallback: "Активна",
+    color: "text-warning bg-warning/10",
+  },
+  pending: {
+    icon: Clock,
+    key: "deals.status.pending",
+    fallback: "Очікує",
+    color: "text-warning bg-warning/10",
+  },
+  cancelled: {
+    icon: XCircle,
+    key: "deals.status.cancelled",
+    fallback: "Скасовано",
+    color: "text-destructive bg-destructive/10",
+  },
+  disputed: {
+    icon: XCircle,
+    key: "deals.status.disputed",
+    fallback: "Спір",
+    color: "text-destructive bg-destructive/10",
+  },
 };
 
 const DealHistory = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, localeTag } = useT();
-  const { money, rates } = useCurrency();
+  const { money } = useCurrency();
   const [deals, setDeals] = useState<DealListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,12 +75,11 @@ const DealHistory = () => {
   }, [refetch]);
 
   const list = deals;
-  // Суммировать amount по угодам «как есть» нельзя: у каждой своя deals.currency.
-  // Нормализуем в EUR по живому курсу; угоды с неизвестным курсом в сумму не
-  // попадают (лучше недосчитать, чем показать смесь валют одним числом).
+  // LOW: «Надано» = реально предоставленные средства как СПОНСОР (а не цель всех завершённых
+  // угод, включая те, где юзер — отримувач). raised всегда в EUR — суммируем напрямую.
   const totalEur = list
-    .filter((d) => d.status === "completed")
-    .reduce((sum, d) => sum + (convertAmount(d.amount || 0, d.currency, "eur", rates) ?? 0), 0);
+    .filter((d) => d.status === "completed" && d.sponsor_id === user?.id)
+    .reduce((sum, d) => sum + Number(d.raised || 0), 0);
   const completed = list.filter((d) => d.status === "completed").length;
 
   return (
