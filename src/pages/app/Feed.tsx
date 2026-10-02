@@ -48,7 +48,7 @@ const Feed = () => {
   const { dealProgress } = useCurrency();
   const [activeCategory, setActiveCategory] = useState("Всі");
   const [activeFlag, setActiveFlag] = useState<string | null>(null);
-  const { deals: realDeals, loading, refetch } = useDeals({ status: "active" });
+  const { deals: realDeals, loading, error, refetch } = useDeals({ status: "active" });
 
   // Real unread-notifications count drives the bell dot (was hardcoded on).
   const [unread, setUnread] = useState(0);
@@ -309,7 +309,22 @@ const Feed = () => {
         </div>
       )}
 
-      {!loading && displayDeals.length === 0 && (
+      {/* H-14: ошибка загрузки — отдельно от «пусто», с кнопкой повтора. */}
+      {!loading && error && (
+        <div className="text-center py-16 px-6">
+          <p className="font-semibold text-foreground mb-2">
+            {t("common.loadError", "Не вдалося завантажити")}
+          </p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {t("common.loadErrorDesc", "Перевірте з'єднання та спробуйте ще раз.")}
+          </p>
+          <button onClick={() => refetch()} className="text-sm text-accent font-semibold min-h-[44px]">
+            {t("common.retry", "Спробувати знову")}
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && displayDeals.length === 0 && (
         <div className="text-center py-16 px-6">
           <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
             {/* SVG empty-state icon per DESIGN.md §States */}

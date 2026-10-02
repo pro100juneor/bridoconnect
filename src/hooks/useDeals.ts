@@ -35,11 +35,15 @@ interface DealsFilter {
 export const useDeals = (filters?: DealsFilter) => {
   const [deals, setDeals] = useState<DealWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  // H-14: ошибка загрузки должна отличаться от «пусто» — иначе страница покажет
+  // «нічого не знайдено» вместо ошибки+retry при сбое сети/RLS.
+  const [error, setError] = useState<string | null>(null);
   // Примітивні залежності: новий об'єкт filters на кожному рендері не викликає перезапит
   const { status, creator_id, sponsor_id, category, limit } = filters ?? {};
 
   const fetchDeals = useCallback(async () => {
     setLoading(true);
+    setError(null);
     let query = supabase
       .from("deals")
       .select(
@@ -58,8 +62,10 @@ export const useDeals = (filters?: DealsFilter) => {
     if (category) query = query.eq("category", category);
     if (limit) query = query.limit(limit);
 
-    const { data, error } = await query;
-    if (!error && data) {
+    const { data, error: qErr } = await query;
+    if (qErr) {
+      setError(qErr.message);
+    } else if (data) {
       const enriched = data.map((d: DealRow) => ({
         ...d,
         creator_name: d.profiles?.name || "Користувач",
@@ -101,5 +107,5 @@ export const useDeals = (filters?: DealsFilter) => {
     return { error };
   };
 
-  return { deals, loading, createDeal, updateDeal, deleteDeal, refetch: fetchDeals };
+  return { deals, loading, error, createDeal, updateDeal, deleteDeal, refetch: fetchDeals };
 };
