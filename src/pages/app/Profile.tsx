@@ -383,7 +383,9 @@ const CryptoCard = ({ userId }: { userId: string | undefined }) => {
     })();
   }, [userId]);
 
-  const save = async () => {
+  // M-4: раньше save всегда инвертировал crypto_enabled → сохранение адреса ВЫКЛЮЧАЛО крипту,
+  // и включённое состояние с адресом было недостижимо. Теперь целевое состояние — явный аргумент.
+  const save = async (nextEnabled: boolean) => {
     if (!userId) return;
     setSaving(true);
     const addrRes = await supabase.from("profile_crypto_addresses").upsert({
@@ -394,18 +396,18 @@ const CryptoCard = ({ userId }: { userId: string | undefined }) => {
     });
     const flagRes = addrRes.error
       ? null
-      : await supabase.from("profiles").update({ crypto_enabled: !enabled }).eq("id", userId);
+      : await supabase.from("profiles").update({ crypto_enabled: nextEnabled }).eq("id", userId);
     const error = addrRes.error ?? flagRes?.error ?? null;
     setSaving(false);
     if (error) {
       toast({ title: "Crypto", description: error.message, variant: "destructive" });
     } else {
-      setEnabled((v) => !v);
+      setEnabled(nextEnabled);
       toast({
         title: "Crypto",
-        description: enabled
-          ? t("connect.crypto.turnedOff", "Виплати в крипті вимкнено")
-          : t("connect.crypto.turnedOn", "Виплати в крипті увімкнено"),
+        description: nextEnabled
+          ? t("connect.crypto.turnedOn", "Виплати в крипті увімкнено")
+          : t("connect.crypto.turnedOff", "Виплати в крипті вимкнено"),
       });
     }
   };
@@ -449,17 +451,36 @@ const CryptoCard = ({ userId }: { userId: string | undefined }) => {
           />
         </div>
       )}
-      <Button
-        data-testid="crypto-toggle"
-        variant="outline"
-        className="w-full transition-transform duration-150 hover:-translate-y-px"
-        disabled={saving}
-        onClick={save}
-      >
-        {enabled
-          ? t("connect.crypto.saveOrDisable", "Зберегти / Вимкнути")
-          : t("connect.crypto.enable", "Увімкнути crypto")}
-      </Button>
+      {enabled ? (
+        <div className="flex gap-2">
+          <Button
+            data-testid="crypto-toggle"
+            className="flex-1 bg-accent hover:bg-accent/90 text-white transition-transform duration-150 hover:-translate-y-px"
+            disabled={saving}
+            onClick={() => save(true)}
+          >
+            {t("connect.crypto.save", "Зберегти")}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 transition-transform duration-150 hover:-translate-y-px"
+            disabled={saving}
+            onClick={() => save(false)}
+          >
+            {t("connect.crypto.disable", "Вимкнути")}
+          </Button>
+        </div>
+      ) : (
+        <Button
+          data-testid="crypto-toggle"
+          variant="outline"
+          className="w-full transition-transform duration-150 hover:-translate-y-px"
+          disabled={saving}
+          onClick={() => save(true)}
+        >
+          {t("connect.crypto.enable", "Увімкнути crypto")}
+        </Button>
+      )}
     </div>
   );
 };

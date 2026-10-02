@@ -106,7 +106,12 @@ const ActiveDeal = () => {
     return [
       { label: t("deal.status.opened"), done: true },
       { label: t("deal.status.reserved"), done: (deal?.raised || 0) > 0 },
-      { label: t("deal.status.confirmation"), done: s === "completed" || s === "active" },
+      {
+        // MEDIUM: раньше done для любой active-сделки (даже raised=0) → шаг 3 «готов»,
+        // а шаг 2 (raised>0) нет. Привязываем к реальному финансированию.
+        label: t("deal.status.confirmation"),
+        done: (deal?.raised || 0) > 0 && s !== "pending",
+      },
       { label: t("deal.status.sent"), done: s === "completed" },
       { label: t("deal.status.finished"), done: s === "completed" },
     ];
