@@ -442,7 +442,9 @@ const Admin = () => {
 
         <AdminSection title="Open Disputes" icon={AlertTriangle} loading={loading}>
           {disputes.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Жодних відкритих спорів.</p>
+            <p className="text-xs text-muted-foreground">
+              {t("admin.noDisputes", "Жодних відкритих спорів.")}
+            </p>
           ) : (
             disputes.map((d) => (
               <div key={d.id} className="py-2 border-b border-border/40 last:border-0">
@@ -460,7 +462,7 @@ const Admin = () => {
 
         <AdminSection title="Recent Refunds" icon={RefreshCw} loading={loading}>
           {refunds.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Жодних refund'ів.</p>
+            <p className="text-xs text-muted-foreground">{t("admin.noRefunds", "Жодних refund'ів.")}</p>
           ) : (
             refunds.map((r) => (
               <div
