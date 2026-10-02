@@ -21,8 +21,18 @@ export const ChatAttachment = ({ path, mine }: { path: string; mine: boolean }) 
 
   if (isImagePath(path)) {
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer" className="block">
-        <img src={url} alt="" className="max-w-[220px] max-h-[260px] rounded-lg object-cover" />
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block"
+        aria-label={path.split("/").pop() || "Вкладення"}
+      >
+        <img
+          src={url}
+          alt={path.split("/").pop() || "Вкладення"}
+          className="max-w-[220px] max-h-[260px] rounded-lg object-cover"
+        />
       </a>
     );
   }

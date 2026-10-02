@@ -377,8 +377,17 @@ const Feed = () => {
             <div
               key={deal.id}
               data-testid="deal-card"
+              role="button"
+              tabIndex={0}
               onClick={() => navigate(`/app/deal/${deal.id}`)}
-              className="relative bg-card rounded-2xl border border-border overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-px hover:shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)] active:scale-[0.99] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 before:z-10"
+              onKeyDown={(e) => {
+                // H-21: карточку сделки можно открыть с клавиатуры (Enter/Space).
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate(`/app/deal/${deal.id}`);
+                }
+              }}
+              className="relative bg-card rounded-2xl border border-border overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-px hover:shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)] active:scale-[0.99] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 before:z-10 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none"
             >
               <div
                 className={`${isHero ? "h-48" : "h-28"} bg-primary/5 flex items-center justify-center relative`}

@@ -217,10 +217,14 @@ const StartStream = () => {
       </div>
       <div className="px-4 space-y-4">
         <div>
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+          <label
+            htmlFor="stream-title"
+            className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1"
+          >
             {t("live.fieldTitle", "Назва ефіру *")}
           </label>
           <input
+            id="stream-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t("live.fieldTitlePlaceholder", "Наприклад: Збір на ремонт будинку")}
@@ -251,11 +255,15 @@ const StartStream = () => {
           </div>
         </div>
         <div>
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+          <label
+            htmlFor="stream-goal"
+            className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1"
+          >
             {/* Поле вводится строго в EUR — символ берём из метаданных валюты, не хардкодим. */}
             {t("live.fieldGoal", "Ціль збору ({currency})", { currency: symbolFor("eur") })}
           </label>
           <input
+            id="stream-goal"
             type="number"
             value={goal}
             onChange={(e) => setGoal(e.target.value)}

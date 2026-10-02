@@ -20,7 +20,7 @@ export default function AppLayout() {
 
   if (!user) return null;
 
-  const isActive = (tab: typeof tabs[0]) => {
+  const isActive = (tab: (typeof tabs)[0]) => {
     if (tab.to === "/app/create-deal") return false;
     if (tab.exact) return pathname === tab.to;
     return pathname.startsWith(tab.to);
@@ -34,19 +34,31 @@ export default function AppLayout() {
       >
         {t("nav.skipToContent", "Перейти до основного вмісту")}
       </a>
-      <main id="app-main" className="flex-1 pb-20 overflow-y-auto" tabIndex={-1}>
+      <main
+        id="app-main"
+        className="flex-1 pb-20 overflow-y-auto pt-[env(safe-area-inset-top)]"
+        tabIndex={-1}
+      >
         <Outlet />
       </main>
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-screen-sm bg-background border-t border-border z-50 safe-area-bottom">
+      <nav
+        aria-label={t("nav.main", "Головна навігація")}
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-screen-sm bg-background border-t border-border z-50 safe-area-bottom"
+      >
         <div className="flex items-center justify-around px-2 py-1.5">
           {tabs.map(({ to, icon: Icon, labelKey, fallback, exact }) => {
             const active = isActive({ to, icon: Icon, labelKey, fallback, exact });
             const label = to === "/app/create-deal" ? "" : t(labelKey, fallback);
             return (
-              <Link key={to} to={to} aria-label={t(labelKey, fallback)}
+              <Link
+                key={to}
+                to={to}
+                aria-label={t(labelKey, fallback)}
+                aria-current={active ? "page" : undefined}
                 className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
                   active ? "text-accent" : "text-muted-foreground hover:text-foreground"
-                }`}>
+                }`}
+              >
                 {to === "/app/create-deal" ? (
                   <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center -mt-5 shadow-lg ring-4 ring-background">
                     <Icon className="w-5 h-5 text-white" />
@@ -56,7 +68,9 @@ export default function AppLayout() {
                     <div className={`p-1.5 rounded-lg transition-colors ${active ? "bg-accent/10" : ""}`}>
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className={`text-[10px] font-medium ${active ? "font-semibold" : ""}`}>{label}</span>
+                    <span className={`text-[10px] font-medium ${active ? "font-semibold" : ""}`}>
+                      {label}
+                    </span>
                   </>
                 )}
               </Link>
