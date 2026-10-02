@@ -72,15 +72,18 @@ export default function App() {
 
   return (
     <LocaleProvider>
-      <PageTransition>
-        <ErrorBoundary>
-          <Suspense
-            fallback={
-              <div className="min-h-screen bg-background flex items-center justify-center" aria-busy="true">
-                <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-              </div>
-            }
-          >
+      {/* GF-3: ErrorBoundary/Suspense СНАРУЖИ PageTransition — иначе key=pathname ремоунтил
+          всё дерево на каждой навигации (мигание таб-бара, сброс скролла, тихая очистка
+          состояния ErrorBoundary, двойной рендер). Теперь анимируется только контент роутов. */}
+      <ErrorBoundary>
+        <Suspense
+          fallback={
+            <div className="min-h-screen bg-background flex items-center justify-center" aria-busy="true">
+              <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+            </div>
+          }
+        >
+          <PageTransition>
             <Routes>
               <Route element={<PublicLayout />}>
                 {/* Native app opens into the product (feed → login if no session),
@@ -157,9 +160,9 @@ export default function App() {
 
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </Suspense>
-        </ErrorBoundary>
-      </PageTransition>
+          </PageTransition>
+        </Suspense>
+      </ErrorBoundary>
     </LocaleProvider>
   );
 }
