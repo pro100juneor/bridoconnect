@@ -44,3 +44,9 @@ jobs:
 
       - name: Test
         run: npm test
+
+      # GF-1: зависимостный гейт. high допускаем (остался vite 5→8 мажор), critical — блокируем.
+      - name: Dependency audit (high — informational)
+        run: npm audit --audit-level=high || true
+      - name: Dependency audit (critical — blocking)
+        run: npm audit --audit-level=critical
