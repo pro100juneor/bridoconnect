@@ -25,7 +25,7 @@ const formatTime = (iso: string | null, t: TFunction, localeTag: string): string
 const ChatList = () => {
   const navigate = useNavigate();
   void useAuth();
-  const { chats, loading } = useChats();
+  const { chats, loading, error, refetch } = useChats();
   const { t, localeTag } = useT();
   const [query, setQuery] = useState("");
 
@@ -58,6 +58,16 @@ const ChatList = () => {
           {[0, 1, 2, 3, 4].map((i) => (
             <div key={i} className="h-16 rounded-2xl bg-secondary animate-pulse" />
           ))}
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center py-16 px-6 gap-3 text-center">
+          <p className="font-semibold text-foreground">{t("common.loadError", "Не вдалося завантажити")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("common.loadErrorDesc", "Перевірте з'єднання та спробуйте ще раз.")}
+          </p>
+          <button onClick={() => refetch()} className="text-sm text-accent font-semibold min-h-[44px]">
+            {t("common.retry", "Спробувати знову")}
+          </button>
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center py-16 px-6 gap-4 text-center">

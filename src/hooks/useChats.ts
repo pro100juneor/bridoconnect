@@ -51,6 +51,7 @@ export const useChats = () => {
   const { user } = useAuth();
   const [chats, setChats] = useState<ChatPreview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null); // H-14
 
   const fetchChats = useCallback(async () => {
     if (!user) {
@@ -59,6 +60,7 @@ export const useChats = () => {
       return;
     }
     setLoading(true);
+    setError(null);
 
     // Підтягую деали, де юзер — creator АБО sponsor
     const { data: deals, error } = await supabase
@@ -74,6 +76,7 @@ export const useChats = () => {
       .order("updated_at", { ascending: false });
 
     if (error || !deals) {
+      if (error) setError(error.message);
       setChats([]);
       setLoading(false);
       return;
@@ -210,5 +213,5 @@ export const useChats = () => {
     fetchChats();
   }, [fetchChats]);
 
-  return { chats, loading, refetch: fetchChats };
+  return { chats, loading, error, refetch: fetchChats };
 };
