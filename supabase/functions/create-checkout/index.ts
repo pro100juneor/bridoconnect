@@ -201,6 +201,18 @@ serve(async (req) => {
         .eq("id", (promoRow as { id: string }).id)
         .is("stripe_session_id", null);
     } else if (type === "subscription" && priceId) {
+      // MEDIUM: priceId приходит из тела запроса — валидируем по серверному allowlist,
+      // иначе можно подставить любую цену из Stripe-аккаунта (дешёвую/тестовую).
+      const allowedPrices = [
+        Deno.env.get("STRIPE_PRICE_MONTHLY"),
+        Deno.env.get("STRIPE_PRICE_YEARLY"),
+      ].filter(Boolean);
+      if (!allowedPrices.includes(priceId)) {
+        return new Response(JSON.stringify({ error: "invalid price" }), {
+          status: 400,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
       session = await stripe.checkout.sessions.create({
         mode: "subscription",
         payment_method_types: ["card"],
@@ -270,10 +282,10 @@ serve(async (req) => {
           for (const done of reservationIds) {
             await supabase.rpc("release_reservation", { p_reservation_id: done });
           }
-          return new Response(
-            JSON.stringify({ error: "product unavailable", productId: p.id }),
-            { status: 409, headers: { ...headers, "Content-Type": "application/json" } }
-          );
+          return new Response(JSON.stringify({ error: "product unavailable", productId: p.id }), {
+            status: 409,
+            headers: { ...headers, "Content-Type": "application/json" },
+          });
         }
         reservationIds.push(rid as string);
       }
@@ -297,32 +309,32 @@ serve(async (req) => {
 
       try {
         session = await stripe.checkout.sessions.create({
-        mode: "payment",
-        payment_method_types: ["card"],
-        line_items,
-        expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
-        success_url: `${origin}/app/shop?success=true`,
-        cancel_url: `${origin}/app/cart`,
-        metadata: {
-          productIds: idsJson,
-          seller_id: sellerId,
-          type: "cart_purchase",
-          user_id: user.id,
-          recipient_id: sellerId,
-          currency: cur.code,
-          platform_fee_cents: String(feeCents),
-          reservationIds: JSON.stringify(reservationIds),
-        },
-        payment_intent_data: {
-          application_fee_amount: feeCents,
-          transfer_data: { destination: seller.stripe_connect_account_id },
+          mode: "payment",
+          payment_method_types: ["card"],
+          line_items,
+          expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
+          success_url: `${origin}/app/shop?success=true`,
+          cancel_url: `${origin}/app/cart`,
           metadata: {
             productIds: idsJson,
             seller_id: sellerId,
-            buyer_id: user.id,
+            type: "cart_purchase",
+            user_id: user.id,
+            recipient_id: sellerId,
+            currency: cur.code,
             platform_fee_cents: String(feeCents),
+            reservationIds: JSON.stringify(reservationIds),
           },
-        },
+          payment_intent_data: {
+            application_fee_amount: feeCents,
+            transfer_data: { destination: seller.stripe_connect_account_id },
+            metadata: {
+              productIds: idsJson,
+              seller_id: sellerId,
+              buyer_id: user.id,
+              platform_fee_cents: String(feeCents),
+            },
+          },
         });
       } catch (e) {
         // Сессия не создалась — резерв держать не за что, возвращаем товар.
@@ -502,7 +514,7 @@ serve(async (req) => {
       if (dealId) {
         const { data: deal, error: dErr } = await supabase
           .from("deals")
-          .select("id, creator_id, status")
+          .select("id, creator_id, status, stripe_payment_intent_id, refunded_at")
           .eq("id", dealId)
           .maybeSingle();
         if (dErr || !deal) {
@@ -514,6 +526,14 @@ serve(async (req) => {
         if (deal.status === "completed" || deal.status === "cancelled") {
           return new Response(JSON.stringify({ error: "deal is closed" }), {
             status: 400,
+            headers: { ...headers, "Content-Type": "application/json" },
+          });
+        }
+        // H-5: сделка — одноплатёжная. Второй checkout рассинхронизировал бы amount_cents
+        // (пишется только для первой сессии) с реально оплаченной суммой → неверный net при release.
+        if (deal.stripe_payment_intent_id && !deal.refunded_at) {
+          return new Response(JSON.stringify({ error: "deal already funded" }), {
+            status: 409,
             headers: { ...headers, "Content-Type": "application/json" },
           });
         }

@@ -98,6 +98,18 @@ serve(async (req) => {
         sponsorId = deal?.sponsor_id || "";
       }
 
+      // H-2: инкремент raised ДО вставки ledger-строки. increment_raised_idempotent
+      // гейтится существованием транзакции с этим (processor,event_id); если вставить
+      // строку раньше — guard увидит её и инкремент не выполнится даже на первой доставке.
+      if (n.eventCode === "AUTHORISATION" && dealId) {
+        await supabase.rpc("increment_raised_idempotent", {
+          p_deal_id: dealId,
+          p_amount: amount,
+          p_processor: "adyen",
+          p_event_id: n.pspReference,
+        });
+      }
+
       const { error } = await supabase.from("transactions").insert({
         processor: "adyen",
         adyen_psp_reference: n.pspReference,
@@ -112,13 +124,7 @@ serve(async (req) => {
       if (error && (error as { code?: string }).code !== "23505") throw error;
 
       if (n.eventCode === "AUTHORISATION" && dealId) {
-        // P1-12 fix: idempotent increment — gates by transaction-existence.
-        await supabase.rpc("increment_raised_idempotent", {
-          p_deal_id: dealId,
-          p_amount: amount,
-          p_processor: "adyen",
-          p_event_id: n.pspReference,
-        });
+        // increment уже выполнен выше (до вставки ledger-строки); здесь только статус/метаданные.
         await supabase
           .from("deals")
           .update({

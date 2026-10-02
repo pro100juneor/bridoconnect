@@ -178,10 +178,12 @@ serve(async (req) => {
     }
     const payment = await resp.json();
 
+    // H-3: НЕ пресетим dlocal_payment_id здесь — это маркер «уже применено» в
+    // apply_dlocal_payment; его должен ставить сам RPC при первом зачислении (как у PayPal),
+    // иначе webhook PAID видит маркер и raised не увеличивается.
     await supabase
       .from("deals")
       .update({
-        dlocal_payment_id: payment.id,
         dlocal_country: country,
         payment_processor: "dlocal",
       })

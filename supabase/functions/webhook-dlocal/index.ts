@@ -87,6 +87,7 @@ serve(async (req) => {
         p_amount: event.amount,
         p_payment_id: event.id,
         p_sponsor_id: sponsorId,
+        p_currency: event.currency, // H-4: конвертация локальной суммы в EUR в RPC
       });
       if (applyErr) throw applyErr;
 
