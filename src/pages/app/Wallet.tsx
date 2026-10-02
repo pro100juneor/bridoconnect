@@ -102,7 +102,7 @@ const Wallet = () => {
             <p className="text-sm text-muted-foreground leading-relaxed text-center max-w-[16rem]">
               {t("wallet.emptyTitle", "Транзакцій ще немає.")}
               <br />
-              {t("wallet.emptyHint", "Поповніть гаманець, щоб почати.")}
+              {t("wallet.emptyHint", "Операції зʼявляться тут автоматично.")}
             </p>
           </div>
         )}

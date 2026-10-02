@@ -31,19 +31,17 @@
   "settings.deleteAccount.errorTitle": "Не вдалося видалити акаунт",
   "settings.deleteAccount.successTitle": "Акаунт видалено",
   "settings.deleteAccount.successDesc": "Дякуємо, що були з нами.",
-
   "wallet.availableBalance": "Підсумок операцій",
   "wallet.send": "Відправити",
   "wallet.sentTotal": "Відправлено",
   "wallet.receivedTotal": "Поповнено",
   "wallet.refreshAria": "Оновити",
   "wallet.emptyTitle": "Транзакцій ще немає.",
-  "wallet.emptyHint": "Поповніть гаманець, щоб почати.",
+  "wallet.emptyHint": "Операції зʼявляться тут автоматично.",
   "wallet.type.deposit": "Поповнення",
   "wallet.type.withdrawal": "Виведення",
   "wallet.type.dealPayment": "Платіж по угоді",
   "wallet.type.refund": "Повернення",
-
   "chat.titleFallback": "Чат",
   "chat.partnerFallback": "Партнер",
   "chat.online": "онлайн",
@@ -53,7 +51,6 @@
   "chat.inputPlaceholder": "Повідомлення…",
   "chat.attachAria": "Прикріпити файл",
   "chat.sendAria": "Надіслати",
-
   "editProfile.title": "Редагувати профіль",
   "editProfile.saved": "Профіль збережено",
   "editProfile.uploadPhotoAria": "Завантажити фото",

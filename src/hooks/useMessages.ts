@@ -12,14 +12,23 @@ export const useMessages = (dealId: string) => {
       return;
     }
 
-    // Завантажуємо існуючі повідомлення
+    // MEDIUM: alive-guard — поздний ответ по старому dealId не перезаписывает новый,
+    // и realtime-строки, пришедшие во время загрузки, не затираются (merge по id).
+    let alive = true;
     supabase
       .from("messages")
       .select("*")
       .eq("deal_id", dealId)
       .order("created_at", { ascending: true })
       .then(({ data, error }) => {
-        if (!error && data) setMessages(data as unknown as Message[]);
+        if (!alive) return;
+        if (!error && data) {
+          setMessages((prev) => {
+            const ids = new Set((data as unknown as Message[]).map((m) => m.id));
+            const extras = prev.filter((m) => !ids.has(m.id));
+            return [...(data as unknown as Message[]), ...extras];
+          });
+        }
         setLoading(false);
       });
 
@@ -41,6 +50,7 @@ export const useMessages = (dealId: string) => {
       .subscribe();
 
     return () => {
+      alive = false;
       supabase.removeChannel(channel);
     };
   }, [dealId]);
@@ -54,6 +64,12 @@ export const useMessages = (dealId: string) => {
       ])
       .select()
       .single();
+    // LOW: показать своё сообщение сразу (realtime-эхо может задержаться); dedup по id.
+    if (!error && data) {
+      setMessages((prev) =>
+        prev.find((m) => m.id === (data as Message).id) ? prev : [...prev, data as unknown as Message]
+      );
+    }
     return { data, error };
   };
 

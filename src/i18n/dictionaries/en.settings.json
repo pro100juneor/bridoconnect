@@ -31,19 +31,17 @@
   "settings.deleteAccount.errorTitle": "Could not delete the account",
   "settings.deleteAccount.successTitle": "Account deleted",
   "settings.deleteAccount.successDesc": "Thank you for being with us.",
-
   "wallet.availableBalance": "Operations summary",
   "wallet.send": "Send",
   "wallet.sentTotal": "Sent",
   "wallet.receivedTotal": "Topped up",
   "wallet.refreshAria": "Refresh",
   "wallet.emptyTitle": "No transactions yet.",
-  "wallet.emptyHint": "Top up your wallet to get started.",
+  "wallet.emptyHint": "Transactions will appear here automatically.",
   "wallet.type.deposit": "Top-up",
   "wallet.type.withdrawal": "Withdrawal",
   "wallet.type.dealPayment": "Deal payment",
   "wallet.type.refund": "Refund",
-
   "chat.titleFallback": "Chat",
   "chat.partnerFallback": "Partner",
   "chat.online": "online",
@@ -53,7 +51,6 @@
   "chat.inputPlaceholder": "Message…",
   "chat.attachAria": "Attach a file",
   "chat.sendAria": "Send",
-
   "editProfile.title": "Edit profile",
   "editProfile.saved": "Profile saved",
   "editProfile.uploadPhotoAria": "Upload photo",

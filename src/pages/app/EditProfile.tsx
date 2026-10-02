@@ -87,8 +87,9 @@ const EditProfile = () => {
         </h2>
         <button
           onClick={handleSave}
+          disabled={saving}
           aria-label={t("common.save", "Зберегти")}
-          className={`min-h-[44px] min-w-[44px] flex items-center justify-center text-sm font-semibold transition-transform duration-150 hover:-translate-y-px ${saved ? "text-success" : "text-accent"}`}
+          className={`min-h-[44px] min-w-[44px] flex items-center justify-center text-sm font-semibold transition-transform duration-150 hover:-translate-y-px disabled:opacity-60 ${saved ? "text-success" : "text-accent"}`}
         >
           {saved ? (
             <motion.span

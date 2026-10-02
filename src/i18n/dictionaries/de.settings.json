@@ -31,19 +31,17 @@
   "settings.deleteAccount.errorTitle": "Konto konnte nicht gelöscht werden",
   "settings.deleteAccount.successTitle": "Konto gelöscht",
   "settings.deleteAccount.successDesc": "Danke, dass du bei uns warst.",
-
   "wallet.availableBalance": "Vorgangsübersicht",
   "wallet.send": "Senden",
   "wallet.sentTotal": "Gesendet",
   "wallet.receivedTotal": "Aufgeladen",
   "wallet.refreshAria": "Aktualisieren",
   "wallet.emptyTitle": "Noch keine Transaktionen.",
-  "wallet.emptyHint": "Lade dein Wallet auf, um zu starten.",
+  "wallet.emptyHint": "Transaktionen erscheinen hier automatisch.",
   "wallet.type.deposit": "Aufladung",
   "wallet.type.withdrawal": "Auszahlung",
   "wallet.type.dealPayment": "Zahlung für Vereinbarung",
   "wallet.type.refund": "Rückerstattung",
-
   "chat.titleFallback": "Chat",
   "chat.partnerFallback": "Partner",
   "chat.online": "online",
@@ -53,7 +51,6 @@
   "chat.inputPlaceholder": "Nachricht…",
   "chat.attachAria": "Datei anhängen",
   "chat.sendAria": "Senden",
-
   "editProfile.title": "Profil bearbeiten",
   "editProfile.saved": "Profil gespeichert",
   "editProfile.uploadPhotoAria": "Foto hochladen",
