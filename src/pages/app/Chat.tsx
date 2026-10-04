@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, Send, Paperclip, MoreVertical } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, MoreVertical, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMessages } from "@/hooks/useMessages";
 import { supabase } from "@/integrations/supabase/client";
@@ -210,6 +210,16 @@ const Chat = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-secondary/20">
+        {/* UGC/анти-скам: сделка защищена эскроу только внутри платформы.
+            Прямое лекарство от топ-вектора увода оплаты «мимо платформы». */}
+        <div className="flex items-start gap-2 rounded-2xl bg-secondary px-3 py-2 text-xs text-muted-foreground">
+          <ShieldCheck
+            className="w-4 h-4 shrink-0 mt-0.5 text-success"
+            strokeWidth={1.75}
+            aria-hidden="true"
+          />
+          <span>{t("chat.escrowSafety", "Оплачуйте лише через Brido — поза платформою захисту немає.")}</span>
+        </div>
         {loading && (
           // DESIGN.md §Loading — 3 skeleton bubbles, alternating sides.
           <div className="space-y-3">
