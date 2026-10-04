@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useT } from "@/i18n/useT";
 import { tap } from "@/lib/native";
 import { toast } from "@/hooks/use-toast";
-import { submitReport } from "@/lib/reports";
+import { submitReport, blockUser } from "@/lib/reports";
 import { uploadChatAttachment } from "@/lib/chatAttachments";
 import { ChatAttachment } from "@/components/ChatAttachment";
 
@@ -57,6 +57,22 @@ const DirectChat = () => {
         title: t("chat.reportSent", "Скаргу надіслано"),
         description: t("chat.reportSentDesc", "Дякуємо, ми розглянемо звернення."),
       });
+    }
+  };
+
+  const handleBlock = async () => {
+    setMenuOpen(false);
+    if (!user || !targetId) return;
+    void tap("light");
+    const { error } = await blockUser(user.id, targetId);
+    if (error) {
+      toast({ title: t("chat.blockError", "Не вдалося заблокувати"), variant: "destructive" });
+    } else {
+      toast({
+        title: t("chat.blocked", "Користувача заблоковано"),
+        description: t("chat.blockedDesc", "Ви більше не отримуватимете повідомлень від цієї людини."),
+      });
+      navigate("/app/chats");
     }
   };
 
@@ -170,6 +186,12 @@ const DirectChat = () => {
                   className="w-full text-left px-4 py-3 text-sm text-destructive hover:bg-secondary min-h-[44px]"
                 >
                   {t("chat.report", "Поскаржитися на користувача")}
+                </button>
+                <button
+                  onClick={handleBlock}
+                  className="w-full text-left px-4 py-3 text-sm text-destructive hover:bg-secondary min-h-[44px] border-t border-border"
+                >
+                  {t("chat.block", "Заблокувати користувача")}
                 </button>
               </div>
             </>
