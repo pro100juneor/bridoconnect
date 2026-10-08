@@ -142,3 +142,34 @@ D-002=владелец завтра, D-003/D-004=внешние). **Аудито
 - **D-002** (вход) — владелец завтра; **D-004** — юрист; **D-001** — прод-миграции/деплой.
 
 Визуально 5 компонентов подтверждены (реальный экран входа + превью на настоящем CSS, скриншоты владельцу).
+
+## 8. Самоаудит приложения (2026-10-08) — 4 параллельных агента + фиксы
+
+Проверено: ~212 обработчиков/все роуты/42 словаря/конфиг iOS/код. **Общий вывод агентов: приложение в
+хорошем состоянии — мёртвых кнопок, сломанной навигации, пропавших i18n-ключей НЕТ.** Найденное — исправлено:
+
+**Исправлено и закоммичено (конвейер зелёный на каждом шаге):**
+
+- `5ce96f5` H1 StartStream (не идём в live при ошибке INSERT), M1 убрана заглушка `"u1"` в отзыве,
+  M2 alive-guards (useReviews/DealUpdates/ActiveDeal/Dispute/useSponsorReveal), M3 ReviewModal без сырой
+  ошибки, M4 удалён мёртвый `useReviews.createReview`.
+- `8744bda` MED-1 LivePage — честный бейдж «Приклад» + дисклеймер (убраны фейковые LIVE/счётчики зрителей);
+  MED-2 Register читает `?role=executor`; LOW-1 FAQ q9 без несуществующего «вывода»; a11y label↔input
+  (EditProfile/StorefrontEditor) + focus-ring (Search/ChatList/Admin/CreateDeal/RecipientPageEditor).
+- `be2c28f` L1 StreamViewer донат (auth-гейт + тост ошибки), L2 дедуп realtime-нотификаций, L6 useProfile
+  `maybeSingle`, L7 CreateDeal валюта в нижнем регистре.
+- `df89a72` iOS: device family → iPhone-only, armv7→arm64, убраны iPad-ориентации.
+- `6892282` a11y: aria-label на icon-кнопки (Cart/RecipientPageEditor), alt лайтбокса.
+
+**НЕ фиксится мной — требует владельца/решения (НЕ блокирует сборку):**
+
+- **Stripe price IDs** в `.env.production` (`VITE_STRIPE_PRICE_MONTHLY/_YEARLY`) — подписки деградируют
+  мягко («Stripe не підключено»), не крашат. Владелец вписывает, когда включает подписки.
+- **FX-cron ref:** `supabase/migrations/025_fx_cron.sql` хардкодит staging-проект `mlgyuonypcyseryrmcms`
+  (прод — `wtevirwkshidxskqpvtu`). Перед накатом на прод (D-001) выровнять.
+- **Admin-роут:** ролевой гейт client-side (`isAdmin` в Admin.tsx) + RLS в БД; подтвердить server-side RLS.
+- **Публичные витрины** (RecipientPage/Catalog) ссылаются на protected `/app/*` → гость уходит на `/auth`;
+  нужен публичный роут товара (решение владельца).
+- **a11y (системно):** ~53 формы используют соседний `<label>` без `htmlFor` (спасает placeholder) —
+  опциональный сквозной проход. MFA fail-open — задокументированный known-issue.
+- `.env.production` в git-истории (только публичные anon/client-id, не секреты) — чистка не срочна.
