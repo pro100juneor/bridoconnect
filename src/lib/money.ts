@@ -43,6 +43,45 @@ export const SUPPORTED_CURRENCIES: CurrencyMeta[] = [
 
 export const BASE_CURRENCY = "eur";
 
+/**
+ * Платформенный сбор — 5% (basis points). ДОЛЖЕН совпадать с
+ * `PLATFORM_FEE_BPS` в supabase/functions/create-checkout и с текстом AGB.
+ * Держим зеркало на клиенте, чтобы честно показать разбивку платежа ДО оплаты.
+ */
+export const PLATFORM_FEE_BPS = 500;
+
+export interface PaymentBreakdown {
+  /** Сколько платит спонсор (в валюте сделки, мажорные единицы). */
+  total: number;
+  /** Комиссия платформы. */
+  fee: number;
+  /** Сколько получит получатель (total − fee) — destination-charge модель. */
+  net: number;
+  /** Ставка сбора в процентах (для подписи «Комиссия Brido 5%»). */
+  feePercent: number;
+}
+
+/**
+ * Разбивка платежа по сделке. Прозрачность — прямое лекарство от топ-жалобы
+ * категории (скрытые комиссии). Считает ровно то, что реально удерживается на
+ * сервере: сбор = round(total * bps / 10000) в минорных единицах, net = total − fee.
+ */
+export function paymentBreakdown(total: number, code: string | null | undefined): PaymentBreakdown {
+  const safe = Number.isFinite(total) && total > 0 ? total : 0;
+  const decimals = metaFor(code).decimals;
+  const factor = 10 ** decimals;
+  // Считаем сбор в минорных единицах той же разрядности, что и отображение,
+  // чтобы net + fee === total без копеечного расхождения.
+  const minor = Math.round(safe * factor);
+  const feeMinor = Math.round((minor * PLATFORM_FEE_BPS) / 10_000);
+  return {
+    total: minor / factor,
+    fee: feeMinor / factor,
+    net: (minor - feeMinor) / factor,
+    feePercent: PLATFORM_FEE_BPS / 100,
+  };
+}
+
 export function normalizeCode(code: string | null | undefined): string {
   return (code || BASE_CURRENCY).trim().toLowerCase();
 }

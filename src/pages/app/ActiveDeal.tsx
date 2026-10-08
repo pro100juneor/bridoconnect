@@ -9,6 +9,7 @@ import { usePaypal } from "@/hooks/usePaypal";
 import { useAdyen } from "@/hooks/useAdyen";
 import { useT } from "@/i18n/useT";
 import { useCurrency } from "@/hooks/useCurrency";
+import { paymentBreakdown } from "@/lib/money";
 import { toast } from "@/hooks/use-toast";
 import ReviewModal from "@/components/ReviewModal";
 import { Confetti } from "@/components/Confetti";
@@ -417,6 +418,32 @@ const ActiveDeal = () => {
               placeholder={t("deal.support.amount.other")}
               className="w-full bg-secondary rounded-xl px-4 py-2.5 text-sm outline-none text-foreground mb-3 focus:ring-2 focus:ring-accent/30"
             />
+            {/* Прозрачная разбивка платежа ДО оплаты — лекарство от топ-жалобы
+                категории (скрытые комиссии). Числа = ровно то, что удерживает сервер. */}
+            {Number(amount) > 0 &&
+              (() => {
+                const b = paymentBreakdown(Number(amount), "eur");
+                return (
+                  <div className="rounded-xl bg-secondary/60 px-3 py-2.5 mb-3 text-xs space-y-1">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>{t("deal.support.breakdown.pay", "Ви платите")}</span>
+                      <span className="text-foreground font-medium">{formatIn(b.total, "eur")}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>
+                        {t("deal.support.breakdown.fee", "Комісія Brido {pct}%", { pct: b.feePercent })}
+                      </span>
+                      <span>−{formatIn(b.fee, "eur")}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-1">
+                      <span className="text-muted-foreground">
+                        {t("deal.support.breakdown.net", "Отримувач отримає")}
+                      </span>
+                      <span className="text-foreground font-semibold">{formatIn(b.net, "eur")}</span>
+                    </div>
+                  </div>
+                );
+              })()}
             <Button
               data-testid="donate-submit"
               className="w-full bg-accent hover:bg-accent/90 text-white transition-transform duration-150 hover:-translate-y-px"

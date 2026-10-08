@@ -9,6 +9,8 @@ import {
   convertAmount,
   formatMoney,
   formatMinor,
+  paymentBreakdown,
+  PLATFORM_FEE_BPS,
   type FxRate,
 } from "./money";
 
@@ -91,5 +93,34 @@ describe("formatMoney", () => {
 describe("formatMinor", () => {
   it("converts cents to major units", () => {
     expect(formatMinor(1050, "eur", { localeTag: "en-GB" })).toBe("€10.50");
+  });
+});
+
+describe("paymentBreakdown", () => {
+  it("takes 5% platform fee and leaves the rest to the recipient", () => {
+    const b = paymentBreakdown(100, "eur");
+    expect(b.total).toBe(100);
+    expect(b.fee).toBe(5);
+    expect(b.net).toBe(95);
+    expect(b.feePercent).toBe(5);
+    expect(PLATFORM_FEE_BPS).toBe(500);
+  });
+  it("net + fee always equals total (no cent drift)", () => {
+    for (const amt of [33.33, 10.07, 1, 999.99, 0.1]) {
+      const b = paymentBreakdown(amt, "eur");
+      expect(Number((b.net + b.fee).toFixed(2))).toBe(Number(amt.toFixed(2)));
+    }
+  });
+  it("respects zero-decimal currencies (UAH): fee rounded to whole units", () => {
+    const b = paymentBreakdown(1000, "uah");
+    expect(b.total).toBe(1000);
+    expect(b.fee).toBe(50);
+    expect(b.net).toBe(950);
+  });
+  it("is 0 across the board for non-positive or non-finite input", () => {
+    for (const bad of [0, -5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      const b = paymentBreakdown(bad, "eur");
+      expect(b).toMatchObject({ total: 0, fee: 0, net: 0 });
+    }
   });
 });
