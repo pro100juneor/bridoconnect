@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, Send, MoreVertical, Paperclip } from "lucide-react";
+import { ArrowLeft, Send, MoreVertical, Paperclip, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { openDirectThread, markDirectThreadRead, useDirectMessages } from "@/hooks/useDirectMessages";
 import { supabase } from "@/integrations/supabase/client";
 import { useT } from "@/i18n/useT";
 import { tap } from "@/lib/native";
 import { toast } from "@/hooks/use-toast";
-import { submitReport, blockUser } from "@/lib/reports";
+import { submitReport, blockUser, detectOffPlatform } from "@/lib/reports";
 import { uploadChatAttachment } from "@/lib/chatAttachments";
 import { ChatAttachment } from "@/components/ChatAttachment";
 
@@ -217,7 +217,7 @@ const DirectChat = () => {
               <motion.div
                 key={msg.id}
                 {...msgEnter}
-                className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
               >
                 <div
                   className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
@@ -239,6 +239,20 @@ const DirectChat = () => {
                     })}
                   </p>
                 </div>
+                {/* Анти-скам: предупреждаем получателя, если собеседник уводит
+                    общение/оплату за пределы Brido (телефон/внешний мессенджер). */}
+                {!isMe && detectOffPlatform(msg.text) && (
+                  <div className="flex items-start gap-1.5 mt-1 max-w-[75%] text-[11px] text-warning">
+                    <AlertTriangle
+                      className="w-3.5 h-3.5 shrink-0 mt-px"
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
+                    <span>
+                      {t("chat.offPlatformWarn", "Будьте обережні: оплата й захист працюють лише в Brido.")}
+                    </span>
+                  </div>
+                )}
               </motion.div>
             );
           })}

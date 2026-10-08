@@ -53,6 +53,7 @@
   "chat.reportSent": "Meldung gesendet",
   "chat.reportSentDesc": "Danke, wir prüfen es.",
   "chat.escrowSafety": "Nur über Brido bezahlen — außerhalb der Plattform gibt es keinen Schutz.",
+  "chat.offPlatformWarn": "Vorsicht: Zahlung und Schutz funktionieren nur innerhalb von Brido.",
   "chat.block": "Nutzer blockieren",
   "chat.blockError": "Blockieren fehlgeschlagen",
   "chat.blocked": "Nutzer blockiert",
