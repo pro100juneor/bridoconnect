@@ -483,6 +483,7 @@ const RecipientPageEditor = () => {
               void tap("light");
               coverInput.current?.click();
             }}
+            aria-label={t("recipientPage.cover", "Обкладинка")}
             className="relative w-full h-32 rounded-2xl bg-secondary overflow-hidden flex items-center justify-center text-muted-foreground/50 transition-transform duration-150 hover:-translate-y-px"
           >
             {profile?.cover_url ? (

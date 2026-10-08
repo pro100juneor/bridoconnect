@@ -311,7 +311,7 @@ export default function RecipientPage() {
           </button>
           <img
             src={lightbox}
-            alt=""
+            alt={t("recipientPage.photoAlt", "Фото")}
             className="max-w-full max-h-full object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}
           />

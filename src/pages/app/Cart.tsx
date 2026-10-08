@@ -79,6 +79,7 @@ const Cart = () => {
                     void tap("light");
                     navigate(`/app/shop/${i.productId}`);
                   }}
+                  aria-label={t("cart.openProduct", "Відкрити товар")}
                   className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center shrink-0 overflow-hidden"
                 >
                   {i.image ? (
