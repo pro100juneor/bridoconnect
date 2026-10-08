@@ -217,7 +217,7 @@ const CreateDeal = () => {
                   <select
                     value={form.currency}
                     onChange={(e) => setForm({ ...form, currency: e.target.value })}
-                    className="bg-secondary rounded-xl px-3 text-sm outline-none text-foreground"
+                    className="bg-secondary rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-accent/30"
                   >
                     {/* Валюта заявки зберігається в deals.currency і враховується
                         при відображенні (конвертація за курсом з currency_rates). */}

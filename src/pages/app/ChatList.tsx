@@ -41,7 +41,7 @@ const ChatList = () => {
         <h1 className="font-serif text-4xl tracking-tight text-foreground mb-3 animate-fade-in">
           {t("chats.title", "Повідомлення")}
         </h1>
-        <div className="flex items-center gap-2 bg-secondary rounded-2xl px-3 py-2 min-h-[44px]">
+        <div className="flex items-center gap-2 bg-secondary rounded-2xl px-3 py-2 min-h-[44px] focus-within:ring-2 focus-within:ring-accent/30">
           <Search className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
           <input
             value={query}

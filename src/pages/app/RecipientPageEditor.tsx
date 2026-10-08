@@ -715,7 +715,7 @@ const RecipientPageEditor = () => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t("recipientPage.catalogSearchPlaceholder", "Пошук у каталозі…")}
-                className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                className="flex-1 bg-transparent text-sm outline-none text-foreground rounded focus:ring-2 focus:ring-accent/30"
                 autoFocus
               />
               <button

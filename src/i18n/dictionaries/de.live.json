@@ -44,7 +44,6 @@
   "live.chatEmpty": "Noch keine Nachrichten — sei der Erste 👋",
   "live.chatPlaceholder": "In den Chat schreiben…",
   "live.send": "Senden",
-
   "premium.title": "BridoConnect Premium",
   "premium.subtitle": "Maximales Vertrauen. Minimale Gebühren.",
   "premium.perk.noFee.title": "Keine Gebühren",
@@ -72,7 +71,6 @@
   "premium.footer": "Jederzeit kündbar. Sichere Zahlung über Stripe.",
   "premium.errorTitle": "Stripe ist nicht verbunden",
   "premium.errorDesc": "Das Abo wird aktiviert, sobald Stripe im Admin-Panel eingerichtet ist.",
-
   "promote.back": "Zurück",
   "promote.title": "Profil bewerben",
   "promote.intro": "Eine bezahlte Platzierung bringt dein Profil an die Spitze des Hauptfeeds und in das Karussell. Je höher die Stufe, desto höher die Priorität und desto länger die Anzeige.",
@@ -92,5 +90,7 @@
   "promote.redirecting": "Weiterleitung…",
   "promote.footer": "Garantierte Anzeige in der oberen Gruppe des Feeds — mindestens 3 Minuten nach der Zahlung.",
   "promote.errorTitle": "Zahlungsfehler",
-  "promote.errorDesc": "Bitte später erneut versuchen"
+  "promote.errorDesc": "Bitte später erneut versuchen",
+  "live.demoBadge": "Beispiel",
+  "live.demoNotice": "Noch keine Live-Streams — unten Beispiele, wie es aussehen wird. Dies ist eine Demo, keine echten Übertragungen."
 }

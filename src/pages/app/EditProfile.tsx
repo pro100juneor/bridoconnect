@@ -159,10 +159,14 @@ const EditProfile = () => {
           </div>
         ))}
         <div>
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+          <label
+            htmlFor="editprofile-bio"
+            className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1"
+          >
             {t("editProfile.bio", "Про себе")}
           </label>
           <textarea
+            id="editprofile-bio"
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
             rows={3}

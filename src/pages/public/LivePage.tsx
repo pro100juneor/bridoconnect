@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Radio, Eye } from "lucide-react";
+import { Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n/useT";
 
@@ -46,8 +46,15 @@ const LivePage = () => {
             {t("live.title", "Прямі ефіри")}
           </h1>
         </div>
-        <p className="text-muted-foreground mb-12 leading-relaxed">
+        <p className="text-muted-foreground mb-4 leading-relaxed">
           {t("live.publicSubtitle", "Дивись, як люди отримують допомогу в режимі реального часу.")}
+        </p>
+        {/* Честность (CLAUDE.md): это демо-витрина, а не реальные эфиры. */}
+        <p className="text-xs text-muted-foreground bg-secondary rounded-xl px-3 py-2 mb-10 leading-relaxed">
+          {t(
+            "live.demoNotice",
+            "Справжніх ефірів поки немає — нижче приклади того, як це виглядатиме. Це демонстрація, не реальні трансляції."
+          )}
         </p>
         <div className="space-y-4 mb-8">
           {featured.map((s, idx) => {
@@ -64,20 +71,12 @@ const LivePage = () => {
                     className={`${isHero ? "w-14 h-14" : "w-10 h-10"} text-primary/20`}
                     strokeWidth={1.75}
                   />
+                  {/* Демо-витрина: честный бейдж «Приклад» вместо фейковых
+                      LIVE/счётчика зрителей (не выдаём демо за реальный эфир). */}
                   <div className="absolute top-2 left-2">
-                    {s.live ? (
-                      <span className="bg-accent text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
-                      </span>
-                    ) : (
-                      <span className="bg-black/50 text-white text-[10px] px-2 py-0.5 rounded">
-                        {t("live.recorded", "Запис")}
-                      </span>
-                    )}
-                  </div>
-                  <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
-                    <Eye className="w-3 h-3" strokeWidth={1.75} />
-                    {s.viewers}
+                    <span className="bg-black/50 text-white text-[10px] font-semibold px-2 py-0.5 rounded">
+                      {t("live.demoBadge", "Приклад")}
+                    </span>
                   </div>
                 </div>
                 <div className="p-3">

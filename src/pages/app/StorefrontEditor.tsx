@@ -407,7 +407,7 @@ export default function StorefrontEditor() {
             </p>
             {(["phone", "email", "address", "site"] as (keyof ShopContacts)[]).map((k) => (
               <div key={k}>
-                <label className={labelCls}>
+                <label className={labelCls} htmlFor={`contact-${k}`}>
                   {k === "phone"
                     ? t("storefrontEditor.contact.phone", "Телефон")
                     : k === "email"
@@ -417,6 +417,7 @@ export default function StorefrontEditor() {
                         : t("storefrontEditor.contact.site", "Сайт")}
                 </label>
                 <input
+                  id={`contact-${k}`}
                   value={contacts[k] ?? ""}
                   onChange={(e) => setContacts((c) => ({ ...c, [k]: e.target.value }))}
                   className={inputCls}
@@ -440,8 +441,11 @@ export default function StorefrontEditor() {
               ] as [keyof ShopMessengers, string, string][]
             ).map(([k, labelKey, labelUk]) => (
               <div key={k}>
-                <label className={labelCls}>{t(labelKey, labelUk)}</label>
+                <label className={labelCls} htmlFor={`messenger-${k}`}>
+                  {t(labelKey, labelUk)}
+                </label>
                 <input
+                  id={`messenger-${k}`}
                   value={messengers[k] ?? ""}
                   onChange={(e) => setMessengers((m) => ({ ...m, [k]: e.target.value }))}
                   className={inputCls}

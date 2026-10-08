@@ -302,7 +302,7 @@ const Admin = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("admin.searchByName", "Пошук за імʼям…")}
-            className="w-full mb-3 px-3 py-2 rounded-xl bg-secondary text-sm text-foreground placeholder:text-muted-foreground outline-none"
+            className="w-full mb-3 px-3 py-2 rounded-xl bg-secondary text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-accent/30"
           />
           {filteredPeople.length === 0 ? (
             <p className="text-xs text-muted-foreground">{t("admin.noneFound", "Нікого не знайдено.")}</p>

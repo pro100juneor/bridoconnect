@@ -71,7 +71,7 @@ const Search = () => {
           {t("search.title", "Пошук")}
         </h1>
         <div className="flex gap-2">
-          <div className="flex-1 flex items-center gap-2 bg-secondary rounded-2xl px-3 py-2 min-h-[44px]">
+          <div className="flex-1 flex items-center gap-2 bg-secondary rounded-2xl px-3 py-2 min-h-[44px] focus-within:ring-2 focus-within:ring-accent/30">
             <SearchIcon className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
             <input
               value={query}

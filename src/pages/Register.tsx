@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,18 @@ const Register = () => {
   const { t } = useT();
   const reduced = useReducedMotion();
   const [step, setStep] = useState<"form" | "success">("form");
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "", role: "sponsor" });
+  // MED-2: дип-линк «Мені потрібна допомога» ведёт на /register?role=executor —
+  // предустанавливаем роль получателя, иначе намерение онбординга терялось.
+  const [searchParams] = useSearchParams();
+  const roleParam = searchParams.get("role");
+  const initialRole = roleParam === "executor" || roleParam === "recipient" ? "recipient" : "sponsor";
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirm: "",
+    role: initialRole,
+  });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
