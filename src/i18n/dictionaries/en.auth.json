@@ -1,6 +1,7 @@
 {
   "auth.or": "or",
   "auth.login.apple": "Sign in with Apple",
+  "auth.lastUsed": "Last used",
   "auth.register.apple": "Sign up with Apple",
   "auth.social.error.title": "Sign-in unavailable",
   "auth.social.error.desc": "This sign-in method is currently unavailable. Please use email.",

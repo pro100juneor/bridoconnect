@@ -16,6 +16,30 @@ import { isNative } from "@/lib/native";
 export type SocialProvider = "google" | "apple";
 export type SocialResult = { error: string | null };
 
+// Запоминаем последний использованный на этом устройстве способ входа, чтобы на
+// экране входа подсказать его («Востаннє»). Прямое лекарство от топ-жалобы
+// онбординга: люди заводят дубли-аккаунты, забыв, что вошли через Apple/Google
+// (особенно с Private Relay). Это лишь UX-подсказка — не влияет на саму сессию.
+export type LoginMethod = SocialProvider | "email";
+const LAST_LOGIN_KEY = "brido-last-login";
+
+export function rememberLoginMethod(method: LoginMethod): void {
+  try {
+    localStorage.setItem(LAST_LOGIN_KEY, method);
+  } catch {
+    // storage недоступен (приватный режим и т.п.) — подсказка просто не покажется
+  }
+}
+
+export function getLastLoginMethod(): LoginMethod | null {
+  try {
+    const v = localStorage.getItem(LAST_LOGIN_KEY);
+    return v === "google" || v === "apple" || v === "email" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
 // Client-id'ы нужны только на нативном iOS (web использует конфиг провайдера в
 // Supabase). Пустые значения до настройки — init просто не поднимется, и login
 // отдаст ошибку.

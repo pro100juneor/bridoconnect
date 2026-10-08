@@ -1,6 +1,7 @@
 {
   "auth.or": "або",
   "auth.login.apple": "Увійти через Apple",
+  "auth.lastUsed": "Востаннє",
   "auth.register.apple": "Зареєструватись через Apple",
   "auth.social.error.title": "Вхід недоступний",
   "auth.social.error.desc": "Зараз цей спосіб входу недоступний. Скористайтесь email.",

@@ -1,6 +1,7 @@
 {
   "auth.or": "oder",
   "auth.login.apple": "Mit Apple anmelden",
+  "auth.lastUsed": "Zuletzt genutzt",
   "auth.register.apple": "Mit Apple registrieren",
   "auth.social.error.title": "Anmeldung nicht verfügbar",
   "auth.social.error.desc": "Diese Anmeldemethode ist derzeit nicht verfügbar. Bitte E-Mail verwenden.",

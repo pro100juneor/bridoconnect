@@ -5,7 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { tap, notify, isNative } from "@/lib/native";
-import { signInWithGoogle, signInWithApple, type SocialProvider } from "@/lib/socialAuth";
+import {
+  signInWithGoogle,
+  signInWithApple,
+  rememberLoginMethod,
+  getLastLoginMethod,
+  type SocialProvider,
+} from "@/lib/socialAuth";
 import { useT } from "@/i18n/useT";
 
 const Auth = () => {
@@ -16,6 +22,8 @@ const Auth = () => {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [social, setSocial] = useState<SocialProvider | null>(null);
+  // Последний использованный метод входа на этом устройстве (подсказка «Востаннє»).
+  const [lastLogin] = useState(getLastLoginMethod);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +44,7 @@ const Auth = () => {
     } else {
       void tap("medium");
       void notify("success");
+      rememberLoginMethod("email");
       toast({
         title: t("auth.login.success.title", "Вітаємо! 👋"),
         description: t("auth.login.success.desc", "Ви успішно увійшли в BridoConnect"),
@@ -60,6 +69,9 @@ const Auth = () => {
         });
         return;
       }
+      // Успешный выбор метода запоминаем для подсказки «Востаннє» (web-OAuth
+      // сейчас уйдёт в redirect — пишем до него; на нативе сессия уже стоит).
+      rememberLoginMethod(provider);
       // Нативний id_token-флоу вже поставив сесію; web-OAuth сам зробить redirect.
       if (isNative) {
         void notify("success");
@@ -156,6 +168,11 @@ const Auth = () => {
             <LogIn className="w-4 h-4" strokeWidth={1.75} />
           )}
           {loading ? t("auth.login.submitting", "Входимо…") : t("auth.login.submit")}
+          {!loading && lastLogin === "email" && (
+            <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide bg-white/15 rounded px-1.5 py-0.5">
+              {t("auth.lastUsed", "Востаннє")}
+            </span>
+          )}
         </Button>
       </form>
 
@@ -182,6 +199,11 @@ const Auth = () => {
             <path d="M16.36 12.86c.02 2.32 2.03 3.09 2.05 3.1-.02.05-.32 1.11-1.07 2.2-.64.94-1.31 1.87-2.36 1.89-1.03.02-1.36-.61-2.54-.61-1.18 0-1.55.59-2.52.63-1.01.04-1.79-1.01-2.44-1.95-1.32-1.92-2.33-5.42-.97-7.79.67-1.17 1.87-1.91 3.17-1.93 1-.02 1.94.67 2.55.67.61 0 1.76-.83 2.96-.71.5.02 1.92.2 2.83 1.52-.07.05-1.69.99-1.67 2.96M14.4 6.13c.54-.65.9-1.56.8-2.46-.78.03-1.72.52-2.28 1.17-.5.57-.94 1.5-.82 2.38.87.07 1.76-.44 2.3-1.09" />
           </svg>
           {t("auth.login.apple", "Увійти через Apple")}
+          {lastLogin === "apple" && (
+            <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide bg-white/15 rounded px-1.5 py-0.5">
+              {t("auth.lastUsed", "Востаннє")}
+            </span>
+          )}
         </Button>
         <Button
           variant="outline"
@@ -208,6 +230,11 @@ const Auth = () => {
             />
           </svg>
           {t("auth.login.google", "Увійти через Google")}
+          {lastLogin === "google" && (
+            <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide bg-secondary text-muted-foreground rounded px-1.5 py-0.5">
+              {t("auth.lastUsed", "Востаннє")}
+            </span>
+          )}
         </Button>
       </div>
     </main>
