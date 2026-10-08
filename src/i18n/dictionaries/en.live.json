@@ -92,5 +92,7 @@
   "promote.errorTitle": "Payment error",
   "promote.errorDesc": "Please try again later",
   "live.demoBadge": "Example",
-  "live.demoNotice": "There are no live streams yet — below are examples of how it will look. This is a demo, not real broadcasts."
+  "live.demoNotice": "There are no live streams yet — below are examples of how it will look. This is a demo, not real broadcasts.",
+  "stream.donate.error": "Could not create the payment",
+  "stream.donate.errorDesc": "Please try again in a moment."
 }

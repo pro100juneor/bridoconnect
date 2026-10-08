@@ -45,7 +45,7 @@ export const useProfile = () => {
     const userId = user.id;
     void (async () => {
       const [{ data, error }, hidden] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", userId).single(),
+        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
         fetchHidden(userId),
       ]);
       if (!error && data) setProfile(mergeHidden(data as unknown as Profile, hidden));

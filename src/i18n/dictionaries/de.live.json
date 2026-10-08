@@ -92,5 +92,7 @@
   "promote.errorTitle": "Zahlungsfehler",
   "promote.errorDesc": "Bitte später erneut versuchen",
   "live.demoBadge": "Beispiel",
-  "live.demoNotice": "Noch keine Live-Streams — unten Beispiele, wie es aussehen wird. Dies ist eine Demo, keine echten Übertragungen."
+  "live.demoNotice": "Noch keine Live-Streams — unten Beispiele, wie es aussehen wird. Dies ist eine Demo, keine echten Übertragungen.",
+  "stream.donate.error": "Zahlung konnte nicht erstellt werden",
+  "stream.donate.errorDesc": "Bitte versuchen Sie es gleich erneut."
 }

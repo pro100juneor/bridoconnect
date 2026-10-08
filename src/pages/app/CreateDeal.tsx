@@ -76,7 +76,7 @@ const CreateDeal = () => {
       description: form.description,
       category: form.category,
       amount: amountNum,
-      currency: form.currency,
+      currency: form.currency.toLowerCase(),
       status: "pending",
       urgent: form.urgent,
     });

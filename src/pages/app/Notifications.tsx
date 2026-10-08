@@ -62,7 +62,9 @@ const Notifications = () => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          setNotifs((prev) => [payload.new as Notification, ...prev]);
+          // L2: дедуп — realtime-вставка может наложиться на refetch и задвоить строку.
+          const incoming = payload.new as Notification;
+          setNotifs((prev) => (prev.some((n) => n.id === incoming.id) ? prev : [incoming, ...prev]));
         }
       )
       .subscribe();
@@ -95,7 +97,9 @@ const Notifications = () => {
     <div className="pb-8">
       <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 pt-4 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">{t("notifications.title", "Сповіщення")}</h2>
+          <h2 className="font-serif text-4xl tracking-tight text-foreground animate-fade-in">
+            {t("notifications.title", "Сповіщення")}
+          </h2>
           {unreadCount > 0 && (
             <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">
               {unreadCount}
@@ -140,7 +144,9 @@ const Notifications = () => {
               <path d="M34 12h8M36 18h6M37 24h5" />
             </svg>
           </div>
-          <p className="font-semibold text-foreground mb-2">{t("notifications.emptyTitle", "Сповіщень немає")}</p>
+          <p className="font-semibold text-foreground mb-2">
+            {t("notifications.emptyTitle", "Сповіщень немає")}
+          </p>
           <p className="text-sm text-muted-foreground leading-relaxed">
             {t("notifications.emptyLine1", "Тут з'являться сповіщення про угоди,")}
             <br />
@@ -187,7 +193,10 @@ const Notifications = () => {
                   </p>
                 </div>
                 {!n.read && (
-                  <div className="w-2 h-2 rounded-full bg-accent shrink-0 mt-2" aria-label={t("notifications.unreadAria", "Непрочитано")} />
+                  <div
+                    className="w-2 h-2 rounded-full bg-accent shrink-0 mt-2"
+                    aria-label={t("notifications.unreadAria", "Непрочитано")}
+                  />
                 )}
               </motion.div>
             );

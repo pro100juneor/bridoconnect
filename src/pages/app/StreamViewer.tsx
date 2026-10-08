@@ -8,6 +8,7 @@ import { useStreamRoom } from "@/hooks/useStreamRoom";
 import { useStripe } from "@/hooks/useStripe";
 import { tap, notify, isNative, openExternal, webAppUrl } from "@/lib/native";
 import { useT } from "@/i18n/useT";
+import { toast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 
 type StreamRow = {
@@ -94,11 +95,22 @@ const StreamViewer = () => {
       openExternal(`${webAppUrl}/app/live/${id}`);
       return;
     }
+    if (!user) {
+      toast({ title: t("deal.needAuth", "Потрібен вхід"), variant: "destructive" });
+      navigate("/auth");
+      return;
+    }
     try {
       await createStreamDonation({ streamId: id, amount: amt });
       // On success Stripe redirects away; nothing else to do here.
     } catch {
+      // L1: раньше ошибка глоталась без объяснения — теперь показываем тост.
       void notify("error");
+      toast({
+        title: t("stream.donate.error", "Не вдалося створити платіж"),
+        description: t("stream.donate.errorDesc", "Спробуйте ще раз за мить."),
+        variant: "destructive",
+      });
     }
   };
 
