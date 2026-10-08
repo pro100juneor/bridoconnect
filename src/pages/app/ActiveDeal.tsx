@@ -12,6 +12,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { paymentBreakdown } from "@/lib/money";
 import { toast } from "@/hooks/use-toast";
 import ReviewModal from "@/components/ReviewModal";
+import { DealUpdates } from "@/components/DealUpdates";
 import { Confetti } from "@/components/Confetti";
 import { tap, notify, isNative, openExternal, webAppUrl } from "@/lib/native";
 import type { Deal } from "@/integrations/supabase/types";
@@ -461,6 +462,8 @@ const ActiveDeal = () => {
             </Button>
           </div>
         )}
+
+        {id && deal && <DealUpdates dealId={id} canPost={!!user && deal.creator_id === user.id} />}
 
         <div>
           <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
