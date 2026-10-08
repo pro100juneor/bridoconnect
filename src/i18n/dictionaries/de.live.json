@@ -29,6 +29,8 @@
   "live.deviceConnected": "Verbunden",
   "live.connecting": "Verbindung wird aufgebaut…",
   "live.startBroadcast": "Stream beginnen",
+  "live.start.error": "Stream konnte nicht gestartet werden",
+  "live.start.errorDesc": "Bitte versuchen Sie es gleich erneut.",
   "live.connectFailed": "Der Stream konnte nicht gestartet werden. Prüfe den Zugriff auf Kamera/Mikrofon und versuche es erneut.",
   "live.cameraConnecting": "Kamera verbindet sich…",
   "live.cameraWaiting": "Warten auf die Kamera…",

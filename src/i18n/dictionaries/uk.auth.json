@@ -69,6 +69,8 @@
   "review.textPlaceholder": "Розкажіть про співпрацю (необов'язково)…",
   "review.antiBlackmail": "Це попереджає взаємний шантаж.",
   "review.error.title": "Помилка",
+  "review.error.duplicate": "Ви вже залишили відгук за цією угодою.",
+  "review.error.generic": "Не вдалося надіслати відгук. Спробуйте пізніше.",
   "review.success.title": "Відгук надіслано ✅",
   "review.success.desc": "Він стане видимим, коли друга сторона теж залишить відгук.",
   "review.tag.fastReply": "Швидко відповів",

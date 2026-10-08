@@ -79,7 +79,7 @@ const StartStream = () => {
     void tap("medium");
     const room = `stream-${user.id}-${Date.now()}`;
 
-    const { data: stream } = await supabase
+    const { data: stream, error: streamError } = await supabase
       .from("streams")
       .insert([
         {
@@ -93,6 +93,18 @@ const StartStream = () => {
       ])
       .select()
       .single();
+
+    // H1: если строка стрима не создалась (RLS/сеть/валидация) — НЕ выходим в
+    // эфир. Иначе камера «идёт», но стрим не виден в списке и донаты невозможны.
+    if (streamError || !stream) {
+      void notify("error");
+      toast({
+        title: t("live.start.error", "Не вдалося почати ефір"),
+        description: t("live.start.errorDesc", "Спробуйте ще раз за мить."),
+        variant: "destructive",
+      });
+      return;
+    }
 
     setRoomName(room);
     setLive(true);

@@ -27,11 +27,11 @@ const RECIPIENT_TAGS = ["Надійний", "Чесний", "Швидко зав
 // переводится только подпись на кнопке, ключ подбирается по значению.
 const TAG_KEY: Record<string, string> = {
   "Швидко відповів": "review.tag.fastReply",
-  "Підтримуючий": "review.tag.supportive",
-  "Зрозумілий": "review.tag.clear",
-  "Гнучкий": "review.tag.flexible",
-  "Надійний": "review.tag.reliable",
-  "Чесний": "review.tag.honest",
+  Підтримуючий: "review.tag.supportive",
+  Зрозумілий: "review.tag.clear",
+  Гнучкий: "review.tag.flexible",
+  Надійний: "review.tag.reliable",
+  Чесний: "review.tag.honest",
   "Швидко завершив": "review.tag.fastFinish",
   "Хороша комунікація": "review.tag.goodCommunication",
 };
@@ -81,18 +81,17 @@ const ReviewModal = ({
     });
 
     if (error) {
-      toast({
-        title: t("review.error.title", "Помилка"),
-        description: error.message,
-        variant: "destructive",
-      });
+      // M3: не выливаем сырую ошибку PostgREST в UI. Переводим известный кейс
+      // (повторный отзыв = unique-violation 23505), остальное — generic.
+      const description =
+        (error as { code?: string }).code === "23505"
+          ? t("review.error.duplicate", "Ви вже залишили відгук за цією угодою.")
+          : t("review.error.generic", "Не вдалося надіслати відгук. Спробуйте пізніше.");
+      toast({ title: t("review.error.title", "Помилка"), description, variant: "destructive" });
     } else {
       toast({
         title: t("review.success.title", "Відгук надіслано ✅"),
-        description: t(
-          "review.success.desc",
-          "Він стане видимим, коли друга сторона теж залишить відгук."
-        ),
+        description: t("review.success.desc", "Він стане видимим, коли друга сторона теж залишить відгук."),
       });
       onSubmit?.();
       onSuccess?.();

@@ -72,6 +72,8 @@ const ActiveDeal = () => {
 
   useEffect(() => {
     if (!id) return;
+    // M2: alive-guard — поздний ответ по старому id не затирает новый при навигации.
+    let alive = true;
     setDealLoading(true);
     supabase
       .from("deals")
@@ -81,6 +83,7 @@ const ActiveDeal = () => {
       .eq("id", id)
       .maybeSingle()
       .then(({ data }) => {
+        if (!alive) return;
         if (data) {
           const d: DealRow = data;
           const p: DealCreatorProfile = d.profiles || {};
@@ -101,6 +104,9 @@ const ActiveDeal = () => {
         }
         setDealLoading(false);
       });
+    return () => {
+      alive = false;
+    };
   }, [id]);
 
   const steps = (() => {
@@ -542,10 +548,10 @@ const ActiveDeal = () => {
         )}
       </div>
 
-      {showReview && (
+      {showReview && d.creator_id && (
         <ReviewModal
           dealId={id || ""}
-          revieweeId={d.creator_id || "u1"}
+          revieweeId={d.creator_id}
           revieweeName={d.creator_name || t("common.user", "Користувач")}
           revieweeRole="as_recipient"
           onClose={() => setShowReview(false)}

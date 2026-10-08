@@ -29,6 +29,8 @@
   "live.deviceConnected": "Connected",
   "live.connecting": "Connecting…",
   "live.startBroadcast": "Start stream",
+  "live.start.error": "Could not start the stream",
+  "live.start.errorDesc": "Please try again in a moment.",
   "live.connectFailed": "Could not start the stream. Check camera/microphone access and try again.",
   "live.cameraConnecting": "Camera is connecting…",
   "live.cameraWaiting": "Waiting for the camera…",

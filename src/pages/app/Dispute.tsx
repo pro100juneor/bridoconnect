@@ -80,14 +80,18 @@ const Dispute = () => {
 
   useEffect(() => {
     if (!id) return;
+    let alive = true;
     supabase
       .from("deals")
       .select("title, amount, currency, profiles!creator_id(name)")
       .eq("id", id)
       .maybeSingle()
       .then(({ data }) => {
-        if (data) setDeal(data);
+        if (alive && data) setDeal(data);
       });
+    return () => {
+      alive = false;
+    };
   }, [id]);
 
   const submit = async () => {

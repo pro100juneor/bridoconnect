@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ImagePlus, Loader2, Megaphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,6 +28,14 @@ export const DealUpdates = ({ dealId, canPost }: { dealId: string; canPost: bool
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [posting, setPosting] = useState(false);
+  // M2: не трогаем state после размонтирования / по устаревшему ответу.
+  const aliveRef = useRef(true);
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+    };
+  }, []);
 
   const fetchUpdates = useCallback(async () => {
     setLoading(true);
@@ -44,6 +52,7 @@ export const DealUpdates = ({ dealId, canPost }: { dealId: string; canPost: bool
         signedUrl: r.image_path ? await signChatAttachment(r.image_path) : null,
       }))
     );
+    if (!aliveRef.current) return;
     setUpdates(withUrls);
     setLoading(false);
   }, [dealId]);

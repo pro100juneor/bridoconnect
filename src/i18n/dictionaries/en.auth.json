@@ -69,6 +69,8 @@
   "review.textPlaceholder": "Tell us about the collaboration (optional)…",
   "review.antiBlackmail": "This prevents mutual blackmail.",
   "review.error.title": "Error",
+  "review.error.duplicate": "You have already left a review for this deal.",
+  "review.error.generic": "Could not submit the review. Please try again later.",
   "review.success.title": "Review sent ✅",
   "review.success.desc": "It becomes visible once the other party leaves a review too.",
   "review.tag.fastReply": "Replied quickly",

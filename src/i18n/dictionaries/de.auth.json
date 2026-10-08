@@ -69,6 +69,8 @@
   "review.textPlaceholder": "Erzählen Sie von der Zusammenarbeit (optional)…",
   "review.antiBlackmail": "Das verhindert gegenseitige Erpressung.",
   "review.error.title": "Fehler",
+  "review.error.duplicate": "Sie haben für diesen Deal bereits eine Bewertung abgegeben.",
+  "review.error.generic": "Bewertung konnte nicht gesendet werden. Bitte später erneut versuchen.",
   "review.success.title": "Bewertung gesendet ✅",
   "review.success.desc": "Sie wird sichtbar, sobald die Gegenseite ebenfalls eine Bewertung abgibt.",
   "review.tag.fastReply": "Schnelle Antwort",

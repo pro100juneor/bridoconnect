@@ -29,6 +29,8 @@
   "live.deviceConnected": "Підключено",
   "live.connecting": "Підключаємось…",
   "live.startBroadcast": "Почати ефір",
+  "live.start.error": "Не вдалося почати ефір",
+  "live.start.errorDesc": "Спробуйте ще раз за мить.",
   "live.connectFailed": "Не вдалося підключити ефір. Перевірте доступ до камери/мікрофона і спробуйте знову.",
   "live.cameraConnecting": "Камера підключається…",
   "live.cameraWaiting": "Очікуємо камеру…",

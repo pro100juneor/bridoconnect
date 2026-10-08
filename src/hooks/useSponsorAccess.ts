@@ -139,11 +139,7 @@ export const useSponsorAccess = () => {
           .select("id, name, avatar_url, verification_status")
           .eq("id", ownerId)
           .maybeSingle(),
-        supabase
-          .from("profile_sponsor_reveal")
-          .select("reveal")
-          .eq("profile_id", ownerId)
-          .maybeSingle(),
+        supabase.from("profile_sponsor_reveal").select("reveal").eq("profile_id", ownerId).maybeSingle(),
       ]);
       if (error || !data) return null;
       const row = data as unknown as {
@@ -187,15 +183,20 @@ export const useSponsorReveal = () => {
       setLoading(false);
       return;
     }
+    let alive = true;
     supabase
       .from("profile_sponsor_reveal")
       .select("reveal")
       .eq("profile_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
+        if (!alive) return;
         if (data) setReveal((data as { reveal?: SponsorReveal | null }).reveal || {});
         setLoading(false);
       });
+    return () => {
+      alive = false;
+    };
   }, [user]);
 
   const save = async (next: SponsorReveal) => {
