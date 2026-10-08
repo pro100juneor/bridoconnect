@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, Send, Paperclip, MoreVertical, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, MoreVertical, ShieldCheck, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMessages } from "@/hooks/useMessages";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,7 @@ const Chat = () => {
   const [input, setInput] = useState("");
   const [partnerName, setPartnerName] = useState(() => t("chat.titleFallback", "Чат"));
   const [partnerId, setPartnerId] = useState<string | null>(null);
+  const [partnerVerified, setPartnerVerified] = useState(false);
   const [partnerOnline, setPartnerOnline] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -87,8 +88,15 @@ const Chat = () => {
         return;
       }
       setPartnerId(other);
-      const { data: profile } = await supabase.from("profiles").select("name").eq("id", other).maybeSingle();
-      if (alive) setPartnerName(profile?.name || t("chat.partnerFallback", "Партнер"));
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("name, verified")
+        .eq("id", other)
+        .maybeSingle();
+      if (alive) {
+        setPartnerName(profile?.name || t("chat.partnerFallback", "Партнер"));
+        setPartnerVerified(!!profile?.verified);
+      }
     })();
     return () => {
       alive = false;
@@ -162,7 +170,17 @@ const Chat = () => {
           {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm text-foreground truncate">{partnerName}</p>
+          <div className="flex items-center gap-1">
+            <p className="font-semibold text-sm text-foreground truncate">{partnerName}</p>
+            {/* Trust-сигнал: подтверждённый контрагент прямо в шапке чата. */}
+            {partnerVerified && (
+              <CheckCircle
+                className="w-3.5 h-3.5 text-success shrink-0"
+                strokeWidth={1.75}
+                aria-label={t("profile.verified", "Підтверджено")}
+              />
+            )}
+          </div>
           {/* Без presence-даних не пишемо нічого — вигадувати статус не можна. */}
           {partnerOnline && <p className="text-xs text-success">{t("chat.online", "онлайн")}</p>}
         </div>

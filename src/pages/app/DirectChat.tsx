@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, Send, MoreVertical, Paperclip, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Send, MoreVertical, Paperclip, AlertTriangle, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { openDirectThread, markDirectThreadRead, useDirectMessages } from "@/hooks/useDirectMessages";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,7 @@ const DirectChat = () => {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [resolving, setResolving] = useState(true);
   const [partnerName, setPartnerName] = useState(() => t("chat.titleFallback", "Чат"));
+  const [partnerVerified, setPartnerVerified] = useState(false);
   const [input, setInput] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -90,10 +91,13 @@ const DirectChat = () => {
       setResolving(false);
       const { data: profile } = await supabase
         .from("profiles")
-        .select("name")
+        .select("name, verified")
         .eq("id", targetId)
         .maybeSingle();
-      if (alive) setPartnerName(profile?.name || t("chat.partnerFallback", "Партнер"));
+      if (alive) {
+        setPartnerName(profile?.name || t("chat.partnerFallback", "Партнер"));
+        setPartnerVerified(!!profile?.verified);
+      }
     })();
     return () => {
       alive = false;
@@ -148,7 +152,16 @@ const DirectChat = () => {
           {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm text-foreground truncate">{partnerName}</p>
+          <div className="flex items-center gap-1">
+            <p className="font-semibold text-sm text-foreground truncate">{partnerName}</p>
+            {partnerVerified && (
+              <CheckCircle
+                className="w-3.5 h-3.5 text-success shrink-0"
+                strokeWidth={1.75}
+                aria-label={t("profile.verified", "Підтверджено")}
+              />
+            )}
+          </div>
         </div>
         <button
           onClick={() => {
