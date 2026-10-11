@@ -53,6 +53,7 @@ import Settings from "./pages/app/Settings";
 import BecomeMerchant from "./pages/app/BecomeMerchant";
 import AddressBook from "./pages/app/AddressBook";
 import Gifts from "./pages/app/Gifts";
+import MerchantOrders from "./pages/app/MerchantOrders";
 import Admin from "./pages/app/Admin";
 import ChatList from "./pages/app/ChatList";
 import Chat from "./pages/app/Chat";
@@ -156,6 +157,7 @@ export default function App() {
                   <Route path="/app/become-merchant" element={<BecomeMerchant />} />
                   <Route path="/app/addresses" element={<AddressBook />} />
                   <Route path="/app/gifts" element={<Gifts />} />
+                  <Route path="/app/orders" element={<MerchantOrders />} />
                   <Route path="/app/admin" element={<Admin />} />
                   <Route
                     path="/app/premium"

@@ -8,6 +8,7 @@ import {
   Heart,
   MessageCircle,
   Gift,
+  Package,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,6 +48,7 @@ const RECIPIENT_TABS: Tab[] = [
 ];
 
 const MERCHANT_TABS: Tab[] = [
+  { to: "/app/orders", icon: Package, labelKey: "nav.orders", fallback: "Замовлення", exact: true },
   { to: "/app/shop", icon: ShoppingBag, labelKey: "nav.shop", fallback: "Магазин", exact: true },
   { to: "/app/live", icon: Radio, labelKey: "nav.live", fallback: "Ефіри" },
   { to: "/app/chats", icon: MessageCircle, labelKey: "nav.chats", fallback: "Чати" },
