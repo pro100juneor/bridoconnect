@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle, XCircle, Clock, ChevronRight, type LucideIcon } from "lucide-react";
+import { CheckCircle, XCircle, Clock, ChevronRight, Gift, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useT } from "@/i18n/useT";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -53,6 +54,8 @@ const statusMap: Record<string, { icon: LucideIcon; key: string; fallback: strin
 const DealHistory = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { profile } = useProfile();
+  const isSponsor = profile?.role === "sponsor";
   const { t, localeTag } = useT();
   const { money } = useCurrency();
   const [deals, setDeals] = useState<DealListItem[]>([]);
@@ -109,6 +112,21 @@ const DealHistory = () => {
             </div>
           </div>
         </div>
+        {isSponsor && (
+          <button
+            onClick={() => {
+              void tap("light");
+              navigate("/app/gifts");
+            }}
+            className="w-full mt-3 flex items-center justify-between gap-2 px-4 py-3 min-h-[44px] bg-secondary rounded-2xl text-sm font-medium text-foreground hover:-translate-y-px transition-transform duration-150"
+          >
+            <span className="flex items-center gap-2">
+              <Gift className="w-4 h-4 text-accent" strokeWidth={1.75} />{" "}
+              {t("gift.sentLink", "Надіслані подарунки")}
+            </span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
+          </button>
+        )}
       </div>
 
       {loading ? (

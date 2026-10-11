@@ -1,5 +1,15 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Radio, Plus, ShoppingBag, User, Heart, MessageCircle, type LucideIcon } from "lucide-react";
+import {
+  Home,
+  Radio,
+  Plus,
+  ShoppingBag,
+  User,
+  Heart,
+  MessageCircle,
+  Gift,
+  type LucideIcon,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useT } from "@/i18n/useT";
@@ -23,7 +33,7 @@ const SPONSOR_TABS: Tab[] = [
   { to: "/app", icon: Home, labelKey: "nav.feed", fallback: "Стрічка", exact: true },
   { to: "/app/shop", icon: ShoppingBag, labelKey: "nav.market", fallback: "Маркет" },
   { to: "/app/live", icon: Radio, labelKey: "nav.live", fallback: "Ефіри" },
-  { to: "/app/deals", icon: Heart, labelKey: "nav.deals", fallback: "Угоди" },
+  { to: "/app/deals", icon: Heart, labelKey: "nav.activity", fallback: "Активність" },
   { to: "/app/profile", icon: User, labelKey: "nav.profile", fallback: "Профіль" },
 ];
 
@@ -31,7 +41,8 @@ const RECIPIENT_TABS: Tab[] = [
   { to: "/app", icon: Home, labelKey: "nav.feed", fallback: "Стрічка", exact: true },
   { to: "/app/live", icon: Radio, labelKey: "nav.live", fallback: "Ефіри" },
   { to: "/app/create-deal", icon: Plus, labelKey: "nav.create", fallback: "", center: true },
-  { to: "/app/shop", icon: ShoppingBag, labelKey: "nav.market", fallback: "Маркет" },
+  // Получатель получает подарки — вместо витрины маркета у него вкладка «Подарунки».
+  { to: "/app/gifts", icon: Gift, labelKey: "nav.gifts", fallback: "Подарунки" },
   { to: "/app/profile", icon: User, labelKey: "nav.profile", fallback: "Профіль" },
 ];
 
