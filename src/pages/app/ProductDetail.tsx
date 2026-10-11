@@ -1,5 +1,5 @@
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Heart, ShoppingCart, Star, Shield, Truck, RotateCcw } from "lucide-react";
+import { ArrowLeft, Heart, ShoppingCart, Star, Shield, Truck, RotateCcw, Gift } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { tap, notify } from "@/lib/native";
@@ -8,6 +8,8 @@ import { useStripe } from "@/hooks/useStripe";
 import { useCart } from "@/hooks/useCart";
 import { useProductFavorites } from "@/hooks/useProductFavorites";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useProfile } from "@/hooks/useProfile";
+import { GiftRecipientPicker } from "@/components/GiftRecipientPicker";
 import { useT } from "@/i18n/useT";
 import { toast } from "@/hooks/use-toast";
 
@@ -20,6 +22,7 @@ const ProductDetail = () => {
   const { buyProduct } = useStripe();
   const { add, beginCheckout, finishCheckout } = useCart();
   const { code, convert } = useCurrency();
+  const { profile } = useProfile();
   const { t } = useT();
   const [searchParams, setSearchParams] = useSearchParams();
   const { isFavorite, toggleFavorite } = useProductFavorites();
@@ -27,6 +30,9 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  // Подарок получателю — действие спонсора (спека §1): он покупает и отправляет.
+  const isSponsor = profile?.role === "sponsor";
 
   useEffect(() => {
     if (!id) return;
@@ -73,6 +79,25 @@ const ProductDetail = () => {
     beginCheckout([id]);
     try {
       await buyProduct({ productId: id, currency: code });
+    } catch (e) {
+      void notify("error");
+      toast({
+        title: t("product.payFailed", "Не вдалося почати оплату"),
+        description: e instanceof Error ? e.message : undefined,
+        variant: "destructive",
+      });
+      setPaying(false);
+    }
+  };
+
+  const handleGift = async (beneficiaryId: string) => {
+    if (!id || !product) return;
+    setPickerOpen(false);
+    void tap("medium");
+    setPaying(true);
+    beginCheckout([id]);
+    try {
+      await buyProduct({ productId: id, currency: code, beneficiaryId, isGift: true });
     } catch (e) {
       void notify("error");
       toast({
@@ -249,6 +274,19 @@ const ProductDetail = () => {
           </button>
         </div>
 
+        {isSponsor && (
+          <Button
+            className="w-full gap-2 min-h-[48px] bg-accent hover:bg-accent/90 text-white transition-transform duration-150 hover:-translate-y-px"
+            disabled={paying || !onboarded || !available}
+            onClick={() => {
+              void tap("light");
+              setPickerOpen(true);
+            }}
+          >
+            <Gift className="w-4 h-4" strokeWidth={1.75} /> {t("gift.cta", "Подарувати отримувачу")}
+          </Button>
+        )}
+
         {product.description && (
           <div>
             <p className="text-sm font-medium text-foreground mb-2">{t("product.description", "Опис")}</p>
@@ -331,6 +369,14 @@ const ProductDetail = () => {
               : t("product.buy", "Купити")}
         </Button>
       </div>
+
+      {isSponsor && (
+        <GiftRecipientPicker
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          onSelect={(bid) => void handleGift(bid)}
+        />
+      )}
     </main>
   );
 };

@@ -80,8 +80,19 @@ serve(async (req) => {
       });
     }
 
-    const { amount, dealId, streamId, productId, productIds, currency, type, priceId, promotion } =
-      await req.json();
+    const {
+      amount,
+      dealId,
+      streamId,
+      productId,
+      productIds,
+      currency,
+      type,
+      priceId,
+      promotion,
+      beneficiaryId,
+      isGift,
+    } = await req.json();
 
     if (
       type !== undefined &&
@@ -385,8 +396,54 @@ serve(async (req) => {
         );
       }
 
+      // Подарок получателю: бенефициар должен быть получателем и иметь адрес доставки.
+      // Адрес резолвит СЕРВЕР (service role) — спонсор его не видит и не выбирает.
+      let giftBeneficiaryId: string | null = null;
+      let giftAddressId: string | null = null;
+      if (isGift && beneficiaryId) {
+        if (beneficiaryId === user.id) {
+          return new Response(JSON.stringify({ error: "cannot gift to self" }), {
+            status: 400,
+            headers: { ...headers, "Content-Type": "application/json" },
+          });
+        }
+        const { data: ben } = await supabase
+          .from("profiles")
+          .select("id, role")
+          .eq("id", beneficiaryId)
+          .maybeSingle();
+        if (!ben || ben.role !== "recipient") {
+          return new Response(JSON.stringify({ error: "invalid beneficiary" }), {
+            status: 400,
+            headers: { ...headers, "Content-Type": "application/json" },
+          });
+        }
+        const { data: addr } = await supabase
+          .from("shipping_addresses")
+          .select("id")
+          .eq("user_id", beneficiaryId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!addr) {
+          return new Response(
+            JSON.stringify({
+              error: "beneficiary_no_address",
+              message: "Recipient has not added a delivery address yet",
+            }),
+            { status: 409, headers: { ...headers, "Content-Type": "application/json" } }
+          );
+        }
+        giftBeneficiaryId = beneficiaryId;
+        giftAddressId = addr.id as string;
+      }
+
       const unitCents = Math.round(product.price_cents * cur.rate);
       const feeCents = Math.round((unitCents * PLATFORM_FEE_BPS) / 10_000);
+
+      const giftMeta = giftBeneficiaryId
+        ? { beneficiary_id: giftBeneficiaryId, is_gift: "true", shipping_address_id: giftAddressId as string }
+        : {};
 
       // Резервация до оплаты — защита от продажи одного экземпляра дважды.
       const { data: reservationId } = await supabase.rpc("reserve_stock", {
@@ -430,6 +487,7 @@ serve(async (req) => {
             currency: cur.code,
             platform_fee_cents: String(feeCents),
             reservationIds: JSON.stringify([reservationId]),
+            ...giftMeta,
           },
           payment_intent_data: {
             application_fee_amount: feeCents,
@@ -439,6 +497,7 @@ serve(async (req) => {
               seller_id: product.seller_id,
               buyer_id: user.id,
               platform_fee_cents: String(feeCents),
+              ...giftMeta,
             },
           },
         });

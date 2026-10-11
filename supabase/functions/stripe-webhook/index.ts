@@ -193,6 +193,11 @@ serve(async (req) => {
               status: "paid",
               stripe_session_id: session.id,
               stripe_payment_intent_id: paymentIntentId,
+              // Подарок получателю: бенефициар + адрес резолвлены в create-checkout
+              // (service role). Спонсор адрес не передаёт и не видит.
+              beneficiary_id: md.beneficiary_id || null,
+              is_gift: md.is_gift === "true",
+              shipping_address_id: md.shipping_address_id || null,
             });
             if (orderErr) {
               console.error("order insert:", orderErr);
@@ -487,10 +492,7 @@ serve(async (req) => {
         // чем обратный путь через charge, и работает даже без source_transaction.
         const metaDealId = (transfer.metadata as Record<string, string> | null)?.deal_id;
         if (metaDealId) {
-          await supabase
-            .from("deals")
-            .update({ stripe_transfer_id: transfer.id })
-            .eq("id", metaDealId);
+          await supabase.from("deals").update({ stripe_transfer_id: transfer.id }).eq("id", metaDealId);
           break;
         }
         if (sourceTx) {

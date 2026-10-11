@@ -68,8 +68,24 @@ export const useStripe = () => {
     if (url) window.location.href = url;
   };
 
-  const buyProduct = async ({ productId, currency }: { productId: string; currency?: string }) => {
-    const resp = await authedFetch("create-checkout", { productId, type: "product_purchase", currency });
+  const buyProduct = async ({
+    productId,
+    currency,
+    beneficiaryId,
+    isGift,
+  }: {
+    productId: string;
+    currency?: string;
+    beneficiaryId?: string;
+    isGift?: boolean;
+  }) => {
+    const resp = await authedFetch("create-checkout", {
+      productId,
+      type: "product_purchase",
+      currency,
+      beneficiaryId,
+      isGift,
+    });
     if (!resp.ok) throw new Error(await safeJsonError(resp, "Stripe error"));
     const { url } = await resp.json();
     if (url) window.location.href = url;
