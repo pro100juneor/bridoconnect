@@ -52,6 +52,21 @@ interface ProductRow {
   profiles: SellerJoin | null;
 }
 
+// Витрина маркетплейса: один магазин = один мерчант с активными товарами.
+// Агрегируется из products (RLS select публичен для active) + shop_profiles для
+// бренд-слага/логотипа. Отдельного запроса на профили не нужно — они приходят join'ом.
+export interface Shop {
+  seller_id: string;
+  name: string;
+  country: string | null;
+  rating: number;
+  verified: boolean;
+  product_count: number;
+  preview_images: string[];
+  slug: string | null;
+  logo_url: string | null;
+}
+
 function enrich(row: ProductRow): Product {
   return {
     ...row,
@@ -81,6 +96,72 @@ export const useProducts = () => {
     const { data, error } = await supabase.from("products").select(SELLER_JOIN).eq("id", id).maybeSingle();
     if (error || !data) return null;
     return enrich(data);
+  };
+
+  const listShops = async (): Promise<Shop[]> => {
+    const { data, error } = await supabase
+      .from("products")
+      .select("seller_id, images, profiles!seller_id(name, country, rating, verified)")
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
+    if (error || !data) return [];
+
+    const map = new Map<string, Shop>();
+    for (const row of data as unknown as {
+      seller_id: string;
+      images: string[] | null;
+      profiles: SellerJoin | null;
+    }[]) {
+      let shop = map.get(row.seller_id);
+      if (!shop) {
+        shop = {
+          seller_id: row.seller_id,
+          name: row.profiles?.name || "Продавець",
+          country: row.profiles?.country ?? null,
+          rating: row.profiles?.rating ?? 0,
+          verified: row.profiles?.verified ?? false,
+          product_count: 0,
+          preview_images: [],
+          slug: null,
+          logo_url: null,
+        };
+        map.set(row.seller_id, shop);
+      }
+      shop.product_count += 1;
+      const img = row.images?.[0];
+      if (img && shop.preview_images.length < 3) shop.preview_images.push(img);
+    }
+
+    const shops = Array.from(map.values());
+    if (shops.length === 0) return [];
+
+    // Брендовые витрины (slug/логотип) — одним запросом по найденным мерчантам.
+    const { data: storefronts } = await supabase
+      .from("shop_profiles")
+      .select("seller_id, slug, logo_url")
+      .in(
+        "seller_id",
+        shops.map((s) => s.seller_id)
+      )
+      .eq("published", true);
+    if (storefronts) {
+      const byId = new Map(
+        (storefronts as { seller_id: string; slug: string; logo_url: string | null }[]).map((s) => [
+          s.seller_id,
+          s,
+        ])
+      );
+      for (const shop of shops) {
+        const sf = byId.get(shop.seller_id);
+        if (sf) {
+          shop.slug = sf.slug;
+          shop.logo_url = sf.logo_url;
+        }
+      }
+    }
+
+    shops.sort((a, b) => b.product_count - a.product_count);
+    return shops;
   };
 
   const productsBySeller = async (sellerId: string): Promise<Product[]> => {
@@ -181,5 +262,5 @@ export const useProducts = () => {
     return { id: (data as { id: string }).id };
   };
 
-  return { listProducts, getProduct, productsBySeller, myProducts, createProduct };
+  return { listProducts, listShops, getProduct, productsBySeller, myProducts, createProduct };
 };

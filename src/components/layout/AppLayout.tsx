@@ -21,7 +21,7 @@ interface Tab {
 // подарков появятся в следующих фазах и встанут в соответствующие наборы).
 const SPONSOR_TABS: Tab[] = [
   { to: "/app", icon: Home, labelKey: "nav.feed", fallback: "Стрічка", exact: true },
-  { to: "/app/shop", icon: ShoppingBag, labelKey: "nav.shop", fallback: "Магазин" },
+  { to: "/app/shop", icon: ShoppingBag, labelKey: "nav.market", fallback: "Маркет" },
   { to: "/app/live", icon: Radio, labelKey: "nav.live", fallback: "Ефіри" },
   { to: "/app/deals", icon: Heart, labelKey: "nav.deals", fallback: "Угоди" },
   { to: "/app/profile", icon: User, labelKey: "nav.profile", fallback: "Профіль" },
@@ -31,7 +31,7 @@ const RECIPIENT_TABS: Tab[] = [
   { to: "/app", icon: Home, labelKey: "nav.feed", fallback: "Стрічка", exact: true },
   { to: "/app/live", icon: Radio, labelKey: "nav.live", fallback: "Ефіри" },
   { to: "/app/create-deal", icon: Plus, labelKey: "nav.create", fallback: "", center: true },
-  { to: "/app/shop", icon: ShoppingBag, labelKey: "nav.shop", fallback: "Магазин" },
+  { to: "/app/shop", icon: ShoppingBag, labelKey: "nav.market", fallback: "Маркет" },
   { to: "/app/profile", icon: User, labelKey: "nav.profile", fallback: "Профіль" },
 ];
 

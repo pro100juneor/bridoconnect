@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ShoppingBag, Star, Heart, Plus, ShoppingCart, Palette } from "lucide-react";
+import { ShoppingBag, Star, Heart, Plus, ShoppingCart, Palette, Store, Shield } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { tap, notify } from "@/lib/native";
-import { useProducts, Product } from "@/hooks/useProducts";
+import { useProducts, Product, Shop as ShopType } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { useProductFavorites } from "@/hooks/useProductFavorites";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -34,9 +34,11 @@ const flagFor = (country?: string | null) => (country === "Україна" ? "�
 const ORDER_POLL_ATTEMPTS = 6;
 const ORDER_POLL_DELAY_MS = 1500;
 
+type View = "shops" | "products";
+
 const Shop = () => {
   const navigate = useNavigate();
-  const { listProducts } = useProducts();
+  const { listProducts, listShops } = useProducts();
   const { items, finishCheckout } = useCart();
   const { convert } = useCurrency();
   const { user } = useAuth();
@@ -46,15 +48,19 @@ const Shop = () => {
   const isMerchant = profile?.role === "merchant";
   const { t } = useT();
   const [searchParams, setSearchParams] = useSearchParams();
+  // IA маркетплейса: первичная витрина — магазины мерчантов, а не плоский каталог.
+  const [view, setView] = useState<View>("shops");
   const [active, setActive] = useState("Всі");
   const { isFavorite, toggleFavorite } = useProductFavorites();
   const [products, setProducts] = useState<Product[]>([]);
+  const [shops, setShops] = useState<ShopType[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await listProducts("Всі");
-    setProducts(data);
+    const [productsData, shopsData] = await Promise.all([listProducts("Всі"), listShops()]);
+    setProducts(productsData);
+    setShops(shopsData);
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -124,6 +130,11 @@ const Shop = () => {
     void toggleFavorite(id);
   };
 
+  const switchView = (next: View) => {
+    void tap("light");
+    setView(next);
+  };
+
   return (
     <div className="pb-8">
       <h1 className="sr-only">{t("shop.catalogTitle", "Гуманітарний магазин")}</h1>
@@ -162,22 +173,42 @@ const Shop = () => {
             </button>
           </div>
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {cats.map((cat) => (
+
+        {/* Сегмент: магазини (первично) / усі товари */}
+        <div className="flex gap-1 p-1 bg-secondary rounded-full mb-3" role="tablist">
+          {(["shops", "products"] as const).map((v) => (
             <button
-              key={cat}
-              onClick={() => {
-                void tap("light");
-                setActive(cat);
-              }}
-              className={`shrink-0 min-h-[44px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                active === cat ? "bg-accent text-white" : "bg-secondary text-foreground"
+              key={v}
+              role="tab"
+              aria-selected={view === v}
+              onClick={() => switchView(v)}
+              className={`flex-1 min-h-[40px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                view === v ? "bg-accent text-white" : "text-foreground"
               }`}
             >
-              {catLabel(cat)}
+              {v === "shops" ? t("shop.tabShops", "Магазини") : t("shop.tabProducts", "Усі товари")}
             </button>
           ))}
         </div>
+
+        {view === "products" && (
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {cats.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => {
+                  void tap("light");
+                  setActive(cat);
+                }}
+                className={`shrink-0 min-h-[44px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  active === cat ? "bg-accent text-white" : "bg-secondary text-foreground"
+                }`}
+              >
+                {catLabel(cat)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <PullToRefresh onRefresh={refetch}>
@@ -185,6 +216,75 @@ const Shop = () => {
           <div className="px-4 mt-8 text-center text-sm text-muted-foreground">
             {t("shop.loading", "Завантаження…")}
           </div>
+        ) : view === "shops" ? (
+          shops.length === 0 ? (
+            <div className="px-4 mt-16 flex flex-col items-center text-center">
+              <Store
+                className="w-12 h-12 text-muted-foreground/30 mb-3"
+                strokeWidth={1.5}
+                aria-hidden="true"
+              />
+              <p className="text-sm text-muted-foreground mb-1">
+                {t("shop.noShops", "Поки що немає магазинів")}
+              </p>
+              <p className="text-xs text-muted-foreground/70">
+                {t("shop.noShopsHint", "Магазини продавців з'являться тут")}
+              </p>
+            </div>
+          ) : (
+            <div className="px-4 mt-3 space-y-3">
+              {shops.map((s) => {
+                const initials = (s.name || "??").slice(0, 2);
+                return (
+                  <article
+                    key={s.seller_id}
+                    onClick={() => {
+                      void tap("light");
+                      navigate(`/app/shop/seller/${s.seller_id}`);
+                    }}
+                    className="relative bg-card rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-px hover:shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_24px_rgb(0_0_0/0.04)] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/8 before:z-10"
+                  >
+                    <div className="flex items-start gap-3 p-3">
+                      <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-base font-semibold text-primary shrink-0 overflow-hidden">
+                        {s.logo_url ? (
+                          <img src={s.logo_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          initials
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-foreground leading-tight line-clamp-1">
+                          {s.name} {flagFor(s.country)}
+                        </p>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                          <span className="flex items-center gap-1">
+                            <Star className="w-3 h-3 fill-warning text-warning" strokeWidth={1.75} />
+                            {(s.rating ?? 0).toFixed(1)}
+                          </span>
+                          <span>{t("shop.productsCount", "{n} товарів", { n: s.product_count })}</span>
+                          {s.verified && (
+                            <span className="flex items-center gap-1 text-success">
+                              <Shield className="w-3 h-3" strokeWidth={1.75} />
+                              {t("shop.verified", "Верифіковано")}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {s.preview_images.length > 0 && (
+                      <div className="grid grid-cols-3 gap-px bg-border/60">
+                        {s.preview_images.map((img, i) => (
+                          <div key={i} className="h-24 bg-secondary/60 overflow-hidden">
+                            <img src={img} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          )
         ) : filtered.length === 0 ? (
           <div className="px-4 mt-16 flex flex-col items-center text-center">
             <ShoppingBag
