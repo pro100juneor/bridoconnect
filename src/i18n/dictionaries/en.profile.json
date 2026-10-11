@@ -1,6 +1,7 @@
 {
   "profile.verified": "Verified",
   "profile.role.recipient": "Recipient",
+  "profile.role.merchant": "Merchant",
   "profile.role.sponsor": "Sponsor",
   "profile.menu.publicPage": "My public page",
   "profile.menu.activeDeals": "Active deals",

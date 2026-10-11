@@ -60,8 +60,10 @@ serve(async (req) => {
         headers: { ...headers, "Content-Type": "application/json" },
       });
     }
-    if (profile.role !== "recipient") {
-      return new Response(JSON.stringify({ error: "only recipients can onboard" }), {
+    // Connect-онбординг доступен получателю (помощь/эскроу) и мерчанту (выплаты за
+    // продажи в магазине). Спонсор/админ не онбордятся.
+    if (profile.role !== "recipient" && profile.role !== "merchant") {
+      return new Response(JSON.stringify({ error: "only recipients or merchants can onboard" }), {
         status: 403,
         headers: { ...headers, "Content-Type": "application/json" },
       });

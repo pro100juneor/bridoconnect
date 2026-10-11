@@ -1,6 +1,7 @@
 {
   "profile.verified": "Верифіковано",
   "profile.role.recipient": "Отримувач",
+  "profile.role.merchant": "Продавець",
   "profile.role.sponsor": "Спонсор",
   "profile.menu.publicPage": "Моя публічна сторінка",
   "profile.menu.activeDeals": "Активні угоди",

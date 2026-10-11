@@ -46,15 +46,19 @@ const Profile = () => {
     fetchConnectStatusRef.current = fetchConnectStatus;
   });
 
+  // Stripe Connect нужен и получателю (помощь/эскроу), и мерчанту (выплаты за продажи:
+  // чекаут магазина требует seller.stripe_connect_status='enabled').
+  const needsConnect = profile?.role === "recipient" || profile?.role === "merchant";
+
   useEffect(() => {
-    if (profile?.role !== "recipient") return;
+    if (!needsConnect) return;
     setConnectLoading(true);
     fetchConnectStatusRef
       .current()
       .then(setConnect)
       .catch(() => setConnect(null))
       .finally(() => setConnectLoading(false));
-  }, [profile?.role]);
+  }, [needsConnect]);
 
   useEffect(() => {
     if (!user || profile?.role !== "recipient") return;
@@ -183,7 +187,9 @@ const Profile = () => {
               {profile?.country ? `${profile.country} · ` : ""}
               {profile?.role === "recipient"
                 ? t("profile.role.recipient", "Отримувач")
-                : t("profile.role.sponsor", "Спонсор")}
+                : profile?.role === "merchant"
+                  ? t("profile.role.merchant", "Продавець")
+                  : t("profile.role.sponsor", "Спонсор")}
             </p>
             {profile?.verified && (
               <span className="inline-flex items-center gap-1 text-[10px] text-success mt-1">
@@ -234,6 +240,13 @@ const Profile = () => {
           <ConnectCard connect={connect} loading={connectLoading} onConnect={handleConnect} />
           <PaypalCard status={paypalStatus} onConnect={handlePaypal} />
           <CryptoCard userId={user?.id} />
+        </div>
+      )}
+
+      {/* Мерчанту — выплаты за продажи через Stripe Connect (без PayPal/крипто). */}
+      {profile?.role === "merchant" && (
+        <div className="px-4 pb-4 space-y-3">
+          <ConnectCard connect={connect} loading={connectLoading} onConnect={handleConnect} />
         </div>
       )}
 
