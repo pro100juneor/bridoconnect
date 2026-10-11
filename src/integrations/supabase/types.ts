@@ -1,4 +1,4 @@
-export type UserRole = "sponsor" | "recipient" | "admin";
+export type UserRole = "sponsor" | "recipient" | "merchant" | "admin";
 export type DealStatus = "pending" | "active" | "completed" | "cancelled" | "disputed";
 export type TransactionType = "deposit" | "withdrawal" | "deal_payment" | "refund";
 // KYC document-request lifecycle (public.verification_requests.status).

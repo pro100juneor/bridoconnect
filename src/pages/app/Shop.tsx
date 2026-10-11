@@ -8,6 +8,7 @@ import { useCart } from "@/hooks/useCart";
 import { useProductFavorites } from "@/hooks/useProductFavorites";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useT } from "@/i18n/useT";
@@ -39,6 +40,10 @@ const Shop = () => {
   const { items, finishCheckout } = useCart();
   const { convert } = useCurrency();
   const { user } = useAuth();
+  const { profile } = useProfile();
+  // Магазин ведут только мерчанты: продавцовские инструменты (дизайн витрины,
+  // добавление товара) скрыты у спонсоров/получателей. Покупка/просмотр — всем.
+  const isMerchant = profile?.role === "merchant";
   const { t } = useT();
   const [searchParams, setSearchParams] = useSearchParams();
   const [active, setActive] = useState("Всі");
@@ -128,16 +133,18 @@ const Shop = () => {
             {t("shop.catalogTitle", "Гуманітарний магазин")}
           </h2>
           <div className="flex items-center gap-1 shrink-0">
-            <button
-              onClick={() => {
-                void tap("light");
-                navigate("/app/shop/design");
-              }}
-              aria-label={t("shop.designAria", "Оформити магазин")}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center"
-            >
-              <Palette className="w-5 h-5 text-foreground" strokeWidth={1.75} />
-            </button>
+            {isMerchant && (
+              <button
+                onClick={() => {
+                  void tap("light");
+                  navigate("/app/shop/design");
+                }}
+                aria-label={t("shop.designAria", "Оформити магазин")}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center"
+              >
+                <Palette className="w-5 h-5 text-foreground" strokeWidth={1.75} />
+              </button>
+            )}
             <button
               onClick={() => {
                 void tap("light");
@@ -281,16 +288,18 @@ const Shop = () => {
         )}
       </PullToRefresh>
 
-      <button
-        onClick={() => {
-          void tap("medium");
-          navigate("/app/shop/new");
-        }}
-        aria-label={t("shop.addProduct", "Додати товар")}
-        className="fixed bottom-24 right-4 z-20 flex items-center gap-2 bg-accent text-white pl-4 pr-5 py-3 rounded-2xl shadow-lg font-medium text-sm transition-transform duration-150 hover:-translate-y-px"
-      >
-        <Plus className="w-4 h-4" strokeWidth={2} /> {t("shop.addProduct", "Додати товар")}
-      </button>
+      {isMerchant && (
+        <button
+          onClick={() => {
+            void tap("medium");
+            navigate("/app/shop/new");
+          }}
+          aria-label={t("shop.addProduct", "Додати товар")}
+          className="fixed bottom-24 right-4 z-20 flex items-center gap-2 bg-accent text-white pl-4 pr-5 py-3 rounded-2xl shadow-lg font-medium text-sm transition-transform duration-150 hover:-translate-y-px"
+        >
+          <Plus className="w-4 h-4" strokeWidth={2} /> {t("shop.addProduct", "Додати товар")}
+        </button>
+      )}
     </div>
   );
 };
