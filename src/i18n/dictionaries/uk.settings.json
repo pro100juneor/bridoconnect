@@ -2,6 +2,7 @@
   "settings.title": "Налаштування",
   "settings.localOnly": "Налаштування зберігаються локально (БД offline)",
   "settings.section.account": "Акаунт",
+  "settings.section.delivery": "Доставка",
   "settings.section.notifications": "Сповіщення",
   "settings.section.security": "Безпека",
   "settings.section.appearance": "Вигляд",

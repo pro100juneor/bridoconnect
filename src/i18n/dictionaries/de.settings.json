@@ -2,6 +2,7 @@
   "settings.title": "Einstellungen",
   "settings.localOnly": "Einstellungen werden lokal gespeichert (DB offline)",
   "settings.section.account": "Konto",
+  "settings.section.delivery": "Lieferung",
   "settings.section.notifications": "Benachrichtigungen",
   "settings.section.security": "Sicherheit",
   "settings.section.appearance": "Darstellung",

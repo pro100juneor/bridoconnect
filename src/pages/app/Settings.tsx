@@ -13,6 +13,7 @@ import {
   Smartphone,
   Mail,
   Lock,
+  MapPin,
   Trash2,
   type LucideIcon,
 } from "lucide-react";
@@ -28,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { supabase, SUPABASE_URL } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 import { usePreferences } from "@/hooks/usePreferences";
 import { toast } from "@/hooks/use-toast";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
@@ -39,8 +41,10 @@ import { useT } from "@/i18n/useT";
 const Settings = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { profile } = useProfile();
   const { prefs, update, tableAvailable } = usePreferences();
   const { t } = useT();
+  const isRecipient = profile?.role === "recipient";
   const mfa = useMfa();
   const [mfaDialog, setMfaDialog] = useState<"enroll" | "disable" | null>(null);
 
@@ -126,6 +130,22 @@ const Settings = () => {
       title: t("settings.section.account", "Акаунт"),
       items: [{ icon: Mail, label: t("settings.emailLabel", "Email"), value: user?.email || "—" }],
     },
+    // Адреса доставки нужна только получателю — туда приходят подарки.
+    ...(isRecipient
+      ? [
+          {
+            title: t("settings.section.delivery", "Доставка"),
+            items: [
+              {
+                icon: MapPin,
+                label: t("address.title", "Адреси доставки"),
+                arrow: true,
+                path: "/app/addresses",
+              },
+            ],
+          },
+        ]
+      : []),
     {
       // Тумблер push-сповіщень прибрано: доставки немає (ні APNs, ні web-push),
       // а перемикач створював враження працюючої функції. Повертати — разом

@@ -2,6 +2,7 @@
   "settings.title": "Settings",
   "settings.localOnly": "Settings are stored locally (DB offline)",
   "settings.section.account": "Account",
+  "settings.section.delivery": "Delivery",
   "settings.section.notifications": "Notifications",
   "settings.section.security": "Security",
   "settings.section.appearance": "Appearance",
