@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Wallet,
   Globe,
+  Store,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -277,6 +278,17 @@ const Profile = () => {
                   label: t("profile.menu.premium", "Premium підписка"),
                   color: "text-warning",
                   path: "/app/premium",
+                },
+              ]),
+          // Стати продавцем — только для не-мерчантов (магазин ведут merchant-аккаунты).
+          ...(profile?.role === "merchant"
+            ? []
+            : [
+                {
+                  icon: Store,
+                  label: t("merchant.apply.menuItem", "Стати продавцем"),
+                  color: "text-accent",
+                  path: "/app/become-merchant",
                 },
               ]),
           {

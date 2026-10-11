@@ -13,6 +13,7 @@ import {
   Megaphone,
   BadgeCheck,
   Ban,
+  Store,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -83,6 +84,16 @@ type PromoRow = {
   expires_at: string | null;
 };
 
+type MerchantAppRow = {
+  id: string;
+  business_name: string;
+  contact: string | null;
+  details: string | null;
+  created_at: string;
+  user_id: string;
+  profiles?: { name: string | null } | null;
+};
+
 type Stats = {
   users: number;
   products: number;
@@ -104,6 +115,7 @@ const Admin = () => {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [streams, setStreams] = useState<StreamRow[]>([]);
   const [promos, setPromos] = useState<PromoRow[]>([]);
+  const [merchantApps, setMerchantApps] = useState<MerchantAppRow[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -174,6 +186,14 @@ const Admin = () => {
     if (pm.data) setPromos(pm.data as PromoRow[]);
     const [users, productsC, streamsC, dealsC, ordersC] = counts as number[];
     setStats({ users, products: productsC, streams: streamsC, deals: dealsC, orders: ordersC });
+
+    const { data: maData } = await supabase
+      .from("merchant_applications")
+      .select("id, business_name, contact, details, created_at, user_id, profiles:profiles!user_id(name)")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true });
+    setMerchantApps((maData as unknown as MerchantAppRow[]) ?? []);
+
     setLoading(false);
   }, [count]);
 
@@ -206,6 +226,14 @@ const Admin = () => {
       t("admin.roleSet", "Роль: {role}", { role: next })
     );
   };
+
+  const decideMerchantApp = (id: string, approve: boolean) =>
+    act(
+      () => supabase.rpc("decide_merchant_application", { p_app_id: id, p_approve: approve, p_reason: null }),
+      approve
+        ? t("admin.merchant.approved", "Продавця схвалено")
+        : t("admin.merchant.rejected", "Заявку відхилено")
+    );
 
   const toggleProduct = (pr: ProductRow) =>
     act(
@@ -294,6 +322,39 @@ const Admin = () => {
               <Stat label={t("admin.stat.deals", "Запити")} value={stats.deals} />
               <Stat label={t("admin.stat.orders", "Замовл.")} value={stats.orders} />
             </div>
+          )}
+        </AdminSection>
+
+        <AdminSection title={t("admin.merchant.title", "Заявки продавців")} icon={Store} loading={loading}>
+          {merchantApps.length === 0 ? (
+            <p className="text-xs text-muted-foreground">{t("admin.merchant.none", "Нових заявок немає.")}</p>
+          ) : (
+            merchantApps.map((a) => (
+              <div key={a.id} className="py-2 border-b border-border/40 last:border-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-foreground truncate flex-1">
+                    {a.business_name}
+                  </span>
+                  <button
+                    onClick={() => decideMerchantApp(a.id, true)}
+                    className="text-[10px] px-2 py-1 rounded-full border border-success text-success"
+                  >
+                    {t("admin.merchant.approve", "Схвалити")}
+                  </button>
+                  <button
+                    onClick={() => decideMerchantApp(a.id, false)}
+                    className="text-[10px] px-2 py-1 rounded-full border border-destructive text-destructive"
+                  >
+                    {t("admin.merchant.reject", "Відхилити")}
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {a.profiles?.name || a.user_id.slice(0, 8)}
+                  {a.contact ? ` · ${a.contact}` : ""}
+                  {a.details ? ` · ${a.details}` : ""}
+                </p>
+              </div>
+            ))
           )}
         </AdminSection>
 
