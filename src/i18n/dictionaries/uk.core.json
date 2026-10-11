@@ -5,10 +5,8 @@
   "nav.profile": "Профіль",
   "nav.create": "Створити запит",
   "nav.skipToContent": "Перейти до основного вмісту",
-
   "settings.language": "Мова / Language",
   "settings.currency": "Валюта / Регіон",
-
   "currency.eur": "Євро",
   "currency.usd": "Долар",
   "currency.uah": "Гривня",
@@ -16,7 +14,6 @@
   "currency.gbp": "Фунт",
   "currency.czk": "Крона",
   "currency.rateMissing": "Курс ще не завантажено — суми показуємо у валюті оригіналу",
-
   "common.save": "Зберегти",
   "common.saving": "Зберігаємо…",
   "common.delete": "Видалити",
@@ -30,5 +27,7 @@
   "common.next": "Далі",
   "common.done": "Готово",
   "common.of": "з",
-  "common.all": "Всі"
+  "common.all": "Всі",
+  "nav.deals": "Угоди",
+  "nav.chats": "Чати"
 }

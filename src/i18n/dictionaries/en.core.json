@@ -5,10 +5,8 @@
   "nav.profile": "Profile",
   "nav.create": "Create request",
   "nav.skipToContent": "Skip to main content",
-
   "settings.language": "Language",
   "settings.currency": "Currency / Region",
-
   "currency.eur": "Euro",
   "currency.usd": "Dollar",
   "currency.uah": "Hryvnia",
@@ -16,7 +14,6 @@
   "currency.gbp": "Pound",
   "currency.czk": "Koruna",
   "currency.rateMissing": "Rates not loaded yet — amounts are shown in their original currency",
-
   "common.save": "Save",
   "common.saving": "Saving…",
   "common.delete": "Delete",
@@ -30,5 +27,7 @@
   "common.next": "Next",
   "common.done": "Done",
   "common.of": "of",
-  "common.all": "All"
+  "common.all": "All",
+  "nav.deals": "Deals",
+  "nav.chats": "Chats"
 }

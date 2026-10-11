@@ -5,10 +5,8 @@
   "nav.profile": "Profil",
   "nav.create": "Anfrage erstellen",
   "nav.skipToContent": "Zum Hauptinhalt springen",
-
   "settings.language": "Sprache",
   "settings.currency": "Währung / Region",
-
   "currency.eur": "Euro",
   "currency.usd": "Dollar",
   "currency.uah": "Hrywnja",
@@ -16,7 +14,6 @@
   "currency.gbp": "Pfund",
   "currency.czk": "Krone",
   "currency.rateMissing": "Kurse noch nicht geladen — Beträge werden in ihrer Originalwährung angezeigt",
-
   "common.save": "Speichern",
   "common.saving": "Wird gespeichert…",
   "common.delete": "Löschen",
@@ -30,5 +27,7 @@
   "common.next": "Weiter",
   "common.done": "Fertig",
   "common.of": "von",
-  "common.all": "Alle"
+  "common.all": "Alle",
+  "nav.deals": "Deals",
+  "nav.chats": "Chats"
 }
