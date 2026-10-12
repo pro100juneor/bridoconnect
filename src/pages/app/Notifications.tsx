@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
-import { Bell, MessageCircle, CheckCircle, DollarSign, Star, type LucideIcon } from "lucide-react";
+import {
+  Bell,
+  MessageCircle,
+  CheckCircle,
+  DollarSign,
+  Star,
+  Gift,
+  Truck,
+  type LucideIcon,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { Notification } from "@/integrations/supabase/types";
@@ -15,6 +24,9 @@ const TYPE_ICON: Record<string, LucideIcon> = {
   new_message: MessageCircle,
   donation_received: DollarSign,
   review_received: Star,
+  gift_received: Gift,
+  gift_shipped: Truck,
+  gift_delivered: CheckCircle,
   system: Bell,
 };
 
@@ -24,6 +36,9 @@ const TYPE_COLOR: Record<string, string> = {
   new_message: "text-accent bg-accent/10",
   donation_received: "text-warning bg-warning/10",
   review_received: "text-yellow-500 bg-yellow-500/10",
+  gift_received: "text-accent bg-accent/10",
+  gift_shipped: "text-warning bg-warning/10",
+  gift_delivered: "text-success bg-success/10",
   system: "text-muted-foreground bg-secondary",
 };
 
