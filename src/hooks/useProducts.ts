@@ -27,6 +27,13 @@ const SELLER_JOIN = `
   profiles!seller_id(name, country, rating, verified, stripe_connect_status)
 `;
 
+// Маркетплейс показывает ТОЛЬКО товары мерчантов (спека §2/§7: магазины ведут
+// мерчанты). !inner + фильтр role='merchant' отсекает легаси-товары не-мерчантов.
+const SELLER_JOIN_MERCHANT = `
+  *,
+  profiles!seller_id!inner(name, country, rating, verified, stripe_connect_status)
+`;
+
 interface SellerJoin {
   name: string | null;
   country: string | null;
@@ -83,8 +90,9 @@ export const useProducts = () => {
   const listProducts = async (category?: string): Promise<Product[]> => {
     let query = supabase
       .from("products")
-      .select(SELLER_JOIN)
+      .select(SELLER_JOIN_MERCHANT)
       .eq("status", "active")
+      .eq("profiles.role", "merchant")
       .order("created_at", { ascending: false });
     if (category && category !== "Всі") query = query.eq("category", category);
     const { data, error } = await query;
@@ -101,8 +109,9 @@ export const useProducts = () => {
   const listShops = async (): Promise<Shop[]> => {
     const { data, error } = await supabase
       .from("products")
-      .select("seller_id, images, profiles!seller_id(name, country, rating, verified)")
+      .select("seller_id, images, profiles!seller_id!inner(name, country, rating, verified, role)")
       .eq("status", "active")
+      .eq("profiles.role", "merchant")
       .order("created_at", { ascending: false });
     if (error || !data) return [];
 
