@@ -15,6 +15,7 @@ import {
   Wallet,
   Globe,
   Store,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -189,7 +190,9 @@ const Profile = () => {
                 ? t("profile.role.recipient", "Отримувач")
                 : profile?.role === "merchant"
                   ? t("profile.role.merchant", "Продавець")
-                  : t("profile.role.sponsor", "Спонсор")}
+                  : profile?.role === "admin"
+                    ? t("profile.role.admin", "Адміністратор")
+                    : t("profile.role.sponsor", "Спонсор")}
             </p>
             {profile?.verified && (
               <span className="inline-flex items-center gap-1 text-[10px] text-success mt-1">
@@ -293,8 +296,9 @@ const Profile = () => {
                   path: "/app/premium",
                 },
               ]),
-          // Стати продавцем — только для не-мерчантов (магазин ведут merchant-аккаунты).
-          ...(profile?.role === "merchant"
+          // Стати продавцем — только для sponsor/recipient (merchant уже продавец,
+          // admin — не кандидат в продавці).
+          ...(profile?.role === "merchant" || profile?.role === "admin"
             ? []
             : [
                 {
@@ -304,6 +308,18 @@ const Profile = () => {
                   path: "/app/become-merchant",
                 },
               ]),
+          // Адмінпанель — тільки для admin. У нативному застосунку немає адресного
+          // рядка, тож це єдиний шлях до /app/admin (модерація, заявки продавців).
+          ...(profile?.role === "admin"
+            ? [
+                {
+                  icon: ShieldCheck,
+                  label: t("profile.menu.admin", "Адмінпанель"),
+                  color: "text-accent",
+                  path: "/app/admin",
+                },
+              ]
+            : []),
           {
             icon: BarChart3,
             label: t("profile.menu.settings", "Налаштування"),
