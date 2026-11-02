@@ -1,7 +1,7 @@
 -- Product favorites (shop wishlist). Mirrors public.favorites, but targets shop
 -- products instead of people, so a liked product persists and can be listed.
 create table if not exists public.product_favorites (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   user_id uuid references public.profiles(id) on delete cascade not null,
   product_id uuid references public.products(id) on delete cascade not null,
   created_at timestamptz not null default now(),

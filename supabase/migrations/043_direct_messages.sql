@@ -4,7 +4,7 @@
 -- so any two people map to exactly one thread.
 
 create table if not exists public.direct_threads (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   user_a uuid references public.profiles(id) on delete cascade not null,
   user_b uuid references public.profiles(id) on delete cascade not null,
   created_at timestamptz not null default now(),
@@ -14,7 +14,7 @@ create table if not exists public.direct_threads (
 );
 
 create table if not exists public.direct_messages (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   thread_id uuid references public.direct_threads(id) on delete cascade not null,
   sender_id uuid references public.profiles(id) on delete cascade not null,
   text text not null,

@@ -1,7 +1,7 @@
 -- User reports (UGC moderation, App Store Guideline 1.2). A user can report
 -- another user from a chat or profile; admins review via public.is_admin().
 create table if not exists public.reports (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   reporter_id uuid references public.profiles(id) on delete cascade not null,
   reported_user_id uuid references public.profiles(id) on delete cascade not null,
   context text, -- e.g. 'chat:deal:<id>', 'chat:dm:<threadId>', 'profile'

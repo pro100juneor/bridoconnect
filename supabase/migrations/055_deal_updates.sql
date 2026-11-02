@@ -3,7 +3,7 @@
 -- (прозрачность расходования). Видны обеим сторонам сделки.
 
 create table if not exists public.deal_updates (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   deal_id uuid references public.deals(id) on delete cascade not null,
   author_id uuid references public.profiles(id) on delete cascade not null,
   text text not null,

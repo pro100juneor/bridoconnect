@@ -38,7 +38,7 @@ create policy "shop_profiles_owner_update" on public.shop_profiles
 
 -- 4) Заявки на роль мерчанта.
 create table if not exists public.merchant_applications (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   user_id uuid references public.profiles(id) on delete cascade not null,
   business_name text not null,
   contact text,
