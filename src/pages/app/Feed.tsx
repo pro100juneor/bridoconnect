@@ -17,6 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useDeals } from "@/hooks/useDeals";
+import { useProfile } from "@/hooks/useProfile";
 import { useT } from "@/i18n/useT";
 import { useCurrency } from "@/hooks/useCurrency";
 import { usePromotions, type PromotedProfile } from "@/hooks/usePromotions";
@@ -45,7 +46,16 @@ const Feed = () => {
   const navigate = useNavigate();
   const { t } = useT();
   const { user } = useAuth();
+  const { profile } = useProfile();
   const { dealProgress } = useCurrency();
+
+  // Лента получателей — не часть IA мерчанта (у него нет вкладки «Стрічка»).
+  // После логина все попадают на /app, поэтому мерчанта уводим на его первый
+  // таб «Замовлення», чтобы он не застревал на экране без активной вкладки.
+  const isMerchant = profile?.role === "merchant";
+  useEffect(() => {
+    if (isMerchant) navigate("/app/orders", { replace: true });
+  }, [isMerchant, navigate]);
   const [activeCategory, setActiveCategory] = useState("Всі");
   const [activeFlag, setActiveFlag] = useState<string | null>(null);
   const { deals: realDeals, loading, error, refetch } = useDeals({ status: "active" });
@@ -140,6 +150,9 @@ const Feed = () => {
 
   const filteredCount = displayDeals.length;
   const sourceCount = source.length;
+
+  // Мерчанта редиректим на /app/orders (см. useEffect выше) — не рисуем ленту.
+  if (isMerchant) return null;
 
   return (
     <div className="pb-4">
