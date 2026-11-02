@@ -8,9 +8,16 @@
 **ГЛАВНОЕ ДЛЯ НОВОГО АГЕНТА: сейчас идёт перестройка продукта по спеке
 `docs/REBUILD_MARKETPLACE_SPEC_2026-10-11.md` (владелец её утвердил).** Прочти спеку и раздел §9 ниже.
 Сделаны фазы **P0, P1, P2, P3, P4** (P4.1–P4.5) и **P5.1/P5.2** (онбординг мерчанта в Connect +
-in-app уведомления о подарке); остаток **P5** (возвраты/споры, email-уведомления, сквозная
-верификация выплат) — физически под D-003/D-002, на этой машине не проверяется (нет Deno/sandbox).
-Подробности и коммиты — в §9.
+in-app уведомления о подарке) + фикс merchant-only маркета; **ВСЁ ЗАПУШЕНО** в origin. Перестройка
+в коде готова и проверена в браузере против локального Supabase (все роли, полный цикл подарка).
+Остаток **P5** (возвраты/споры, email-уведомления, сквозная верификация выплат) — под D-003/D-004.
+
+**СЛЕДУЮЩИЙ ШАГ (прочти §10):** применить миграции 049–059 на **staging** (это «A») — это
+разблокирует нативное/браузерное тестирование перестройки на симуляторе И устройстве по HTTPS без
+локалки/туннелей. `supabase db push` блокируется харнессом как «Production Deploy» → нужен владелец:
+правило `Bash(supabase db push:*)` в `.claude/settings.local.json` ИЛИ владелец сам: `echo y | npx
+supabase db push --linked` (CLI уже залинкован на staging mlgyuonypcyseryrmcms, креды есть).
+Подробности перестройки — §9; тест-инфраструктура, устройство, A-гейт, тупики — **§10**.
 
 Директива владельца по стилю работы (действует постоянно; зафиксирована в CLAUDE.md §«Автономність
 по плану»): выполнять план до конца БЕЗ запросов одобрения — решения в рамках плана принимать сам,
@@ -269,3 +276,108 @@ stripe-webhook) — верификация платёжного пути под 
 - **a11y (системно):** ~53 формы используют соседний `<label>` без `htmlFor` (спасает placeholder) —
   опциональный сквозной проход. MFA fail-open — задокументированный known-issue.
 - `.env.production` в git-истории (только публичные anon/client-id, не секреты) — чистка не срочна.
+
+## 10. Сессия 2026-10-12…11-02: QA перестройки, A-гейт, тест-инфраструктура, устройство
+
+### 10.1 Что сделано и ЗАПУШЕНО (ветка feat/appstore-launch, всё в origin)
+
+Коммиты этой сессии поверх P2 (`fb03605`):
+
+- `43a76b4` **P3** — маркет = магазины мерчантов (сегмент «Магазини|Усі товари»); `useProducts.listShops()`.
+- `6286bde` **P4.1** мигр. **057** gift orders (shipping_addresses, orders+подарок, RLS-приватность,
+  RPC order_shipping_for_merchant / merchant_update_fulfillment). RLS проверен локально.
+- `6e38d3c` **P4.2** адреса доставки (`/app/addresses`, useShippingAddresses, пункт в Settings).
+- `223f337` **P4.3** подарок: мигр. **058** recipient_has_shipping_address; GiftRecipientPicker;
+  кнопка «Подарувати» у спонсора; edge create-checkout/stripe-webhook (D-003).
+- `0406f7f` **P4.4** экран «Подарунки» (`/app/gifts`, role-aware); навигация.
+- `0732688` **P4.5** кабинет заказов мерчанта (`/app/orders`), адрес через RPC, статусы.
+- `b51dcae` **P5.1** Stripe Connect онбординг для мерчанта (Profile + connect-onboard edge).
+- `611d052` **P5.2** мигр. **059** gift_notifications (триггер on orders → in-app уведомления).
+- `9815743` **fix** маркет только мерчантов (listProducts/listShops inner-join role='merchant') —
+  **найден в QA** (легаси-товар не-мерчанта светился как магазин).
+- `f52f18b` **A-скрипт** `scripts/apply-pending-migrations.sh` (накат 049–059, запускает владелец).
+- docs-коммиты handoff. Конвейер зелёный на каждом (tsc 0 · eslint 0 · тесты 28/28 · build ок).
+
+### 10.2 QA перестройки — ПРОЙДЕН в браузере (все роли, против локального Supabase)
+
+Полный прогон P1–P5.2 через Chrome DevTools против локального бэкенда: заявка→одобрение мерчанта,
+ролевые табы, витрина магазинов, полный цикл подарка (пикер+пречек адреса→заказ→уведомления→адрес
+через RPC→отправка с треком→смена статусов), Connect-карта мерчанта, уведомления. **1 баг найден и
+исправлен** (9815743). ~20 экранов без ошибок консоли. Логика продукта считается проверенной.
+
+### 10.3 Тестовые юзеры (ЛОКАЛЬНЫЙ Supabase, пароль у всех `Test1234!`)
+
+Засеяны прямо в БД (том пережил рестарт Docker): sponsor@test.local / recipient@test.local /
+merchant@test.local / admin@test.local (роли проставлены, onboarding_completed_at=now(), token-колонки
+auth.users исправлены на '' — иначе GoTrue «Database error querying schema»). Плюс merchant-товар,
+shop_profile(slug=test-merchant), адрес получателя, подарок-заказ. NB: sponsor@test.local в ходе теста
+стал merchant (одобрял заявку). Сид-скрипты — в `$CLAUDE_JOB_DIR/tmp/` (эфемерно, может не сохраниться).
+
+### 10.4 «A» — миграции на staging (СЛЕДУЮЩИЙ ШАГ, разблокирует всё тестирование)
+
+CLI залинкован на **staging** `mlgyuonypcyseryrmcms` (не прод!), креды сохранены: `npx supabase
+migration list --linked` работает и показывает, что **049–059 на staging НЕ применены**. Применить:
+`echo y | npx supabase db push --linked`. НО **харнесс блокирует** эту команду («Production Deploy» /
+«Protected-Scope IaC Apply»); агент сам обойти/саморазрешить не может. Владелец: добавь правило
+`Bash(supabase db push:*)` в `.claude/settings.local.json` (там уже есть `Bash(git push:*)`) ИЛИ
+выполни команду сам. После A обычная сборка (prod/staging mode) на симуляторе И устройстве ходит на
+HTTPS-staging с миграциями — без локалки/CapacitorHttp/ATS/туннелей. Прод (D-001) — НЕ трогать.
+
+### 10.5 Симулятор — РАБОЧИЙ путь для tap-fix-loop (Maestro)
+
+Maestro (нужен Java: `brew install openjdk@17`, JAVA_HOME=/opt/homebrew/opt/openjdk@17) надёжно водит
+UI **симулятора** (iPhone 17 Pro sim DDE6A678): `maestro --device <simUDID> test flow.yaml` (tapOn по
+тексту). idb тоже водит симулятор. Логин нативной сборки против ЛОКАЛЬНОГО http-бэкенда на симуляторе
+НЕ прошёл (WKWebView mixed-content/CORS; пробовал iosScheme:http + CapacitorHttp + ATS — не добил).
+**Вывод: для натив-тестов нужен HTTPS-бэкенд = A.** Против staging (HTTPS) логин/флоу пойдут штатно.
+
+### 10.6 Физический iPhone — РЕАЛЬНОСТЬ (большой тупик, НЕ углубляться повторно)
+
+- **Тапы на физическом iPhone 15/17 (iOS 17+/CoreDevice) НЕ достигнуты** ничем: idb, Maestro, Appium
+  xcuitest — все на легаси usbmux, который iOS 17+ физ-устройство видит лишь флапающим «Network» или
+  не видит. Appium «Unknown device UDID». WDA-туннель рвётся по SSL. pymobiledevice3 `remote tunneld`
+  требует **sudo** (пароль у владельца).
+- **Что РАБОТАЕТ без sudo:** (1) `xcrun devicectl device process launch --terminate-existing --device
+19F9CA69-764D-5A51-9DC8-5457C9270EBA de.brido.connect` — запуск/install/логи/copy-файлов (CoreDevice,
+  стабильно). (2) **СКРИНШОТ**: `pymobiledevice3 developer dvt screenshot out.png --udid
+00008130-000C71E93CE0001C` (**pmd 11.29.1** в venv; у 9.x НЕ работает) — поднимает no-root userspace
+  tunnel, ~3с PNG, НО ТОЛЬКО когда 15-й виден в `pymobiledevice3 usbmux list` (флапает!). Один такой
+  скрин BridoConnect-входа на 15-м реально снят и отправлен владельцу.
+- **Идентификаторы 15 Pro Max:** devicectl/CoreDevice UDID `19F9CA69-764D-5A51-9DC8-5457C9270EBA`;
+  hardware UDID (pmd/appium/usbmux) `00008130-000C71E93CE0001C`.
+- **iPhone 17 Pro Max** — CoreDevice `31B87EC7-65B0-5A40-BF36-409D0D77A030`, hw `00008150-...`.
+  **НЕ ИСПОЛЬЗОВАТЬ без явного разрешения владельца** (личный телефон; dvt без --udid берёт первое
+  устройство и случайно снял личный звонок — ВСЕГДА указывать `--udid` 15-го).
+- **Устройство ОБЩЕЕ** с параллельными агентами (сессии `KD`/`Kids` — проект Kids Academy, `com.luftarbeiter.*`,
+  каталог дронов). Работают по слотам, координация через SendMessage. 15-й нестабилен для всех.
+- **Вывод по устройству:** без тапов и при флапе — это не путь для tap-fix-loop. Скриншоты возможны
+  точечно. Полноценный интерактивный прогон перестройки — на симуляторе (A), не на физ-устройстве.
+
+### 10.7 Установленные сборки на устройствах (важно!)
+
+На iPhone 15 Pro Max и 17 Pro Max стоит BridoConnect, но билды собирались под РАЗНЫЕ бэкенды:
+prod-режим `npm run build` → прод (без миграций!); dev-эксперимент → LAN `http://10.0.1.158:54321`
+(локальный Supabase по Mac-LAN, с CapacitorHttp+ATS+NSLocalNetworkUsageDescription, dev-правки Info.plist/
+capacitor.config ОТКАЧЕНЫ из репо — дерево чистое). Чтобы перестройка работала на устройстве — нужен
+бэкенд С миграциями, куда оно ходит: staging (A) → пересобрать в staging-mode, ИЛИ прод (D-001).
+
+### 10.8 Среда / инструменты (для возобновления)
+
+- **Docker** периодически зависал и исчерпывал kernel file table (kern.num_files≈maxfiles) → падали
+  любые открытия файлов (флаки тестов/команд). Лечение: убить com.docker.backend, перезапустить Docker.app.
+  Локальный Supabase: `npx supabase start` (contename supabase_db_bridoconnect). Health: `curl
+http://127.0.0.1:54321/auth/v1/health`.
+- Поставлено в сессии: openjdk@17, appium+@appium/xcuitest-driver, pymobiledevice3 9.16 (~/.local/bin,
+  старая) и **11.29.1 в venv** `$CLAUDE_JOB_DIR/pmdvenv` (ЭФЕМЕРНО — пересоздать:
+  `python3.11 -m venv <venv> && <venv>/bin/pip install pymobiledevice3==11.29.1`).
+- `.env.landevice.local` (gitignored) — VITE_SUPABASE_URL=LAN-IP для dev-сборки на устройство.
+
+### 10.9 Гейты (всё, что требует владельца)
+
+- **A / staging-миграции** — правило `Bash(supabase db push:*)` или владелец сам (см. 10.4). Самый важный.
+- **D-001** — прод-миграции/деплой (049–059 на прод): только по явному «да».
+- **D-002** — провайдеры (Apple/Google/Supabase-ключи).
+- **D-003** — edge/Stripe sandbox (оплаты, выплаты, refund; create-checkout/stripe-webhook/connect-onboard).
+- **D-004** — юр (Widerruf/возвраты, MiCA, DSA) — блокирует P5-возвраты.
+- **Физ-устройство тапы** — нужен CoreDevice-туннель (sudo-пароль владельца) ИЛИ стабильный USB; пока нет.
+- **push** — по «запушити» (разрешение `Bash(git push:*)` уже в settings; сейчас всё запушено).
