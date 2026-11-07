@@ -48,7 +48,9 @@ const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
   }, [user, session]);
 
   if (loading) return <Spinner />;
-  if (!user) return <Navigate to="/auth" replace />;
+  // Запоминаем, куда вёл гость (напр. CTA на публичной /u/:slug), чтобы Auth вернул
+  // его сюда после входа, а не оставлял на /app (иначе публичные CTA — тупик).
+  if (!user) return <Navigate to="/auth" replace state={{ from: location.pathname + location.search }} />;
   if (aal === "checking") return <Spinner />;
   if (aal === "needs-mfa") return <MfaChallenge />;
   // Соц-пользователь без завершённого онбординга → на /welcome (кроме самого /welcome).

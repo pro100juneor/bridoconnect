@@ -103,7 +103,26 @@ const Notifications = () => {
   const onRowTap = (n: Notification) => {
     void tap("light");
     void markRead(n.id);
-    if (n.deal_id) navigate(`/app/deal/${n.deal_id}`);
+    if (n.deal_id) {
+      navigate(`/app/deal/${n.deal_id}`);
+      return;
+    }
+    // Нотификации без deal_id ведут на профильный раздел по типу (раньше были «мёртвыми»).
+    switch (n.type) {
+      case "gift_received":
+      case "gift_shipped":
+      case "gift_delivered":
+        navigate("/app/gifts");
+        break;
+      case "new_message":
+        navigate("/app/chats");
+        break;
+      case "review_received":
+        navigate("/app/profile");
+        break;
+      default:
+        break; // system / donation без deal_id — некуда вести
+    }
   };
 
   const unreadCount = notifs.filter((n) => !n.read).length;

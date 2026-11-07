@@ -142,7 +142,7 @@ const Search = () => {
                   {r.avatar_url ? (
                     <img src={r.avatar_url} className="w-full h-full object-cover" alt="" />
                   ) : (
-                    r.name
+                    (r.name || "?")
                       .split(" ")
                       .map((n: string) => n[0])
                       .join("")

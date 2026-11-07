@@ -5,7 +5,7 @@ export type TransactionType = "deposit" | "withdrawal" | "deal_payment" | "refun
 // NB: distinct from a profile's verification_status ("unverified" | "pending" |
 // "verified"), which lives in useIdentity/useRecipientPage — different concept.
 export type VerificationRequestStatus = "pending" | "submitted" | "approved" | "rejected";
-export type NotificationType = "deal_accepted" | "deal_completed" | "new_message" | "donation_received" | "review_received" | "system";
+export type NotificationType = "deal_accepted" | "deal_completed" | "new_message" | "donation_received" | "review_received" | "gift_received" | "gift_shipped" | "gift_delivered" | "system";
 
 export interface Profile {
   id: string;

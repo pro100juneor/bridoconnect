@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, LogIn } from "lucide-react";
@@ -16,7 +16,12 @@ import { useT } from "@/i18n/useT";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useT();
+  // Куда вернуть после входа: путь, с которого ProtectedRoute увёл гостя
+  // (напр. CTA на публичной /u/:slug). Только внутренний путь (не open-redirect).
+  const fromState = (location.state as { from?: string } | null)?.from;
+  const redirectTo = typeof fromState === "string" && /^\/(?!\/|\\)/.test(fromState) ? fromState : "/app";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -49,7 +54,7 @@ const Auth = () => {
         title: t("auth.login.success.title", "Вітаємо! 👋"),
         description: t("auth.login.success.desc", "Ви успішно увійшли в BridoConnect"),
       });
-      navigate("/app");
+      navigate(redirectTo, { replace: true });
     }
   };
 
@@ -75,7 +80,7 @@ const Auth = () => {
       // Нативний id_token-флоу вже поставив сесію; web-OAuth сам зробить redirect.
       if (isNative) {
         void notify("success");
-        navigate("/app");
+        navigate(redirectTo, { replace: true });
       }
     } finally {
       // Гарантований сброс — інакше кнопка «зависає» в лоадингу при будь-якому збої.
