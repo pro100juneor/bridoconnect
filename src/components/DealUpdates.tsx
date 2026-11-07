@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ImagePlus, Loader2, Megaphone } from "lucide-react";
+import { ImagePlus, Loader2, Megaphone, Paperclip } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/i18n/useT";
 import { toast } from "@/hooks/use-toast";
 import { tap } from "@/lib/native";
-import { uploadChatAttachment, signChatAttachment } from "@/lib/chatAttachments";
+import { uploadChatAttachment, signChatAttachment, isImagePath } from "@/lib/chatAttachments";
 
 interface DealUpdateRow {
   id: string;
@@ -147,14 +147,27 @@ export const DealUpdates = ({ dealId, canPost }: { dealId: string; canPost: bool
           {updates.map((u) => (
             <div key={u.id} className="bg-secondary rounded-2xl p-3">
               <p className="text-sm text-foreground whitespace-pre-wrap break-words">{u.text}</p>
-              {u.signedUrl && (
-                <img
-                  src={u.signedUrl}
-                  alt={t("dealUpdates.photoAlt", "Фото оновлення")}
-                  className="mt-2 rounded-xl max-h-60 w-full object-cover"
-                  loading="lazy"
-                />
-              )}
+              {u.signedUrl &&
+                (u.image_path && isImagePath(u.image_path) ? (
+                  <a href={u.signedUrl} target="_blank" rel="noopener noreferrer" className="block">
+                    <img
+                      src={u.signedUrl}
+                      alt={t("dealUpdates.photoAlt", "Фото оновлення")}
+                      className="mt-2 rounded-xl max-h-60 w-full object-cover"
+                      loading="lazy"
+                    />
+                  </a>
+                ) : (
+                  <a
+                    href={u.signedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1.5 text-sm text-accent underline"
+                  >
+                    <Paperclip className="w-4 h-4" strokeWidth={1.75} aria-hidden="true" />
+                    {t("dealUpdates.openReceipt", "Відкрити чек (PDF)")}
+                  </a>
+                ))}
               <p className="text-[11px] text-muted-foreground mt-2">
                 {new Date(u.created_at).toLocaleDateString(localeTag, {
                   day: "numeric",

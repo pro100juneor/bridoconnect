@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +48,14 @@ const ReviewModal = ({
 }: ReviewModalProps) => {
   const { user } = useAuth();
   const { t } = useT();
+  // Escape закрывает модалку (hand-rolled overlay, не shadcn Dialog).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
   const [text, setText] = useState("");

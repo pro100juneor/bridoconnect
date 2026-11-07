@@ -28,6 +28,7 @@
   "dealUpdates.postError": "Konnte nicht veröffentlicht werden",
   "dealUpdates.empty": "Noch keine Updates.",
   "dealUpdates.photoAlt": "Update-Foto",
+  "dealUpdates.openReceipt": "Beleg öffnen (PDF)",
   "deal.support.amountMin": "Mindestens {min} eingeben",
   "deal.support.tryPaypal": "Versuche PayPal oder komm später wieder.",
   "deal.support.tryStripe": "Versuche Stripe oder komm später wieder.",

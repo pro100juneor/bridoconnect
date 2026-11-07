@@ -28,6 +28,7 @@
   "dealUpdates.postError": "Не вдалося опублікувати",
   "dealUpdates.empty": "Поки що оновлень немає.",
   "dealUpdates.photoAlt": "Фото оновлення",
+  "dealUpdates.openReceipt": "Відкрити чек (PDF)",
   "deal.support.amountMin": "Введіть суму від {min}",
   "deal.support.tryPaypal": "Спробуйте PayPal або зверніться пізніше.",
   "deal.support.tryStripe": "Спробуйте Stripe або зверніться пізніше.",

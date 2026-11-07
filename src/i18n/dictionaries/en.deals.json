@@ -28,6 +28,7 @@
   "dealUpdates.postError": "Could not post",
   "dealUpdates.empty": "No updates yet.",
   "dealUpdates.photoAlt": "Update photo",
+  "dealUpdates.openReceipt": "Open receipt (PDF)",
   "deal.support.amountMin": "Enter at least {min}",
   "deal.support.tryPaypal": "Try PayPal or come back later.",
   "deal.support.tryStripe": "Try Stripe or come back later.",

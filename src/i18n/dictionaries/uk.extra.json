@@ -47,6 +47,7 @@
   "cart.title": "Кошик",
   "cart.total": "Разом",
   "chat.attachError": "Не вдалося завантажити файл",
+  "chat.attachmentUnavailable": "Вкладення недоступне",
   "chat.profile": "Профіль",
   "chat.report": "Поскаржитися на користувача",
   "chat.reportError": "Не вдалося надіслати",

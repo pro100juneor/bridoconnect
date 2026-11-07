@@ -43,8 +43,10 @@ export function CookieConsent() {
   const { t } = useT();
   const [visible, setVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [analytics, setAnalytics] = useState(true);
-  const [errorTracking, setErrorTracking] = useState(true);
+  // GDPR: нет предварительно отмеченного согласия — пользователь явно включает
+  // analytics/error-tracking («Прийняти все» ставит оба в true напряму).
+  const [analytics, setAnalytics] = useState(false);
+  const [errorTracking, setErrorTracking] = useState(false);
 
   useEffect(() => {
     // У нативному застосунку (App Store, guideline 5.1.2) банера немає:

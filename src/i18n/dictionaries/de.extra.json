@@ -47,6 +47,7 @@
   "cart.title": "Warenkorb",
   "cart.total": "Gesamt",
   "chat.attachError": "Datei konnte nicht hochgeladen werden",
+  "chat.attachmentUnavailable": "Anhang nicht verfügbar",
   "chat.profile": "Profil",
   "chat.report": "Nutzer melden",
   "chat.reportError": "Senden fehlgeschlagen",

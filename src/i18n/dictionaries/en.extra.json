@@ -47,6 +47,7 @@
   "cart.title": "Cart",
   "cart.total": "Total",
   "chat.attachError": "Could not upload file",
+  "chat.attachmentUnavailable": "Attachment unavailable",
   "chat.profile": "Profile",
   "chat.report": "Report user",
   "chat.reportError": "Could not send",
