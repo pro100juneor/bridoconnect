@@ -39,18 +39,26 @@ export const useProfile = () => {
 
   useEffect(() => {
     if (!user) {
+      // Очищаем профиль прежнего юзера при выходе/смене аккаунта (иначе UI
+      // продолжал бы показывать чужое имя/аватар/город).
+      setProfile(null);
       setLoading(false);
       return;
     }
+    let alive = true;
     const userId = user.id;
     void (async () => {
       const [{ data, error }, hidden] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
         fetchHidden(userId),
       ]);
+      if (!alive) return;
       if (!error && data) setProfile(mergeHidden(data as unknown as Profile, hidden));
       setLoading(false);
     })();
+    return () => {
+      alive = false;
+    };
   }, [user]);
 
   const updateProfile = async (updates: Partial<Profile>) => {

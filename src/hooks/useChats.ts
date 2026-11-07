@@ -53,164 +53,174 @@ export const useChats = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null); // H-14
 
-  const fetchChats = useCallback(async () => {
-    if (!user) {
-      setChats([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
+  // isActive: при гонке смены аккаунта (A→B, N+1 для A ещё в полёте) не даём
+  // устаревшему результату перезаписать превью чатами прежнего юзера.
+  const fetchChats = useCallback(
+    async (isActive: () => boolean = () => true) => {
+      if (!user) {
+        setChats([]);
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      setError(null);
 
-    // Підтягую деали, де юзер — creator АБО sponsor
-    const { data: deals, error } = await supabase
-      .from("deals")
-      .select(
-        `
+      // Підтягую деали, де юзер — creator АБО sponsor
+      const { data: deals, error } = await supabase
+        .from("deals")
+        .select(
+          `
         id, title, status, creator_id, sponsor_id,
         creator:profiles!creator_id(name, avatar_url, country),
         sponsor:profiles!sponsor_id(name, avatar_url, country)
       `
-      )
-      .or(`creator_id.eq.${user.id},sponsor_id.eq.${user.id}`)
-      .order("updated_at", { ascending: false });
+        )
+        .or(`creator_id.eq.${user.id},sponsor_id.eq.${user.id}`)
+        .order("updated_at", { ascending: false });
 
-    if (error || !deals) {
-      if (error) setError(error.message);
-      setChats([]);
-      setLoading(false);
-      return;
-    }
+      if (error || !deals) {
+        if (error) setError(error.message);
+        setChats([]);
+        setLoading(false);
+        return;
+      }
 
-    // Позначки прочитаного (chat_reads): deal_id → last_read_at
-    const { data: reads } = await supabase
-      .from("chat_reads")
-      .select("deal_id, last_read_at")
-      .eq("user_id", user.id);
-    const readMap = new Map<string, string>(
-      (reads ?? []).map((r: { deal_id: string; last_read_at: string }) => [r.deal_id, r.last_read_at])
-    );
+      // Позначки прочитаного (chat_reads): deal_id → last_read_at
+      const { data: reads } = await supabase
+        .from("chat_reads")
+        .select("deal_id, last_read_at")
+        .eq("user_id", user.id);
+      const readMap = new Map<string, string>(
+        (reads ?? []).map((r: { deal_id: string; last_read_at: string }) => [r.deal_id, r.last_read_at])
+      );
 
-    // Для кожного деалу — останнє повідомлення + кількість непрочитаних
-    const previews: ChatPreview[] = await Promise.all(
-      deals.map(async (d: ChatDealRow) => {
-        const isCreator = d.creator_id === user.id;
-        const other = firstJoin(isCreator ? d.sponsor : d.creator);
-        const otherId = isCreator ? d.sponsor_id : d.creator_id;
+      // Для кожного деалу — останнє повідомлення + кількість непрочитаних
+      const previews: ChatPreview[] = await Promise.all(
+        deals.map(async (d: ChatDealRow) => {
+          const isCreator = d.creator_id === user.id;
+          const other = firstJoin(isCreator ? d.sponsor : d.creator);
+          const otherId = isCreator ? d.sponsor_id : d.creator_id;
 
-        const { data: lastMsg } = await supabase
-          .from("messages")
-          .select("text, created_at, sender_id")
-          .eq("deal_id", d.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        let unread = 0;
-        if (lastMsg && lastMsg.sender_id !== user.id) {
-          const lastRead = readMap.get(d.id);
-          let q = supabase
+          const { data: lastMsg } = await supabase
             .from("messages")
-            .select("id", { count: "exact", head: true })
+            .select("text, created_at, sender_id")
             .eq("deal_id", d.id)
-            .neq("sender_id", user.id);
-          if (lastRead) q = q.gt("created_at", lastRead);
-          const { count } = await q;
-          unread = count ?? 0;
-        }
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-        return {
-          kind: "deal" as const,
-          deal_id: d.id,
-          deal_title: d.title,
-          deal_status: d.status,
-          other_id: otherId || "",
-          other_name: other?.name || "Очікує спонсора",
-          other_avatar: other?.avatar_url || null,
-          other_flag: other?.country === "Україна" ? "🇺🇦" : "🏳️",
-          last_message: lastMsg?.text || null,
-          last_message_at: lastMsg?.created_at || null,
-          unread_count: unread,
-        };
-      })
-    );
+          let unread = 0;
+          if (lastMsg && lastMsg.sender_id !== user.id) {
+            const lastRead = readMap.get(d.id);
+            let q = supabase
+              .from("messages")
+              .select("id", { count: "exact", head: true })
+              .eq("deal_id", d.id)
+              .neq("sender_id", user.id);
+            if (lastRead) q = q.gt("created_at", lastRead);
+            const { count } = await q;
+            unread = count ?? 0;
+          }
 
-    // тільки ті, де є хтось з іншого боку (щоб чат мав сенс)
-    const dealValid = previews.filter((p) => p.other_id);
+          return {
+            kind: "deal" as const,
+            deal_id: d.id,
+            deal_title: d.title,
+            deal_status: d.status,
+            other_id: otherId || "",
+            other_name: other?.name || "Очікує спонсора",
+            other_avatar: other?.avatar_url || null,
+            other_flag: other?.country === "Україна" ? "🇺🇦" : "🏳️",
+            last_message: lastMsg?.text || null,
+            last_message_at: lastMsg?.created_at || null,
+            unread_count: unread,
+          };
+        })
+      );
 
-    // Direct (deal-less) chats — separate tables, merged into the same list.
-    const { data: threads } = await supabase
-      .from("direct_threads")
-      .select(
-        `id, user_a, user_b, updated_at,
+      // тільки ті, де є хтось з іншого боку (щоб чат мав сенс)
+      const dealValid = previews.filter((p) => p.other_id);
+
+      // Direct (deal-less) chats — separate tables, merged into the same list.
+      const { data: threads } = await supabase
+        .from("direct_threads")
+        .select(
+          `id, user_a, user_b, updated_at,
          a:profiles!user_a(name, avatar_url, country),
          b:profiles!user_b(name, avatar_url, country)`
-      )
-      .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
-      .order("updated_at", { ascending: false });
+        )
+        .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
+        .order("updated_at", { ascending: false });
 
-    const { data: dmReads } = await supabase
-      .from("direct_reads")
-      .select("thread_id, last_read_at")
-      .eq("user_id", user.id);
-    const dmReadMap = new Map<string, string>(
-      (dmReads ?? []).map((r: { thread_id: string; last_read_at: string }) => [r.thread_id, r.last_read_at])
-    );
+      const { data: dmReads } = await supabase
+        .from("direct_reads")
+        .select("thread_id, last_read_at")
+        .eq("user_id", user.id);
+      const dmReadMap = new Map<string, string>(
+        (dmReads ?? []).map((r: { thread_id: string; last_read_at: string }) => [r.thread_id, r.last_read_at])
+      );
 
-    const dmPreviews: ChatPreview[] = await Promise.all(
-      (threads ?? []).map(async (th: DirectThreadRow) => {
-        const meIsA = th.user_a === user.id;
-        const other = firstJoin(meIsA ? th.b : th.a);
-        const otherId = meIsA ? th.user_b : th.user_a;
+      const dmPreviews: ChatPreview[] = await Promise.all(
+        (threads ?? []).map(async (th: DirectThreadRow) => {
+          const meIsA = th.user_a === user.id;
+          const other = firstJoin(meIsA ? th.b : th.a);
+          const otherId = meIsA ? th.user_b : th.user_a;
 
-        const { data: lastMsg } = await supabase
-          .from("direct_messages")
-          .select("text, created_at, sender_id")
-          .eq("thread_id", th.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        let unread = 0;
-        if (lastMsg && lastMsg.sender_id !== user.id) {
-          const lastRead = dmReadMap.get(th.id);
-          let q = supabase
+          const { data: lastMsg } = await supabase
             .from("direct_messages")
-            .select("id", { count: "exact", head: true })
+            .select("text, created_at, sender_id")
             .eq("thread_id", th.id)
-            .neq("sender_id", user.id);
-          if (lastRead) q = q.gt("created_at", lastRead);
-          const { count } = await q;
-          unread = count ?? 0;
-        }
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-        return {
-          kind: "dm" as const,
-          deal_id: th.id,
-          deal_title: "",
-          deal_status: "",
-          other_id: otherId,
-          other_name: other?.name || "Користувач",
-          other_avatar: other?.avatar_url || null,
-          other_flag: other?.country === "Україна" ? "🇺🇦" : "🏳️",
-          last_message: lastMsg?.text || null,
-          last_message_at: lastMsg?.created_at || th.updated_at,
-          unread_count: unread,
-        };
-      })
-    );
+          let unread = 0;
+          if (lastMsg && lastMsg.sender_id !== user.id) {
+            const lastRead = dmReadMap.get(th.id);
+            let q = supabase
+              .from("direct_messages")
+              .select("id", { count: "exact", head: true })
+              .eq("thread_id", th.id)
+              .neq("sender_id", user.id);
+            if (lastRead) q = q.gt("created_at", lastRead);
+            const { count } = await q;
+            unread = count ?? 0;
+          }
 
-    const all = [...dealValid, ...dmPreviews].sort((x, y) => {
-      const tx = x.last_message_at ? Date.parse(x.last_message_at) : 0;
-      const ty = y.last_message_at ? Date.parse(y.last_message_at) : 0;
-      return ty - tx;
-    });
-    setChats(all);
-    setLoading(false);
-  }, [user]);
+          return {
+            kind: "dm" as const,
+            deal_id: th.id,
+            deal_title: "",
+            deal_status: "",
+            other_id: otherId,
+            other_name: other?.name || "Користувач",
+            other_avatar: other?.avatar_url || null,
+            other_flag: other?.country === "Україна" ? "🇺🇦" : "🏳️",
+            last_message: lastMsg?.text || null,
+            last_message_at: lastMsg?.created_at || th.updated_at,
+            unread_count: unread,
+          };
+        })
+      );
+
+      const all = [...dealValid, ...dmPreviews].sort((x, y) => {
+        const tx = x.last_message_at ? Date.parse(x.last_message_at) : 0;
+        const ty = y.last_message_at ? Date.parse(y.last_message_at) : 0;
+        return ty - tx;
+      });
+      if (!isActive()) return;
+      setChats(all);
+      setLoading(false);
+    },
+    [user]
+  );
 
   useEffect(() => {
-    fetchChats();
+    let alive = true;
+    void fetchChats(() => alive);
+    return () => {
+      alive = false;
+    };
   }, [fetchChats]);
 
   return { chats, loading, error, refetch: fetchChats };

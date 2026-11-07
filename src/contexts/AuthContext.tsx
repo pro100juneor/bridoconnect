@@ -52,12 +52,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Онбординг: у соц-пользователя onboarding_completed_at = NULL, пока он не пройдёт
   // /welcome. Fail-open — если запрос/колонка недоступны, не блокируем вход.
-  const loadOnboarding = async (uid: string) => {
+  const loadOnboarding = async (uid: string, isActive: () => boolean = () => true) => {
     const { data, error } = await supabase
       .from("profiles")
       .select("onboarding_completed_at")
       .eq("id", uid)
       .maybeSingle();
+    if (!isActive()) return;
     if (error) {
       setNeedsOnboarding(false);
       return;
@@ -65,13 +66,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setNeedsOnboarding(data ? data.onboarding_completed_at === null : false);
   };
 
+  // Ключ — user?.id, а не объект user: onAuthStateChange отдаёт новый объект на
+  // каждый TOKEN_REFRESHED (раз в час / при фокусе), и по [user] эффект лишне
+  // перечитывал бы онбординг. alive-guard — против гонки с выходом.
+  const userId = user?.id;
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       setNeedsOnboarding(null);
       return;
     }
-    void loadOnboarding(user.id);
-  }, [user]);
+    let alive = true;
+    void loadOnboarding(userId, () => alive);
+    return () => {
+      alive = false;
+    };
+  }, [userId]);
 
   const refreshOnboarding = async () => {
     if (user) await loadOnboarding(user.id);

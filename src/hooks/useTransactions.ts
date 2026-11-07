@@ -9,32 +9,58 @@ export const useTransactions = () => {
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState(0);
 
-  const fetchTransactions = useCallback(async () => {
+  // Чистый фетч без setState — чтобы вызывающий (эффект под alive-guard или
+  // ручной refetch) сам решал, применять ли результат.
+  const load = useCallback(async (): Promise<{ txs: Transaction[]; bal: number }> => {
+    if (!user) return { txs: [], bal: 0 };
+    // Список — последние 50 для показа; баланс — по ВСЕМУ леджеру (иначе при
+    // >50 транзакциях баланс считался бы только по последней странице и был неверен).
+    const [listRes, ledgerRes] = await Promise.all([
+      supabase
+        .from("transactions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      supabase.from("transactions").select("type, amount").eq("user_id", user.id),
+    ]);
+    const txs = (listRes.data || []) as unknown as Transaction[];
+    const ledger = (ledgerRes.data || []) as unknown as Pick<Transaction, "type" | "amount">[];
+    const bal = ledger.reduce((sum, tx) => {
+      if (tx.type === "deposit" || tx.type === "refund") return sum + tx.amount;
+      return sum - tx.amount;
+    }, 0);
+    return { txs, bal };
+  }, [user]);
+
+  const refetch = useCallback(async () => {
+    setLoading(true);
+    const { txs, bal } = await load();
+    setTransactions(txs);
+    setBalance(bal);
+    setLoading(false);
+  }, [load]);
+
+  useEffect(() => {
+    let alive = true;
     if (!user) {
+      // Смена аккаунта / выход: не оставляем баланс и историю прежнего юзера.
+      setTransactions([]);
+      setBalance(0);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const { data } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(50);
+    void load().then(({ txs, bal }) => {
+      if (!alive) return;
+      setTransactions(txs);
+      setBalance(bal);
+      setLoading(false);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [user, load]);
 
-    const txs = (data || []) as unknown as Transaction[];
-    setTransactions(txs);
-    const bal = txs.reduce((sum, tx) => {
-      if (tx.type === "deposit" || tx.type === "refund") return sum + tx.amount;
-      return sum - tx.amount;
-    }, 0);
-    setBalance(bal);
-    setLoading(false);
-  }, [user]);
-
-  useEffect(() => {
-    void fetchTransactions();
-  }, [fetchTransactions]);
-
-  return { transactions, balance, loading, refetch: fetchTransactions };
+  return { transactions, balance, loading, refetch };
 };
