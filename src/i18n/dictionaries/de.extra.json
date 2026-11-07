@@ -42,6 +42,7 @@
   "auth.reset.new.submitting": "Speichern…",
   "auth.reset.new.title": "Neues Passwort",
   "cart.checkout": "Zur Kasse",
+  "cart.openProduct": "Produkt öffnen",
   "cart.empty": "Ihr Warenkorb ist leer",
   "cart.removeItem": "Aus dem Warenkorb entfernen",
   "cart.title": "Warenkorb",
