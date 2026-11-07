@@ -40,7 +40,7 @@ const Cart = () => {
   };
 
   return (
-    <main className="pb-28">
+    <main className="pb-[calc(10rem+env(safe-area-inset-bottom,0px))]">
       <div className="flex items-center gap-3 px-4 pt-4 pb-4">
         <button
           onClick={() => navigate(-1)}
@@ -106,7 +106,7 @@ const Cart = () => {
             ))}
           </div>
 
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/85 backdrop-blur-md border-t border-border">
+          <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40 p-4 bg-background/85 backdrop-blur-md border-t border-border">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm text-muted-foreground">{t("cart.total", "Разом")}</span>
               <span className="text-xl font-bold text-foreground">{convert(totalCents).formatted}</span>

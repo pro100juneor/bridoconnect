@@ -142,7 +142,7 @@ const ProductDetail = () => {
   }
 
   return (
-    <main className="pb-24 relative">
+    <main className="pb-[calc(9rem+env(safe-area-inset-bottom,0px))] relative">
       <div className="flex items-center gap-3 px-4 pt-4 pb-4">
         <button
           onClick={() => navigate(-1)}
@@ -337,7 +337,7 @@ const ProductDetail = () => {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/85 backdrop-blur-md border-t border-border flex gap-3">
+      <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40 p-4 bg-background/85 backdrop-blur-md border-t border-border flex gap-3">
         <Button
           variant="outline"
           aria-label={t("product.addToCart", "Додати в кошик")}
